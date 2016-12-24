@@ -7,8 +7,6 @@ import (
 	"reflect"
 )
 
-var ErrUnaddressable = errors.New("using unaddressable value")
-
 // Field model field definition
 type Field struct {
 	*StructField
