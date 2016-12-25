@@ -8,7 +8,3 @@ type SQLCommon interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
 }
-
-type Tabler interface {
-	TableName() string
-}

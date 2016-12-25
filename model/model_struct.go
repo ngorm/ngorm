@@ -35,7 +35,7 @@ type StructField struct {
 	Relationship    *Relationship
 }
 
-func (structField *StructField) clone() *StructField {
+func (structField *StructField) Clone() *StructField {
 	clone := &StructField{
 		DBName:          structField.DBName,
 		Name:            structField.Name,

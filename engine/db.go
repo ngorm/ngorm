@@ -14,7 +14,7 @@ type Engine struct {
 	RowsAffected      int64
 	Parent            *Engine
 	logMode           int
-	singularTable     bool
+	SingularTable     bool
 	source            string
 	values            map[string]interface{}
 	blockGlobalUpdate bool
@@ -24,6 +24,10 @@ type Engine struct {
 	Search    *Search
 	Scope     *Scope
 	StructMap *model.SafeModelStructsMap
+}
+
+func (e *Engine) AddError(err error) error {
+	return nil
 }
 
 type Search struct {
@@ -61,4 +65,12 @@ type Scope struct {
 	SkipLeft        bool
 	Fields          *[]*model.Field
 	SelectAttrs     *[]string
+}
+
+type DbTabler interface {
+	TableName(*Engine) string
+}
+
+type Tabler interface {
+	TableName() string
 }
