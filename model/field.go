@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/gernest/gorm/errmsg"
 	"github.com/gernest/gorm/util"
 )
-
-var ErrUnaddressable = errors.New("using unaddressable value")
 
 // Field model field definition
 type Field struct {
@@ -25,7 +24,7 @@ func (field *Field) Set(value interface{}) (err error) {
 	}
 
 	if !field.Field.CanAddr() {
-		return ErrUnaddressable
+		return errmsg.Unaddressable
 	}
 
 	reflectValue, ok := value.(reflect.Value)
