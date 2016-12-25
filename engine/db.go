@@ -20,23 +20,23 @@ type Engine struct {
 	OrConditions     []map[string]interface{}
 	NotConditions    []map[string]interface{}
 	HavingConditions []map[string]interface{}
-	joinConditions   []map[string]interface{}
+	JoinConditions   []map[string]interface{}
 	InitAttrs        []interface{}
 	AssignAttrs      []interface{}
 	Selects          map[string]interface{}
 	Omits            []string
 	orders           []interface{}
-	preload          []SearchPreload
+	Preload          []SearchPreload
 	Offset           interface{}
 	Limit            interface{}
 	Group            string
-	tableName        string
-	raw              bool
+	TableName        string
+	Raw              bool
 	Unscoped         bool
 	IgnoreOrderQuery bool
 }
 
 type SearchPreload struct {
-	schema     string
-	conditions []interface{}
+	Schema     string
+	Conditions []interface{}
 }

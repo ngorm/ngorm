@@ -87,3 +87,35 @@ func Having(e *engine.Engine, query interface{}, values ...interface{}) *engine.
 	e.HavingConditions = append(e.HavingConditions, map[string]interface{}{"query": query, "args": values})
 	return e
 }
+
+func Join(e *engine.Engine, query interface{}, values ...interface{}) *engine.Engine {
+	e.JoinConditions = append(e.JoinConditions, map[string]interface{}{"query": query, "args": values})
+	return e
+}
+
+func Preload(e *engine.Engine, schema string, values ...interface{}) *engine.Engine {
+	var preloads []engine.SearchPreload
+	for _, preload := range e.Preload {
+		if preload.Schema != schema {
+			preloads = append(preloads, preload)
+		}
+	}
+	preloads = append(preloads, engine.SearchPreload{schema, values})
+	e.Preload = preloads
+	return e
+}
+
+func Raw(e *engine.Engine, b bool) *engine.Engine {
+	e.Raw = b
+	return e
+}
+
+func Unscoped(e *engine.Engine, b bool) *engine.Engine {
+	e.Unscoped = b
+	return e
+}
+
+func Table(e *engine.Engine, name string) *engine.Engine {
+	e.TableName = name
+	return e
+}
