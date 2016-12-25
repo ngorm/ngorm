@@ -35,3 +35,7 @@ func GetInterfaceAsSQL(value interface{}) (string, error) {
 
 	return "", ErrInvalidSQL
 }
+
+type Tabler interface {
+	TableName() string
+}

@@ -3,6 +3,7 @@ package base
 import (
 	"reflect"
 	"strings"
+	"sync"
 )
 
 // ModelStruct model definition
@@ -10,7 +11,7 @@ type ModelStruct struct {
 	PrimaryFields    []*StructField
 	StructFields     []*StructField
 	ModelType        reflect.Type
-	defaultTableName string
+	DefaultTableName string
 }
 
 // StructField model field's struct definition
@@ -67,7 +68,7 @@ type Relationship struct {
 	//JoinTableHandler             JoinTableHandlerInterface
 }
 
-func getForeignField(column string, fields []*StructField) *StructField {
+func GetForeignField(column string, fields []*StructField) *StructField {
 	for _, field := range fields {
 		if field.Name == column || field.DBName == column || field.DBName == ToDBName(column) {
 			return field
@@ -76,7 +77,7 @@ func getForeignField(column string, fields []*StructField) *StructField {
 	return nil
 }
 
-func parseTagSetting(tags reflect.StructTag) map[string]string {
+func ParseTagSetting(tags reflect.StructTag) map[string]string {
 	setting := map[string]string{}
 	for _, str := range []string{tags.Get("sql"), tags.Get("gorm")} {
 		tags := strings.Split(str, ";")
@@ -91,4 +92,25 @@ func parseTagSetting(tags reflect.StructTag) map[string]string {
 		}
 	}
 	return setting
+}
+
+type SafeModelStructsMap struct {
+	m map[reflect.Type]*ModelStruct
+	l *sync.RWMutex
+}
+
+func (s *SafeModelStructsMap) Set(key reflect.Type, value *ModelStruct) {
+	s.l.Lock()
+	defer s.l.Unlock()
+	s.m[key] = value
+}
+
+func (s *SafeModelStructsMap) Get(key reflect.Type) *ModelStruct {
+	s.l.RLock()
+	defer s.l.RUnlock()
+	return s.m[key]
+}
+
+func NewModelStructsMap() *SafeModelStructsMap {
+	return &SafeModelStructsMap{l: new(sync.RWMutex), m: make(map[reflect.Type]*ModelStruct)}
 }

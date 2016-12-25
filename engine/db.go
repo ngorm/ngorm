@@ -1,19 +1,24 @@
 package engine
 
-import "context"
+import (
+	"context"
+
+	"github.com/gernest/gorm/base"
+)
 
 // DB contains information for current db connection
 type Engine struct {
 	Value             interface{}
 	Error             error
 	RowsAffected      int64
-	parent            *Engine
+	Parent            *Engine
 	logMode           int
 	singularTable     bool
 	source            string
 	values            map[string]interface{}
 	blockGlobalUpdate bool
 	ctx               context.Context
+	Dialect           base.Dialect
 
 	// search conditions
 	WhereConditions  []map[string]interface{}
@@ -34,9 +39,24 @@ type Engine struct {
 	Raw              bool
 	Unscoped         bool
 	IgnoreOrderQuery bool
+
+	Scope *Scope
+
+	StructMap *base.SafeModelStructsMap
 }
 
 type SearchPreload struct {
 	Schema     string
 	Conditions []interface{}
+}
+
+type Scope struct {
+	Value           interface{}
+	SQL             string
+	SQLVars         []interface{}
+	InstanceID      string
+	PrimaryKeyField *base.Field
+	SkipLeft        bool
+	Fields          *[]*base.Field
+	SelectAttrs     *[]string
 }
