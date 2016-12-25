@@ -9,22 +9,22 @@ import (
 )
 
 func Where(e *engine.Engine, query interface{}, values ...interface{}) *engine.Engine {
-	e.WhereConditions = append(e.WhereConditions, map[string]interface{}{"query": query, "args": values})
+	e.Search.WhereConditions = append(e.Search.WhereConditions, map[string]interface{}{"query": query, "args": values})
 	return e
 }
 
 func Not(e *engine.Engine, query interface{}, values ...interface{}) *engine.Engine {
-	e.NotConditions = append(e.NotConditions, map[string]interface{}{"query": query, "args": values})
+	e.Search.NotConditions = append(e.Search.NotConditions, map[string]interface{}{"query": query, "args": values})
 	return e
 }
 
 func Or(e *engine.Engine, query interface{}, values ...interface{}) *engine.Engine {
-	e.OrConditions = append(e.OrConditions, map[string]interface{}{"query": query, "args": values})
+	e.Search.OrConditions = append(e.Search.OrConditions, map[string]interface{}{"query": query, "args": values})
 	return e
 }
 
 func Attr(e *engine.Engine, attrs ...interface{}) *engine.Engine {
-	e.InitAttrs = append(e.InitAttrs, toSearchableMap(attrs...))
+	e.Search.InitAttrs = append(e.Search.InitAttrs, toSearchableMap(attrs...))
 	return e
 }
 
@@ -46,30 +46,30 @@ func toSearchableMap(attrs ...interface{}) (result interface{}) {
 }
 
 func Assign(e *engine.Engine, attrs ...interface{}) *engine.Engine {
-	e.AssignAttrs = append(e.AssignAttrs, toSearchableMap(attrs...))
+	e.Search.AssignAttrs = append(e.Search.AssignAttrs, toSearchableMap(attrs...))
 	return e
 }
 
 func Select(e *engine.Engine, query interface{}, values ...interface{}) *engine.Engine {
 	if regexes.DistinctSQL.MatchString(fmt.Sprint(query)) {
-		e.IgnoreOrderQuery = true
+		e.Search.IgnoreOrderQuery = true
 	}
-	e.Selects = map[string]interface{}{"query": query, "args": values}
+	e.Search.Selects = map[string]interface{}{"query": query, "args": values}
 	return e
 }
 
 func Omit(e *engine.Engine, columns ...string) *engine.Engine {
-	e.Omits = columns
+	e.Search.Omits = columns
 	return e
 }
 
 func Limit(e *engine.Engine, limit interface{}) *engine.Engine {
-	e.Limit = limit
+	e.Search.Limit = limit
 	return e
 }
 
 func Offset(e *engine.Engine, offset interface{}) *engine.Engine {
-	e.Offset = offset
+	e.Search.Offset = offset
 	return e
 }
 
@@ -78,44 +78,44 @@ func Group(e *engine.Engine, query interface{}) *engine.Engine {
 	if err != nil {
 		e.Error = err
 	} else {
-		e.Group = s
+		e.Search.Group = s
 	}
 	return e
 }
 
 func Having(e *engine.Engine, query interface{}, values ...interface{}) *engine.Engine {
-	e.HavingConditions = append(e.HavingConditions, map[string]interface{}{"query": query, "args": values})
+	e.Search.HavingConditions = append(e.Search.HavingConditions, map[string]interface{}{"query": query, "args": values})
 	return e
 }
 
 func Join(e *engine.Engine, query interface{}, values ...interface{}) *engine.Engine {
-	e.JoinConditions = append(e.JoinConditions, map[string]interface{}{"query": query, "args": values})
+	e.Search.JoinConditions = append(e.Search.JoinConditions, map[string]interface{}{"query": query, "args": values})
 	return e
 }
 
 func Preload(e *engine.Engine, schema string, values ...interface{}) *engine.Engine {
 	var preloads []engine.SearchPreload
-	for _, preload := range e.Preload {
+	for _, preload := range e.Search.Preload {
 		if preload.Schema != schema {
 			preloads = append(preloads, preload)
 		}
 	}
 	preloads = append(preloads, engine.SearchPreload{schema, values})
-	e.Preload = preloads
+	e.Search.Preload = preloads
 	return e
 }
 
 func Raw(e *engine.Engine, b bool) *engine.Engine {
-	e.Raw = b
+	e.Search.Raw = b
 	return e
 }
 
 func Unscoped(e *engine.Engine, b bool) *engine.Engine {
-	e.Unscoped = b
+	e.Search.Unscoped = b
 	return e
 }
 
 func Table(e *engine.Engine, name string) *engine.Engine {
-	e.TableName = name
+	e.Search.TableName = name
 	return e
 }

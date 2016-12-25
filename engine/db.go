@@ -20,7 +20,12 @@ type Engine struct {
 	ctx               context.Context
 	Dialect           base.Dialect
 
-	// search conditions
+	Search    *Search
+	Scope     *Scope
+	StructMap *base.SafeModelStructsMap
+}
+
+type Search struct {
 	WhereConditions  []map[string]interface{}
 	OrConditions     []map[string]interface{}
 	NotConditions    []map[string]interface{}
@@ -39,10 +44,6 @@ type Engine struct {
 	Raw              bool
 	Unscoped         bool
 	IgnoreOrderQuery bool
-
-	Scope *Scope
-
-	StructMap *base.SafeModelStructsMap
 }
 
 type SearchPreload struct {
