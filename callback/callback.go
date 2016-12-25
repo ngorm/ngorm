@@ -1,6 +1,6 @@
 package callback
 
-import "github.com/jinzhu/gorm/scope"
+import "github.com/gernest/gorm/engine"
 
 // Callback is a struct that contains all CURD callbacks
 //   Field `creates` contains callbacks will be call when creating object
@@ -10,23 +10,23 @@ import "github.com/jinzhu/gorm/scope"
 //   Field `rowQueries` contains callbacks will be call when querying object with Row, Rows...
 //   Field `processors` contains all callback processors, will be used to generate above callbacks in order
 type Callback struct {
-	creates    []*func(scope *scope.Scope)
-	updates    []*func(scope *scope.Scope)
-	deletes    []*func(scope *scope.Scope)
-	queries    []*func(scope *scope.Scope)
-	rowQueries []*func(scope *scope.Scope)
+	creates    []*func(e *engine.Engine)
+	updates    []*func(e *engine.Engine)
+	deletes    []*func(e *engine.Engine)
+	queries    []*func(e *engine.Engine)
+	rowQueries []*func(e *engine.Engine)
 	processors []*CallbackProcessor
 }
 
 // CallbackProcessor contains callback informations
 type CallbackProcessor struct {
-	name      string                    // current callback's name
-	before    string                    // register current callback before a callback
-	after     string                    // register current callback after a callback
-	replace   bool                      // replace callbacks with same name
-	remove    bool                      // delete callbacks with same name
-	kind      string                    // callback type: create, update, delete, query, row_query
-	processor *func(scope *scope.Scope) // callback handler
+	name      string                  // current callback's name
+	before    string                  // register current callback before a callback
+	after     string                  // register current callback after a callback
+	replace   bool                    // replace callbacks with same name
+	remove    bool                    // delete callbacks with same name
+	kind      string                  // callback type: create, update, delete, query, row_query
+	processor *func(e *engine.Engine) // callback handler
 	parent    *Callback
 }
 
@@ -42,12 +42,12 @@ func (c *Callback) clone() *Callback {
 }
 
 // Create could be used to register callbacks for creating object
-//     db.Callback().Create().After("gorm:create").Register("plugin:run_after_create", func(*scope.Scope) {
+//     db.Callback().Create().After("gorm:create").Register("plugin:run_after_create", func(*engine.Engine) {
 //       // business logic
 //       ...
 //
 //       // set error if some thing wrong happened, will rollback the creating
-//       scope.Err(errors.New("error"))
+//       e.Err(errors.New("error"))
 //     })
 func (c *Callback) Create() *CallbackProcessor {
 	return &CallbackProcessor{kind: "create", parent: c}
@@ -87,7 +87,7 @@ func (cp *CallbackProcessor) Before(callbackName string) *CallbackProcessor {
 }
 
 // Register a new callback, refer `Callbacks.Create`
-func (cp *CallbackProcessor) Register(callbackName string, callback func(scope *scope.Scope)) {
+func (cp *CallbackProcessor) Register(callbackName string, callback func(e *engine.Engine)) {
 	cp.name = callbackName
 	cp.processor = &callback
 	cp.parent.processors = append(cp.parent.processors, cp)
@@ -105,11 +105,11 @@ func (cp *CallbackProcessor) Remove(callbackName string) {
 }
 
 // Replace a registered callback with new callback
-//     db.Callback().Create().Replace("gorm:update_time_stamp_when_create", func(*scope.Scope) {
-//		   scope.SetColumn("Created", now)
-//		   scope.SetColumn("Updated", now)
+//     db.Callback().Create().Replace("gorm:update_time_stamp_when_create", func(*engine.Engine) {
+//		   e.SetColumn("Created", now)
+//		   e.SetColumn("Updated", now)
 //     })
-func (cp *CallbackProcessor) Replace(callbackName string, callback func(scope *scope.Scope)) {
+func (cp *CallbackProcessor) Replace(callbackName string, callback func(e *engine.Engine)) {
 	//fmt.Printf("[info] replacing callback `%v` from %v\n", callbackName, fileWithLineNum())
 	cp.name = callbackName
 	cp.processor = &callback
@@ -120,7 +120,7 @@ func (cp *CallbackProcessor) Replace(callbackName string, callback func(scope *s
 
 // Get registered callback
 //    db.Callback().Create().Get("gorm:create")
-func (cp *CallbackProcessor) Get(callbackName string) (callback func(scope *scope.Scope)) {
+func (cp *CallbackProcessor) Get(callbackName string) (callback func(e *engine.Engine)) {
 	for _, p := range cp.parent.processors {
 		if p.name == callbackName && p.kind == cp.kind && !cp.remove {
 			return *p.processor
@@ -140,7 +140,7 @@ func getRIndex(strs []string, str string) int {
 }
 
 // sortProcessors sort callback processors based on its before, after, remove, replace
-func sortProcessors(cps []*CallbackProcessor) []*func(scope *scope.Scope) {
+func sortProcessors(cps []*CallbackProcessor) []*func(e *engine.Engine) {
 	var (
 		allNames, sortedNames []string
 		sortCallbackProcessor func(c *CallbackProcessor)
@@ -193,7 +193,7 @@ func sortProcessors(cps []*CallbackProcessor) []*func(scope *scope.Scope) {
 		sortCallbackProcessor(cp)
 	}
 
-	var sortedFuncs []*func(scope *scope.Scope)
+	var sortedFuncs []*func(e *engine.Engine)
 	for _, name := range sortedNames {
 		if index := getRIndex(allNames, name); !cps[index].remove {
 			sortedFuncs = append(sortedFuncs, cps[index].processor)

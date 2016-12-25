@@ -9,6 +9,8 @@ import (
 
 	"github.com/gernest/gorm/base"
 	"github.com/gernest/gorm/engine"
+	"github.com/gernest/gorm/model"
+	"github.com/gernest/gorm/util"
 )
 
 func Quote(e *engine.Engine, str string) string {
@@ -22,9 +24,9 @@ func Quote(e *engine.Engine, str string) string {
 	return e.Dialect.Quote(str)
 }
 
-func Fields(e *engine.Engine) []*base.Field {
+func Fields(e *engine.Engine) []*model.Field {
 	if e.Scope.Fields == nil {
-		var fields []*base.Field
+		var fields []*model.Field
 		i := reflect.ValueOf(e.Scope.Value)
 		if i.Kind() == reflect.Ptr {
 			i = i.Elem()
@@ -37,12 +39,12 @@ func Fields(e *engine.Engine) []*base.Field {
 				for _, name := range structField.Names {
 					fieldValue = reflect.Indirect(fieldValue).FieldByName(name)
 				}
-				fields = append(fields, &base.Field{
+				fields = append(fields, &model.Field{
 					StructField: structField,
 					Field:       fieldValue,
 					IsBlank:     isBlank(fieldValue)})
 			} else {
-				fields = append(fields, &base.Field{
+				fields = append(fields, &model.Field{
 					StructField: structField,
 					IsBlank:     true})
 			}
@@ -57,8 +59,8 @@ func isBlank(value reflect.Value) bool {
 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 }
 
-func GetModelStruct(e *engine.Engine) *base.ModelStruct {
-	var modelStruct base.ModelStruct
+func GetModelStruct(e *engine.Engine) *model.ModelStruct {
+	var modelStruct model.ModelStruct
 	// Scope value can't be nil
 	if e.Scope.Value == nil {
 		return &modelStruct
@@ -85,7 +87,7 @@ func GetModelStruct(e *engine.Engine) *base.ModelStruct {
 	if tabler, ok := reflect.New(reflectType).Interface().(base.Tabler); ok {
 		modelStruct.DefaultTableName = tabler.TableName()
 	} else {
-		tableName := base.ToDBName(reflectType.Name())
+		tableName := util.ToDBName(reflectType.Name())
 		//if scope.db == nil || !scope.db.parent.singularTable {
 		//tableName = inflection.Plural(tableName)
 		//}
@@ -95,12 +97,12 @@ func GetModelStruct(e *engine.Engine) *base.ModelStruct {
 	// Get all fields
 	for i := 0; i < reflectType.NumField(); i++ {
 		if fieldStruct := reflectType.Field(i); ast.IsExported(fieldStruct.Name) {
-			field := &base.StructField{
+			field := &model.StructField{
 				Struct:      fieldStruct,
 				Name:        fieldStruct.Name,
 				Names:       []string{fieldStruct.Name},
 				Tag:         fieldStruct.Tag,
-				TagSettings: base.ParseTagSetting(fieldStruct.Tag),
+				TagSettings: model.ParseTagSetting(fieldStruct.Tag),
 			}
 
 			// is ignored field
@@ -131,7 +133,7 @@ func GetModelStruct(e *engine.Engine) *base.ModelStruct {
 					field.IsScanner, field.IsNormal = true, true
 					if indirectType.Kind() == reflect.Struct {
 						for i := 0; i < indirectType.NumField(); i++ {
-							for key, value := range base.ParseTagSetting(indirectType.Field(i).Tag) {
+							for key, value := range model.ParseTagSetting(indirectType.Field(i).Tag) {
 								field.TagSettings[key] = value
 							}
 						}
@@ -473,7 +475,7 @@ func GetModelStruct(e *engine.Engine) *base.ModelStruct {
 			if value, ok := field.TagSettings["COLUMN"]; ok {
 				field.DBName = value
 			} else {
-				field.DBName = base.ToDBName(fieldStruct.Name)
+				field.DBName = util.ToDBName(fieldStruct.Name)
 			}
 
 			modelStruct.StructFields = append(modelStruct.StructFields, field)
@@ -481,7 +483,7 @@ func GetModelStruct(e *engine.Engine) *base.ModelStruct {
 	}
 
 	if len(modelStruct.PrimaryFields) == 0 {
-		if field := base.GetForeignField("id", modelStruct.StructFields); field != nil {
+		if field := model.GetForeignField("id", modelStruct.StructFields); field != nil {
 			field.IsPrimaryKey = true
 			modelStruct.PrimaryFields = append(modelStruct.PrimaryFields, field)
 		}
@@ -491,9 +493,9 @@ func GetModelStruct(e *engine.Engine) *base.ModelStruct {
 	return &modelStruct
 }
 
-func FieldByName(e *engine.Engine, name string) (*base.Field, bool) {
-	var mostMatchedField *base.Field
-	dbName := base.ToDBName(name)
+func FieldByName(e *engine.Engine, name string) (*model.Field, bool) {
+	var mostMatchedField *model.Field
+	dbName := util.ToDBName(name)
 	for _, field := range Fields(e) {
 		if field.Name == name || field.DBName == name {
 			return field, true
@@ -505,7 +507,7 @@ func FieldByName(e *engine.Engine, name string) (*base.Field, bool) {
 	return mostMatchedField, mostMatchedField != nil
 }
 
-func PrimaryFields(e *engine.Engine) (fields []*base.Field) {
+func PrimaryFields(e *engine.Engine) (fields []*model.Field) {
 	for _, field := range Fields(e) {
 		if field.IsPrimaryKey {
 			fields = append(fields, field)
@@ -514,7 +516,7 @@ func PrimaryFields(e *engine.Engine) (fields []*base.Field) {
 	return fields
 }
 
-func PrimaryField(e *engine.Engine) *base.Field {
+func PrimaryField(e *engine.Engine) *model.Field {
 	if primaryFields := GetModelStruct(e).PrimaryFields; len(primaryFields) > 0 {
 		if len(primaryFields) > 1 {
 			if field, ok := FieldByName(e, "id"); ok {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm/base"
+	"github.com/gernest/gorm/model"
 )
 
 // DefaultForeignKeyNamer contains the default foreign key name generator method
@@ -37,8 +37,8 @@ func (Common) Quote(key string) string {
 	return fmt.Sprintf(`"%s"`, key)
 }
 
-func (Common) DataTypeOf(field *base.StructField) string {
-	var dataValue, sqlType, size, additionalType = base.ParseFieldStructForDialect(field)
+func (Common) DataTypeOf(field *model.StructField) string {
+	var dataValue, sqlType, size, additionalType = model.ParseFieldStructForDialect(field)
 
 	if sqlType == "" {
 		switch dataValue.Kind() {

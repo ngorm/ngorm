@@ -1,11 +1,15 @@
-package base
+package model
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/gernest/gorm/util"
 )
+
+var ErrUnaddressable = errors.New("using unaddressable value")
 
 // Field model field definition
 type Field struct {
@@ -53,6 +57,6 @@ func (field *Field) Set(value interface{}) (err error) {
 		field.Field.Set(reflect.Zero(field.Field.Type()))
 	}
 
-	field.IsBlank = isBlank(field.Field)
+	field.IsBlank = util.IsBlank(field.Field)
 	return err
 }

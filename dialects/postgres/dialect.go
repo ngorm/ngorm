@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm/base"
-	"github.com/jinzhu/gorm/dialects/common"
+	"github.com/gernest/gorm/dialects/common"
+	"github.com/gernest/gorm/model"
 )
 
 type postgres struct {
@@ -22,8 +22,8 @@ func (postgres) BindVar(i int) string {
 	return fmt.Sprintf("$%v", i)
 }
 
-func (postgres) DataTypeOf(field *base.StructField) string {
-	var dataValue, sqlType, size, additionalType = base.ParseFieldStructForDialect(field)
+func (postgres) DataTypeOf(field *model.StructField) string {
+	var dataValue, sqlType, size, additionalType = model.ParseFieldStructForDialect(field)
 
 	if sqlType == "" {
 		switch dataValue.Kind() {

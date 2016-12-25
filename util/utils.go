@@ -1,4 +1,4 @@
-package base
+package util
 
 import (
 	"bytes"
@@ -155,7 +155,7 @@ func fileWithLineNum() string {
 	return ""
 }
 
-func isBlank(value reflect.Value) bool {
+func IsBlank(value reflect.Value) bool {
 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 }
 

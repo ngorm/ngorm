@@ -1,10 +1,12 @@
-package base
+package dialects
 
 import (
 	"database/sql"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/gernest/gorm/model"
 )
 
 // Dialect interface contains behaviors that differ across SQL database
@@ -20,7 +22,7 @@ type Dialect interface {
 	// Quote quotes field name to avoid SQL parsing exceptions by using a reserved word as a field name
 	Quote(key string) string
 	// DataTypeOf return data's sql type
-	DataTypeOf(field *StructField) string
+	DataTypeOf(field *model.StructField) string
 
 	// HasIndex check has index or not
 	HasIndex(tableName string, indexName string) bool
@@ -48,7 +50,7 @@ type Dialect interface {
 }
 
 // ParseFieldStructForDialect parse field struct for dialect
-func ParseFieldStructForDialect(field *StructField) (fieldValue reflect.Value, sqlType string, size int, additionalType string) {
+func ParseFieldStructForDialect(field *model.StructField) (fieldValue reflect.Value, sqlType string, size int, additionalType string) {
 	// Get redirected field type
 	var reflectType = field.Struct.Type
 	for reflectType.Kind() == reflect.Ptr {

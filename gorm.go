@@ -3,10 +3,10 @@ package gorm
 import (
 	"database/sql"
 
-	"github.com/gernest/gorm/base"
 	"github.com/gernest/gorm/callback"
+	"github.com/gernest/gorm/dialects"
+	"github.com/gernest/gorm/engine"
 	"github.com/gernest/gorm/logger"
-	"github.com/gernest/gorm/scope"
 )
 
 // DB contains information for current db connection
@@ -39,7 +39,7 @@ func (s *DB) DB() *sql.DB {
 }
 
 // Dialect get dialect
-func (s *DB) Dialect() base.Dialect {
+func (s *DB) Dialect() dialects.Dialect {
 	return nil
 }
 
@@ -49,7 +49,7 @@ func (s *DB) New() *DB {
 }
 
 // NewScope create a scope for current operation
-func (s *DB) NewScope(value interface{}) *scope.Scope {
+func (s *DB) NewScope(value interface{}) *engine.Scope {
 	return nil
 }
 

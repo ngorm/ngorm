@@ -3,7 +3,8 @@ package engine
 import (
 	"context"
 
-	"github.com/gernest/gorm/base"
+	"github.com/gernest/gorm/dialects"
+	"github.com/gernest/gorm/model"
 )
 
 // DB contains information for current db connection
@@ -18,11 +19,11 @@ type Engine struct {
 	values            map[string]interface{}
 	blockGlobalUpdate bool
 	ctx               context.Context
-	Dialect           base.Dialect
+	Dialect           dialects.Dialect
 
 	Search    *Search
 	Scope     *Scope
-	StructMap *base.SafeModelStructsMap
+	StructMap *model.SafeModelStructsMap
 }
 
 type Search struct {
@@ -56,8 +57,8 @@ type Scope struct {
 	SQL             string
 	SQLVars         []interface{}
 	InstanceID      string
-	PrimaryKeyField *base.Field
+	PrimaryKeyField *model.Field
 	SkipLeft        bool
-	Fields          *[]*base.Field
+	Fields          *[]*model.Field
 	SelectAttrs     *[]string
 }
