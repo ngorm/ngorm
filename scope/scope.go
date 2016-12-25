@@ -513,3 +513,15 @@ func PrimaryFields(e *engine.Engine) (fields []*base.Field) {
 	}
 	return fields
 }
+
+func PrimaryField(e *engine.Engine) *base.Field {
+	if primaryFields := GetModelStruct(e).PrimaryFields; len(primaryFields) > 0 {
+		if len(primaryFields) > 1 {
+			if field, ok := FieldByName(e, "id"); ok {
+				return field
+			}
+		}
+		return PrimaryFields(e)[0]
+	}
+	return nil
+}
