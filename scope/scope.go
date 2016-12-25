@@ -504,3 +504,12 @@ func FieldByName(e *engine.Engine, name string) (*base.Field, bool) {
 	}
 	return mostMatchedField, mostMatchedField != nil
 }
+
+func PrimaryFields(e *engine.Engine) (fields []*base.Field) {
+	for _, field := range Fields(e) {
+		if field.IsPrimaryKey {
+			fields = append(fields, field)
+		}
+	}
+	return fields
+}
