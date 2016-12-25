@@ -1,6 +1,7 @@
 package base
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 )
@@ -17,6 +18,13 @@ var (
 	// ErrUnaddressable unaddressable value
 	ErrUnaddressable = errors.New("using unaddressable value")
 )
+
+type SQLCommon interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Prepare(query string) (*sql.Stmt, error)
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+}
 
 func GetInterfaceAsSQL(value interface{}) (string, error) {
 	switch value.(type) {
