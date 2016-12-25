@@ -490,3 +490,17 @@ func GetModelStruct(e *engine.Engine) *base.ModelStruct {
 	e.StructMap.Set(reflectType, &modelStruct)
 	return &modelStruct
 }
+
+func FieldByName(e *engine.Engine, name string) (*base.Field, bool) {
+	var mostMatchedField *base.Field
+	dbName := base.ToDBName(name)
+	for _, field := range Fields(e) {
+		if field.Name == name || field.DBName == name {
+			return field, true
+		}
+		if field.DBName == dbName {
+			mostMatchedField = field
+		}
+	}
+	return mostMatchedField, mostMatchedField != nil
+}
