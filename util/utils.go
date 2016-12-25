@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/gernest/gorm/errmsg"
 )
 
 // Copied from golint
@@ -238,4 +240,14 @@ func addExtraSpaceIfExist(str string) string {
 		return " " + str
 	}
 	return ""
+}
+
+func GetInterfaceAsSQL(value interface{}) (string, error) {
+	switch value.(type) {
+	case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return fmt.Sprintf("%v", value), nil
+	default:
+	}
+
+	return "", errmsg.InvalidSQL
 }
