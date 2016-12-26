@@ -28,7 +28,7 @@ func Quote(e *engine.Engine, str string) string {
 func Fields(e *engine.Engine, value interface{}) []*model.Field {
 	if e.Scope.Fields == nil {
 		var fields []*model.Field
-		i := reflect.ValueOf(e.Scope.Value)
+		i := reflect.ValueOf(value)
 		if i.Kind() == reflect.Ptr {
 			i = i.Elem()
 		}
