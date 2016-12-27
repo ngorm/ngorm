@@ -1,6 +1,6 @@
 package callback
 
-import "github.com/gernest/gorm/engine"
+import "github.com/gernest/ngorm/engine"
 
 // Callback is a struct that contains all CURD callbacks
 //   Field `creates` contains callbacks will be call when creating object

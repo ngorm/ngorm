@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/gernest/gorm/model"
+	"github.com/gernest/ngorm/model"
 )
 
 type CalculateField struct {

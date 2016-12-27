@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gernest/gorm/dialects/common"
-	"github.com/gernest/gorm/model"
+	"github.com/gernest/ngorm/dialects/common"
+	"github.com/gernest/ngorm/model"
 )
 
 type postgres struct {

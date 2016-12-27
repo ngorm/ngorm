@@ -3,9 +3,9 @@ package search
 import (
 	"fmt"
 
-	"github.com/gernest/gorm/base"
-	"github.com/gernest/gorm/engine"
-	"github.com/gernest/gorm/regexes"
+	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/regexes"
+	"github.com/gernest/ngorm/util"
 )
 
 func Where(e *engine.Engine, query interface{}, values ...interface{}) *engine.Engine {
@@ -74,7 +74,7 @@ func Offset(e *engine.Engine, offset interface{}) *engine.Engine {
 }
 
 func Group(e *engine.Engine, query interface{}) *engine.Engine {
-	s, err := base.GetInterfaceAsSQL(query)
+	s, err := util.GetInterfaceAsSQL(query)
 	if err != nil {
 		e.Error = err
 	} else {

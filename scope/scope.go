@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gernest/gorm/engine"
-	"github.com/gernest/gorm/model"
-	"github.com/gernest/gorm/util"
+	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/model"
+	"github.com/gernest/ngorm/util"
 	"github.com/jinzhu/inflection"
 )
 

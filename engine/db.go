@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/gernest/gorm/dialects"
-	"github.com/gernest/gorm/model"
+	"github.com/gernest/ngorm/dialects"
+	"github.com/gernest/ngorm/model"
 )
 
 // DB contains information for current db connection

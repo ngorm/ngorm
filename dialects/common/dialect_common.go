@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gernest/gorm/model"
+	"github.com/gernest/ngorm/model"
 )
 
 // DefaultForeignKeyNamer contains the default foreign key name generator method

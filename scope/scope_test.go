@@ -3,9 +3,9 @@ package scope
 import (
 	"testing"
 
-	"github.com/gernest/gorm/engine"
-	"github.com/gernest/gorm/fixture"
-	"github.com/gernest/gorm/model"
+	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/fixture"
+	"github.com/gernest/ngorm/model"
 )
 
 func TestFieldByName(t *testing.T) {

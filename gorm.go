@@ -3,10 +3,10 @@ package gorm
 import (
 	"database/sql"
 
-	"github.com/gernest/gorm/callback"
-	"github.com/gernest/gorm/dialects"
-	"github.com/gernest/gorm/engine"
-	"github.com/gernest/gorm/logger"
+	"github.com/gernest/ngorm/callback"
+	"github.com/gernest/ngorm/dialects"
+	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/logger"
 )
 
 // DB contains information for current db connection

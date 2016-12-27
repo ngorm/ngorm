@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gernest/gorm/util"
+	"github.com/gernest/ngorm/util"
 )
 
 type Model struct {
