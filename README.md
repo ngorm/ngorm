@@ -10,9 +10,7 @@
 * Safety
 * Developer friendly for real
 
-[![Join the chat at https://gitter.im/jinzhu/gorm](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jinzhu/gorm?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![wercker status](https://app.wercker.com/status/0cb7bb1039e21b74f8274941428e0921/s/master "wercker status")](https://app.wercker.com/project/bykey/0cb7bb1039e21b74f8274941428e0921)
-[![GoDoc](https://godoc.org/github.com/jinzhu/gorm?status.svg)](https://godoc.org/github.com/jinzhu/gorm)
+[![Build Status](https://travis-ci.org/gernest/ngorm.svg?branch=master)](https://travis-ci.org/gernest/ngorm) [![Coverage Status](https://coveralls.io/repos/github/gernest/ngorm/badge.svg?branch=master)](https://coveralls.io/github/gernest/ngorm?branch=master) [![GoDoc](https://godoc.org/github.com/gernest/ngorm?status.svg)](https://godoc.org/github.com/gernest/ngorm) [![Go Report Card](https://goreportcard.com/badge/github.com/gernest/ngorm)](https://goreportcard.com/report/github.com/gernest/ngorm)
 
 ## Overview
 
