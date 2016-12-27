@@ -1,7 +1,6 @@
-# GGORM
+# NGORM
 
-The fantastic ORM library for Golang, aims to be developer friendly.
-The fork of gorm with focus on
+ The fork of gorm,The fantastic ORM library for Golang, that focus on
 
 * Performance
 * Maintainability
