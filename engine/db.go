@@ -25,6 +25,13 @@ type Engine struct {
 	Search    *Search
 	Scope     *Scope
 	StructMap *model.SafeModelStructsMap
+
+	SQL *SQL
+}
+
+type SQL struct {
+	Query  string
+	Values []interface{}
 }
 
 func (e *Engine) AddError(err error) error {
