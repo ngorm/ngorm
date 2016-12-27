@@ -78,7 +78,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.ModelStruct {
 	}
 
 	// Get Cached model struct
-	if v := e.StructMap.Get(refType); value != nil {
+	if v := e.StructMap.Get(refType); v != nil {
 		return v
 	}
 
