@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/gernest/ngorm/fixture"
-	"github.com/kr/pretty"
 )
 
 func TestSearch(t *testing.T) {
@@ -13,5 +12,4 @@ func TestSearch(t *testing.T) {
 	Order(e, "name")
 	Attr(e, "name", "gernest")
 	Select(e, "name, age")
-	pretty.Println(e.Search)
 }
