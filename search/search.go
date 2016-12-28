@@ -50,6 +50,17 @@ func Assign(e *engine.Engine, attrs ...interface{}) *engine.Engine {
 	return e
 }
 
+func Order(e *engine.Engine, value interface{}, reorder ...bool) *engine.Engine {
+	if len(reorder) > 0 && reorder[0] {
+		e.Search.Orders = []interface{}{}
+	}
+
+	if value != nil {
+		e.Search.Orders = append(e.Search.Orders, value)
+	}
+	return e
+}
+
 func Select(e *engine.Engine, query interface{}, values ...interface{}) *engine.Engine {
 	if regexes.DistinctSQL.MatchString(fmt.Sprint(query)) {
 		e.Search.IgnoreOrderQuery = true

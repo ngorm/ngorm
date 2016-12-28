@@ -48,7 +48,7 @@ type Search struct {
 	AssignAttrs      []interface{}
 	Selects          map[string]interface{}
 	Omits            []string
-	orders           []interface{}
+	Orders           []interface{}
 	Preload          []SearchPreload
 	Offset           interface{}
 	Limit            interface{}
