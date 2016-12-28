@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/gernest/ngorm/engine"
 	"github.com/gernest/ngorm/model"
 )
 
@@ -283,4 +284,12 @@ func (nt NullTime) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return nt.Time, nil
+}
+
+func TestEngine() *engine.Engine {
+	return &engine.Engine{
+		Search:    &engine.Search{},
+		Scope:     &engine.Scope{},
+		StructMap: model.NewModelStructsMap(),
+	}
 }
