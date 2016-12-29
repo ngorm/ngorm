@@ -2,7 +2,6 @@ package model
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -20,7 +19,7 @@ type Field struct {
 // Set set a value to the field
 func (field *Field) Set(value interface{}) (err error) {
 	if !field.Field.IsValid() {
-		return errors.New("field value not valid")
+		return errmsg.InvalidFieldValue
 	}
 
 	if !field.Field.CanAddr() {
