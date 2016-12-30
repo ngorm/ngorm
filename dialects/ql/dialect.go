@@ -1,7 +1,6 @@
 package ql
 
 import (
-	"database/sql"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -13,7 +12,7 @@ import (
 
 type QL struct {
 	name string
-	db   *sql.DB
+	db   model.SQLCommon
 }
 
 func Memory() *QL {
@@ -30,7 +29,7 @@ func (q *QL) GetName() string {
 }
 
 // SetDB set db for dialect
-func (q *QL) SetDB(db *sql.DB) {
+func (q *QL) SetDB(db model.SQLCommon) {
 	q.db = db
 }
 

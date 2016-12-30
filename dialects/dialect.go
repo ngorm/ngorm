@@ -1,10 +1,6 @@
 package dialects
 
-import (
-	"database/sql"
-
-	"github.com/gernest/ngorm/model"
-)
+import "github.com/gernest/ngorm/model"
 
 // Dialect interface contains behaviors that differ across SQL database
 type Dialect interface {
@@ -12,7 +8,7 @@ type Dialect interface {
 	GetName() string
 
 	// SetDB set db for dialect
-	SetDB(db *sql.DB)
+	SetDB(db model.SQLCommon)
 
 	// BindVar return the placeholder for actual values in SQL statements, in many dbs it is "?", Postgres using $1
 	BindVar(i int) string
