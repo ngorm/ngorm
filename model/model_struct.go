@@ -161,3 +161,14 @@ func ParseFieldStructForDialect(field *StructField) (fieldValue reflect.Value, s
 
 	return fieldValue, field.TagSettings["TYPE"], size, strings.TrimSpace(additionalType)
 }
+
+type Scope struct {
+	Value           interface{}
+	SQL             string
+	SQLVars         []interface{}
+	InstanceID      string
+	PrimaryKeyField *Field
+	SkipLeft        bool
+	Fields          *[]*Field
+	SelectAttrs     *[]string
+}

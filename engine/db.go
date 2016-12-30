@@ -23,7 +23,7 @@ type Engine struct {
 	Dialect           dialects.Dialect
 
 	Search    *Search
-	Scope     *Scope
+	Scope     *model.Scope
 	StructMap *model.SafeModelStructsMap
 
 	SQL *SQL
@@ -62,17 +62,6 @@ type Search struct {
 type SearchPreload struct {
 	Schema     string
 	Conditions []interface{}
-}
-
-type Scope struct {
-	Value           interface{}
-	SQL             string
-	SQLVars         []interface{}
-	InstanceID      string
-	PrimaryKeyField *model.Field
-	SkipLeft        bool
-	Fields          *[]*model.Field
-	SelectAttrs     *[]string
 }
 
 type DbTabler interface {

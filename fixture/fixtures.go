@@ -289,7 +289,7 @@ func (nt NullTime) Value() (driver.Value, error) {
 func TestEngine() *engine.Engine {
 	return &engine.Engine{
 		Search:    &engine.Search{},
-		Scope:     &engine.Scope{},
+		Scope:     &model.Scope{},
 		StructMap: model.NewModelStructsMap(),
 	}
 }
