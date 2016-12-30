@@ -76,25 +76,25 @@ func ToDBName(name string) string {
 		if i > 0 {
 			if currCase == upper {
 				if lastCase == upper && nextCase == upper {
-					buf.WriteRune(v)
+					_, _ = buf.WriteRune(v)
 				} else {
 					if value[i-1] != '_' && value[i+1] != '_' {
-						buf.WriteRune('_')
+						_, _ = buf.WriteRune('_')
 					}
-					buf.WriteRune(v)
+					_, _ = buf.WriteRune(v)
 				}
 			} else {
-				buf.WriteRune(v)
+				_, _ = buf.WriteRune(v)
 			}
 		} else {
 			currCase = upper
-			buf.WriteRune(v)
+			_, _ = buf.WriteRune(v)
 		}
 		lastCase = currCase
 		currCase = nextCase
 	}
 
-	buf.WriteByte(value[len(value)-1])
+	_ = buf.WriteByte(value[len(value)-1])
 
 	s := strings.ToLower(buf.String())
 	smap.Set(name, s)
@@ -113,7 +113,7 @@ func toQueryMarks(primaryValues [][]interface{}) string {
 
 	for _, primaryValue := range primaryValues {
 		var marks []string
-		for _, _ = range primaryValue {
+		for range primaryValue {
 			marks = append(marks, "?")
 		}
 
@@ -145,6 +145,7 @@ func fileWithLineNum() string {
 	return ""
 }
 
+//IsBlank returns true if the value represent a zero value of the specified valut ype.
 func IsBlank(value reflect.Value) bool {
 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 }
@@ -230,11 +231,11 @@ func addExtraSpaceIfExist(str string) string {
 	return ""
 }
 
+//GetInterfaceAsSQL returns sql value representation of the value.
 func GetInterfaceAsSQL(value interface{}) (string, error) {
 	switch value.(type) {
 	case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		return fmt.Sprintf("%v", value), nil
-	default:
 	}
 
 	return "", errmsg.InvalidSQL
