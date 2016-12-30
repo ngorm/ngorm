@@ -35,13 +35,15 @@ func TestDialect(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 	tx, err := db.Begin()
 	if err != nil {
 		t.Fatal(err)
 	}
-	tx.Exec(migration)
-	tx.Commit()
+	_, _ = tx.Exec(migration)
+	_ = tx.Commit()
 	dialect.SetDB(db)
 	if dialect.db == nil {
 		t.Fatal("expected the database to be set")

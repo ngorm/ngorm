@@ -1,7 +1,11 @@
+// Package ql exposes implementations and functions that henables ngorm to work
+// with ql database.
+//
+// ql is an embedded sql database. This database doesn't conform 100% qith the
+// SQL standard. The link to the project is https://github.com/cznic/ql
 package ql
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -11,15 +15,27 @@ import (
 	"github.com/gernest/ngorm/model"
 )
 
+//QL implements the dialects.Dialect interface that uses ql database as the SQl
+//backend.
+//
+// For some reason the ql database doesn't support multiple databases, as
+// databases are file based. So, the name of the file is the name of the
+// database.. Which doesn't affect the querries, since the database name is
+// irrelevant assuming the SQLCommon interface is the handle over the open
+// database.
 type QL struct {
 	name string
 	db   model.SQLCommon
 }
 
+// Memory returns the dialect for in memory ql database. This is not persistent
+// everything will be lost when the process exits.
 func Memory() *QL {
 	return &QL{name: "ql-mem"}
 }
 
+//File returns the dialcet for file backed ql database. This is the recommended
+//way use the Memory only for testing else you might lose all of your data.
 func File() *QL {
 	return &QL{name: "ql"}
 }
@@ -40,7 +56,7 @@ func (q QL) BindVar(i int) string {
 }
 
 // Quote quotes field name to avoid SQL parsing exceptions by using a reserved word as a field name
-func (a *QL) Quote(key string) string {
+func (q *QL) Quote(key string) string {
 	return fmt.Sprintf(`"%s"`, key)
 }
 
@@ -83,7 +99,7 @@ func (q *QL) DataTypeOf(field *model.StructField) (string, error) {
 	}
 
 	if sqlType == "" {
-		return "", errors.New(fmt.Sprintf("invalid sql type %s (%s) for ql", dataValue.Type().Name(), dataValue.Kind().String()))
+		return "", fmt.Errorf("invalid sql type %s (%s) for ql", dataValue.Type().Name(), dataValue.Kind().String())
 	}
 
 	if strings.TrimSpace(additionalType) == "" {
@@ -96,7 +112,10 @@ func (q *QL) DataTypeOf(field *model.StructField) (string, error) {
 func (q *QL) HasIndex(tableName string, indexName string) bool {
 	querry := "select count() from __Index where Name=$1  && TableName=$2"
 	var count int
-	q.db.QueryRow(querry, indexName, tableName).Scan(&count)
+	err := q.db.QueryRow(querry, indexName, tableName).Scan(&count)
+	if err != nil {
+		//TODO; Propery log or return this error?
+	}
 	return count > 0
 }
 
@@ -122,7 +141,10 @@ func (q *QL) RemoveIndex(tableName string, indexName string) error {
 func (q *QL) HasTable(tableName string) bool {
 	querry := "select count() from __Table where Name=$1"
 	var count int
-	q.db.QueryRow(querry, tableName).Scan(&count)
+	err := q.db.QueryRow(querry, tableName).Scan(&count)
+	if err != nil {
+		//TODO; Propery log or return this error?
+	}
 	return count > 0
 }
 
@@ -130,7 +152,10 @@ func (q *QL) HasTable(tableName string) bool {
 func (q *QL) HasColumn(tableName string, columnName string) bool {
 	querry := "select count() from __Column where Name=$1  && TableName=$2"
 	var count int
-	q.db.QueryRow(querry, columnName, tableName).Scan(&count)
+	err := q.db.QueryRow(querry, columnName, tableName).Scan(&count)
+	if err != nil {
+		//TODO; Propery log or return this error?
+	}
 	return count > 0
 }
 
@@ -144,7 +169,7 @@ func (q *QL) SelectFromDummyTable() string {
 	return ""
 }
 
-// LastInsertIdReturningSuffix most dbs support LastInsertId, but postgres needs to use `RETURNING`
+// LastInsertIDReturningSuffix ost dbs support LastInsertId, but postgres needs to use `RETURNING`
 func (q *QL) LastInsertIDReturningSuffix(tableName, columnName string) string {
 	return ""
 }
