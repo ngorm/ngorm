@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/model"
 	"github.com/gernest/ngorm/regexes"
 	"github.com/gernest/ngorm/util"
 )
@@ -105,13 +106,13 @@ func Join(e *engine.Engine, query interface{}, values ...interface{}) *engine.En
 }
 
 func Preload(e *engine.Engine, schema string, values ...interface{}) *engine.Engine {
-	var preloads []engine.SearchPreload
+	var preloads []model.SearchPreload
 	for _, preload := range e.Search.Preload {
 		if preload.Schema != schema {
 			preloads = append(preloads, preload)
 		}
 	}
-	preloads = append(preloads, engine.SearchPreload{schema, values})
+	preloads = append(preloads, model.SearchPreload{schema, values})
 	e.Search.Preload = preloads
 	return e
 }

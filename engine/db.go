@@ -22,7 +22,7 @@ type Engine struct {
 	ctx               context.Context
 	Dialect           dialects.Dialect
 
-	Search    *Search
+	Search    *model.Search
 	Scope     *model.Scope
 	StructMap *model.SafeModelStructsMap
 
@@ -36,32 +36,6 @@ type SQL struct {
 
 func (e *Engine) AddError(err error) error {
 	return nil
-}
-
-type Search struct {
-	WhereConditions  []map[string]interface{}
-	OrConditions     []map[string]interface{}
-	NotConditions    []map[string]interface{}
-	HavingConditions []map[string]interface{}
-	JoinConditions   []map[string]interface{}
-	InitAttrs        []interface{}
-	AssignAttrs      []interface{}
-	Selects          map[string]interface{}
-	Omits            []string
-	Orders           []interface{}
-	Preload          []SearchPreload
-	Offset           interface{}
-	Limit            interface{}
-	Group            string
-	TableName        string
-	Raw              bool
-	Unscoped         bool
-	IgnoreOrderQuery bool
-}
-
-type SearchPreload struct {
-	Schema     string
-	Conditions []interface{}
 }
 
 type DbTabler interface {
