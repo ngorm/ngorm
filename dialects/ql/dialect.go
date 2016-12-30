@@ -1,6 +1,7 @@
 package ql
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -44,7 +45,7 @@ func (a *QL) Quote(key string) string {
 }
 
 // DataTypeOf return data's sql type
-func (q *QL) DataTypeOf(field *model.StructField) string {
+func (q *QL) DataTypeOf(field *model.StructField) (string, error) {
 	var dataValue, sqlType, _, additionalType = model.ParseFieldStructForDialect(field)
 
 	if sqlType == "" {
@@ -82,13 +83,13 @@ func (q *QL) DataTypeOf(field *model.StructField) string {
 	}
 
 	if sqlType == "" {
-		panic(fmt.Sprintf("invalid sql type %s (%s) for ql", dataValue.Type().Name(), dataValue.Kind().String()))
+		return "", errors.New(fmt.Sprintf("invalid sql type %s (%s) for ql", dataValue.Type().Name(), dataValue.Kind().String()))
 	}
 
 	if strings.TrimSpace(additionalType) == "" {
-		return sqlType
+		return sqlType, nil
 	}
-	return fmt.Sprintf("%v %v", sqlType, additionalType)
+	return fmt.Sprintf("%v %v", sqlType, additionalType), nil
 }
 
 // HasIndex check has index or not
