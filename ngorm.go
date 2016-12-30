@@ -26,9 +26,16 @@
 //
 // Query execution
 //
-// This is where the generated sql qery is executed. This phase is as generic as
+// This is s the phase where the generated sql query is executed. This phase is as generic as
 // possible in a way that you can easily implement adoptes for non SQL database
 // and still reap all the benefits of this package.
+//
+// Table of Ccntents
+//
+// The following are links to packages under this project.
+//   [engine] https://godoc.org/github.com/gernest/ngorm/engine
+// This is what drives the whole project, helps with query building and provides
+// conveinet structure to help with query execution.
 package ngorm
 
 // DB contains information for current db connection
