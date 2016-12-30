@@ -83,3 +83,13 @@ func TestQL_Quote(t *testing.T) {
 		t.Errorf("expected %s got %s", expect, v)
 	}
 }
+
+func TestQL_BindVar(t *testing.T) {
+	q := &QL{}
+	src := 1
+	expect := "$1"
+	v := q.BindVar(src)
+	if v != expect {
+		t.Errorf("expected %s got %s", expect, v)
+	}
+}
