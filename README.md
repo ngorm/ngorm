@@ -27,3 +27,4 @@
 * Every feature comes with tests
 * Developer Friendly
 
+Documentation https://godoc.org/github.com/gernest/ngorm
