@@ -639,3 +639,13 @@ func AddToVars(e *engine.Engine, value interface{}) string {
 	e.Scope.SQLVars = append(e.Scope.SQLVars, value)
 	return e.Dialect.BindVar(len(e.Scope.SQLVars))
 }
+
+//HasColumn returns true if the modelValue has column of name column.
+func HasColumn(e *engine.Engine, modelValue interface{}, column string) bool {
+	for _, field := range GetModelStruct(e, modelValue).StructFields {
+		if field.IsNormal && (field.Name == column || field.DBName == column) {
+			return true
+		}
+	}
+	return false
+}
