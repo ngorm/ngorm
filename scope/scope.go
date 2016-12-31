@@ -1,3 +1,8 @@
+// Package scope defines functions that operates on  engine.Engine and  enables
+// operating on model values easily.
+//
+// Scope adds a layer of encapsulation on the model on which we are using to
+// compose Queries or interact with the database
 package scope
 
 import (
@@ -14,6 +19,18 @@ import (
 	"github.com/jinzhu/inflection"
 )
 
+//Quote quotes the str into an SQL string. This makes sure sql strings have ""
+//around them.
+//
+// For the case of a str which has a dot in it example one.two the string is
+// quoted and becomes "one"."two" and the quote implementation is called from
+// the e.Parent.Dialect.
+//
+// In case of a string without a dot example one it will be quoted using the
+// current dialect e.Dialect
+//
+//TODO: (gernest) Understand why we use the Parent.Dialect here as it seems
+//unlikely the dialect to be different.
 func Quote(e *engine.Engine, str string) string {
 	if strings.Index(str, ".") != -1 {
 		newStrs := []string{}
@@ -25,6 +42,9 @@ func Quote(e *engine.Engine, str string) string {
 	return e.Dialect.Quote(str)
 }
 
+//Fields extracts []*model.Fields from value, value is obvously a struct or
+//something. This is only done when e.Scope.Fields is nil, for the case of non
+//nil value then *e.Scope.Fiedls is returned without computing anything.
 func Fields(e *engine.Engine, value interface{}) []*model.Field {
 	if e.Scope.Fields == nil {
 		var fields []*model.Field
@@ -43,7 +63,7 @@ func Fields(e *engine.Engine, value interface{}) []*model.Field {
 				fields = append(fields, &model.Field{
 					StructField: structField,
 					Field:       fieldValue,
-					IsBlank:     isBlank(fieldValue)})
+					IsBlank:     util.IsBlank(fieldValue)})
 			} else {
 				fields = append(fields, &model.Field{
 					StructField: structField,
@@ -56,10 +76,17 @@ func Fields(e *engine.Engine, value interface{}) []*model.Field {
 	return *e.Scope.Fields
 }
 
-func isBlank(value reflect.Value) bool {
-	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
-}
-
+//GetModelStruct construct a *model.ModelStruct from value. This does not set
+//the e.Scope.Value to value, you must set this value manually if you want to
+//set the scope value.
+//
+// value must be a go struct. The computed *model.ModelStruct is cached , so
+// multiple calls to this function with the same value won't compute anything
+// and return the cached copy. It is less unlikely that the structs will be
+// changine at runtime.
+//
+// The value can implement engine.Tabler interface to help easily identify the
+// table name for the model.
 func GetModelStruct(e *engine.Engine, value interface{}) *model.ModelStruct {
 	var m model.ModelStruct
 	// Scope value can't be nil
@@ -89,7 +116,10 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.ModelStruct {
 		m.DefaultTableName = tabler.TableName()
 	} else {
 		tableName := util.ToDBName(refType.Name())
-		if e.Parent.SingularTable {
+
+		// In case we have set SingulaTable to false, then we pluralize the
+		// table name. For example session becomes sessions.
+		if !e.SingularTable {
 			tableName = inflection.Plural(tableName)
 		}
 		m.DefaultTableName = tableName
@@ -191,6 +221,11 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.ModelStruct {
 	return &m
 }
 
+//BuildRelationSlice builds relationship for a field of kind reflect.Slice. This
+//updates the ModelStruct m accordingly.
+//
+//TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
+//of loggic and no any error should be absorbed.
 func BuildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.ModelStruct, field *model.StructField) {
 	var (
 		rel                    = &model.Relationship{}
@@ -309,7 +344,8 @@ func BuildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.ModelSt
 						associationForeignKeys = []string{PrimaryKey(e, e.Scope.Value)}
 					}
 				} else if len(fks) != len(associationForeignKeys) {
-					e.AddError(errors.New("invalid foreign keys, should have same length"))
+					_ = e.AddError(errors.New("invalid foreign keys, should have same length"))
+					// TODO:(grenest) Return this error?
 					return
 				}
 			}
@@ -338,6 +374,11 @@ func BuildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.ModelSt
 	}
 }
 
+//BuildRelationStruct builds relationship for a field of kind reflect.Struct . This
+//updates the ModelStruct m accordingly.
+//
+//TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
+//of loggic and no any error should be absorbed.
 func BuildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.ModelStruct, field *model.StructField) {
 	var (
 		// user has one profile, associationType is User, profile use UserID as foreign key
@@ -411,7 +452,8 @@ func BuildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.ModelS
 					associationForeignKeys = []string{PrimaryKey(e, e.Scope.Value)}
 				}
 			} else if len(fks) != len(associationForeignKeys) {
-				e.AddError(errors.New("invalid foreign keys, should have same length"))
+				_ = e.AddError(errors.New("invalid foreign keys, should have same length"))
+				//TODO:(gernest) Return this error?
 				return
 			}
 		}
@@ -470,7 +512,8 @@ func BuildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.ModelS
 					associationForeignKeys = []string{PrimaryKey(e, toScope)}
 				}
 			} else if len(fks) != len(associationForeignKeys) {
-				e.AddError(errors.New("invalid foreign keys, should have same length"))
+				_ = e.AddError(errors.New("invalid foreign keys, should have same length"))
+				//TODO:(gernest) Return this error?
 				return
 			}
 		}
@@ -497,6 +540,10 @@ func BuildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.ModelS
 		}
 	}
 }
+
+//FieldByName returns the field in the model struct value with name name.
+//
+//TODO:(gernest) return an error when the field is not found.
 func FieldByName(e *engine.Engine, value interface{}, name string) (*model.Field, bool) {
 	var mostMatchedField *model.Field
 	dbName := util.ToDBName(name)
@@ -511,6 +558,7 @@ func FieldByName(e *engine.Engine, value interface{}, name string) (*model.Field
 	return mostMatchedField, mostMatchedField != nil
 }
 
+//PrimaryFields returns fields that have PRIMARY_KEY Tab from the struct value.
 func PrimaryFields(e *engine.Engine, value interface{}) (fields []*model.Field) {
 	for _, field := range Fields(e, value) {
 		if field.IsPrimaryKey {
@@ -520,6 +568,8 @@ func PrimaryFields(e *engine.Engine, value interface{}) (fields []*model.Field) 
 	return fields
 }
 
+//PrimaryField returns the field with name id, or any primary field that happens
+//to be the one defined by the model value.
 func PrimaryField(e *engine.Engine, value interface{}) *model.Field {
 	if primaryFields := GetModelStruct(e, e.Scope.Value).PrimaryFields; len(primaryFields) > 0 {
 		if len(primaryFields) > 1 {
@@ -532,6 +582,14 @@ func PrimaryField(e *engine.Engine, value interface{}) *model.Field {
 	return nil
 }
 
+// TableName returns a string representation of the possible name of the table
+// that is mapped to the model value.
+//
+// If it happens that the model value implements engine.Tabler interface then we
+// go with it.
+//
+// In case we are in search mode, the Tbalename inside the e.Search.TableName is
+// what we use.
 func TableName(e *engine.Engine, value interface{}) string {
 	if e.Search != nil && len(e.Search.TableName) > 0 {
 		return e.Search.TableName
@@ -547,6 +605,7 @@ func TableName(e *engine.Engine, value interface{}) string {
 	return GetModelStruct(e, value).DefaultTableName
 }
 
+//PrimaryKey returns the name of the primary key for the model value
 func PrimaryKey(e *engine.Engine, value interface{}) string {
 	if field := PrimaryField(e, value); field != nil {
 		return field.DBName

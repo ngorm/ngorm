@@ -28,6 +28,9 @@ type ModelStruct struct {
 
 // StructField model field's struct definition
 type StructField struct {
+
+	// DBName is the name of the field as it is seen in the database, for
+	// instance a field ID can be represented in the database as id.
 	DBName          string
 	Name            string
 	Names           []string
