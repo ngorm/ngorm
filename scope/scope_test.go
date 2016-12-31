@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/gernest/ngorm/dialects/ql"
+	"github.com/gernest/ngorm/engine"
 	"github.com/gernest/ngorm/fixture"
+	"github.com/gernest/ngorm/model"
 )
 
 func TestFieldByName(t *testing.T) {
@@ -56,4 +58,50 @@ func TestPrimaryKey(t *testing.T) {
 	if key != expect {
 		t.Errorf("expected %s got %s", expect, key)
 	}
+}
+
+type withTabler struct {
+	model.Model
+}
+
+func (_ *withTabler) TableName() string {
+	return "with_tabler"
+}
+
+type withDBTabler struct {
+	model.Model
+}
+
+func (_ *withDBTabler) TableName(e *engine.Engine) string {
+	return "with_tabler"
+}
+
+func TestTableName(t *testing.T) {
+	e := fixture.TestEngine()
+	e.Dialect = &ql.QL{}
+	e.Parent = e
+	table := "serach_table"
+	tabler := "with_tabler"
+	e.Search.TableName = table
+
+	// When the serach has table name set
+	name := TableName(e, &withTabler{})
+	if name != table {
+		t.Errorf("expected %s got %s", table, name)
+	}
+	e.Search = nil
+	name = TableName(e, &withTabler{})
+	if name != tabler {
+		t.Errorf("expected %s got %s", tabler, name)
+	}
+	name = TableName(e, &withDBTabler{})
+	if name != tabler {
+		t.Errorf("expected %s got %s", tabler, name)
+	}
+	name = TableName(e, &model.Model{})
+	expect := "models"
+	if name != expect {
+		t.Errorf("expected %s got %s", expect, name)
+	}
+
 }

@@ -595,11 +595,11 @@ func TableName(e *engine.Engine, value interface{}) string {
 		return e.Search.TableName
 	}
 
-	if tabler, ok := e.Scope.Value.(engine.Tabler); ok {
+	if tabler, ok := value.(engine.Tabler); ok {
 		return tabler.TableName()
 	}
 
-	if tabler, ok := e.Scope.Value.(engine.DbTabler); ok {
+	if tabler, ok := value.(engine.DbTabler); ok {
 		return tabler.TableName(e)
 	}
 	return GetModelStruct(e, value).DefaultTableName
