@@ -46,3 +46,14 @@ func TestQuotedTableName(t *testing.T) {
 		t.Errorf("expected %s got %s", Quote(e, tname), name)
 	}
 }
+
+func TestPrimaryKey(t *testing.T) {
+	e := fixture.TestEngine()
+	e.Dialect = &ql.QL{}
+	e.Parent = e
+	expect := "mapped_id"
+	key := PrimaryKey(e, &fixture.CustomizeColumn{ID: 10})
+	if key != expect {
+		t.Errorf("expected %s got %s", expect, key)
+	}
+}

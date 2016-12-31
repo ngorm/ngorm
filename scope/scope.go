@@ -571,7 +571,7 @@ func PrimaryFields(e *engine.Engine, value interface{}) (fields []*model.Field) 
 //PrimaryField returns the field with name id, or any primary field that happens
 //to be the one defined by the model value.
 func PrimaryField(e *engine.Engine, value interface{}) *model.Field {
-	if primaryFields := GetModelStruct(e, e.Scope.Value).PrimaryFields; len(primaryFields) > 0 {
+	if primaryFields := GetModelStruct(e, value).PrimaryFields; len(primaryFields) > 0 {
 		if len(primaryFields) > 1 {
 			if field, ok := FieldByName(e, value, "id"); ok {
 				return field
