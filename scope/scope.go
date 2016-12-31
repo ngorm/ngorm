@@ -612,3 +612,27 @@ func PrimaryKey(e *engine.Engine, value interface{}) string {
 	}
 	return ""
 }
+
+func QuotedTableName(e *engine.Engine, value interface{}) string {
+	if e.Search != nil && len(e.Search.TableName) > 0 {
+		if strings.Index(e.Search.TableName, " ") != -1 {
+			return e.Search.TableName
+		}
+		return Quote(e, e.Search.TableName)
+	}
+
+	return Quote(e, TableName(e, value))
+}
+
+func AddToVars(e *engine.Engine, value interface{}) string {
+	if expr, ok := value.(*model.Expr); ok {
+		exp := expr.Q
+		for _, arg := range expr.Args {
+			exp = strings.Replace(exp, "?", AddToVars(e, arg), 1)
+		}
+		return exp
+	}
+
+	e.Scope.SQLVars = append(e.Scope.SQLVars, value)
+	return e.Dialect.BindVar(len(e.Scope.SQLVars))
+}
