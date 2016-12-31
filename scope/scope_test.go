@@ -34,3 +34,15 @@ func TestQuote(t *testing.T) {
 		}
 	}
 }
+
+func TestQuotedTableName(t *testing.T) {
+	e := fixture.TestEngine()
+	e.Dialect = &ql.QL{}
+	e.Parent = e
+	tname := "my_table"
+	e.Search.TableName = tname
+	name := QuotedTableName(e, tname)
+	if name != Quote(e, tname) {
+		t.Errorf("expected %s got %s", Quote(e, tname), name)
+	}
+}

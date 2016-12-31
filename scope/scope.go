@@ -613,6 +613,7 @@ func PrimaryKey(e *engine.Engine, value interface{}) string {
 	return ""
 }
 
+//QuotedTableName  returns a quoted table name.
 func QuotedTableName(e *engine.Engine, value interface{}) string {
 	if e.Search != nil && len(e.Search.TableName) > 0 {
 		if strings.Index(e.Search.TableName, " ") != -1 {
