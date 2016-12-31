@@ -64,7 +64,7 @@ type withTabler struct {
 	model.Model
 }
 
-func (_ *withTabler) TableName() string {
+func (w *withTabler) TableName() string {
 	return "with_tabler"
 }
 
@@ -72,7 +72,7 @@ type withDBTabler struct {
 	model.Model
 }
 
-func (_ *withDBTabler) TableName(e *engine.Engine) string {
+func (w *withDBTabler) TableName(e *engine.Engine) string {
 	return "with_tabler"
 }
 
