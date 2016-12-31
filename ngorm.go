@@ -1,4 +1,4 @@
-//Package ngorm is a Go Object relation mapper that foucs on performance,
+//Package ngorm is a Go Object relation mapper that focus on performance,
 //maintainability, modularity,	battle testing, extensibility , safety and
 //developer frindliness.
 //
@@ -8,7 +8,7 @@
 //
 // This tries to avoid defining methods on structs. This comes at a cost of
 // limiting chaining, this cost is intential. I intend to work really hard on
-// improving perfomance and thus avoiding spaghetti is not an option.
+// improving performance and thus avoiding spaghetti is not an option.
 //
 // Installation
 //
