@@ -209,3 +209,9 @@ type SQLCommon interface {
 	QueryRow(query string, args ...interface{}) *sql.Row
 	Begin() (*sql.Tx, error)
 }
+
+// SQL expression
+type Expr struct {
+	Q    string
+	Args []interface{}
+}
