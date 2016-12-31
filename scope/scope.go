@@ -625,6 +625,8 @@ func QuotedTableName(e *engine.Engine, value interface{}) string {
 	return Quote(e, TableName(e, value))
 }
 
+//AddToVars add value to e.Scope.SQLVars it retursn the positional binding of
+//the values.
 func AddToVars(e *engine.Engine, value interface{}) string {
 	if expr, ok := value.(*model.Expr); ok {
 		exp := expr.Q
