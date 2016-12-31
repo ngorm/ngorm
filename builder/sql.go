@@ -292,11 +292,11 @@ func OrderSQL(e *engine.Engine, modelValue interface{}) string {
 	return " ORDER BY " + strings.Join(orders, ",")
 }
 
-func LimitAndOffsetSQL(e *engine.Engine, modelValue interface{}) string {
+func LimitAndOffsetSQL(e *engine.Engine) string {
 	return e.Dialect.LimitAndOffsetSQL(e.Search.Limit, e.Search.Offset)
 }
 
-func GroupSQL(e *engine.Engine, modelValue interface{}) string {
+func GroupSQL(e *engine.Engine) string {
 	if len(e.Search.Group) == 0 {
 		return ""
 	}
@@ -343,7 +343,7 @@ func CombinedCondition(e *engine.Engine, modelValue interface{}) string {
 	if e.Search.Raw {
 		whereSql = strings.TrimSuffix(strings.TrimPrefix(whereSql, "WHERE ("), ")")
 	}
-	return joinSql + whereSql + GroupSQL(e, modelValue) +
+	return joinSql + whereSql + GroupSQL(e) +
 		HavingSQL(e, modelValue) +
-		OrderSQL(e, modelValue) + LimitAndOffsetSQL(e, modelValue)
+		OrderSQL(e, modelValue) + LimitAndOffsetSQL(e)
 }
