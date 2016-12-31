@@ -10,6 +10,12 @@
 // limiting chaining, this cost is intential. I intend to work really hard on
 // improving perfomance and thus avoiding spaghetti is not an option.
 //
+// Installation
+//
+// You can install  with go get
+//   go get -u github.com/gernest/ngorm
+//
+//
 // The package is divided into two phases, Query building and Query execution
 // phase.
 //
@@ -36,6 +42,24 @@
 //   [engine] https://godoc.org/github.com/gernest/ngorm/engine
 // This is what drives the whole project, helps with query building and provides
 // conveinet structure to help with query execution.
+//
+//   [scope] https://godoc.org/github.com/gernest/ngorm/scope
+// Functions to help with model manipulations.
+//
+//   [search] https://godoc.org/github.com/gernest/ngorm/search
+// Functions to help with search  querries building.
+//
+//   [hooks] https://godoc.org/github.com/gernest/ngorm/hooks
+// Callbacks executed byt ngorm. You can easily overide and provide custom ones
+// to suit your needs.
+//
+//   [logger] https://godoc.org/github.com/gernest/ngorm/logger
+// The logger used by ngorm for logging. It is an interface, and a reference
+// implementation is provided.
+//
+//   [dialects] https://godoc.org/github.com/gernest/ngorm/dialects
+// Adopts to different SQL databases supported by ngorm. For now ngorm support
+// mysql, mssql, postgresql, sqlite and ql.
 package ngorm
 
 // DB contains information for current db connection
