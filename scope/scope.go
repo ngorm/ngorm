@@ -190,9 +190,9 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.ModelStruct {
 					// build relationships
 					switch inType.Kind() {
 					case reflect.Slice:
-						BuildRelationSlice(e, refType, &m, field)
+						buildRelationSlice(e, refType, &m, field)
 					case reflect.Struct:
-						BuildRelationStruct(e, refType, &m, field)
+						buildRelationStruct(e, refType, &m, field)
 					default:
 						field.IsNormal = true
 					}
@@ -226,7 +226,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.ModelStruct {
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
 //of loggic and no any error should be absorbed.
-func BuildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.ModelStruct, field *model.StructField) {
+func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.ModelStruct, field *model.StructField) {
 	var (
 		rel                    = &model.Relationship{}
 		toScope                = reflect.New(field.Struct.Type).Interface()
@@ -379,7 +379,7 @@ func BuildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.ModelSt
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
 //of loggic and no any error should be absorbed.
-func BuildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.ModelStruct, field *model.StructField) {
+func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.ModelStruct, field *model.StructField) {
 	var (
 		// user has one profile, associationType is User, profile use UserID as foreign key
 		// user belongs to profile, associationType is Profile, user use ProfileID as foreign key
