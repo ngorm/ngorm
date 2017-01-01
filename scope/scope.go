@@ -640,7 +640,7 @@ func QuotedTableName(e *engine.Engine, value interface{}) string {
 // the ql dialect.
 //
 // It is possible to supply *model.Expr as value. The expression will be
-// evaluated accordingly by replacing each occurance of ? in *model.Expr.Q with
+// evaluated accordingly by replacing each occurrence of ? in *model.Expr.Q with
 // the positional binding of the *model.Expr.Arg item.
 func AddToVars(e *engine.Engine, value interface{}) string {
 	if expr, ok := value.(*model.Expr); ok {
