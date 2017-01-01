@@ -298,6 +298,8 @@ func OrderSQL(e *engine.Engine, modelValue interface{}) string {
 	return " ORDER BY " + strings.Join(orders, ",")
 }
 
+//LimitAndOffsetSQL generates SQL for LIMIT and OFFSET. This relies on the
+//implementation defined by the engine.Engine.Dialect.
 func LimitAndOffsetSQL(e *engine.Engine) string {
 	return e.Dialect.LimitAndOffsetSQL(e.Search.Limit, e.Search.Offset)
 }
