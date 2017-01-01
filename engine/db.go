@@ -36,8 +36,8 @@ func (e *Engine) AddError(err error) error {
 	return nil
 }
 
-//DbTabler is an interface for getting database table name from the *Engine
-type DbTabler interface {
+//DBTabler is an interface for getting database table name from the *Engine
+type DBTabler interface {
 	TableName(*Engine) string
 }
 

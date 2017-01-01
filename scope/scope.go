@@ -599,7 +599,7 @@ func TableName(e *engine.Engine, value interface{}) string {
 		return tabler.TableName()
 	}
 
-	if tabler, ok := value.(engine.DbTabler); ok {
+	if tabler, ok := value.(engine.DBTabler); ok {
 		return tabler.TableName(e)
 	}
 	return GetModelStruct(e, value).DefaultTableName
