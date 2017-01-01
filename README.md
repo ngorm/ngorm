@@ -28,3 +28,11 @@
 * Developer Friendly
 
 Documentation https://godoc.org/github.com/gernest/ngorm
+
+Database support
+
+- [x] [ql](https://godoc.org/github.com/cznic/ql)
+- [ ] postgresql
+- [ ] mysql
+- [ ] mssql
+- [ ] sqlite
