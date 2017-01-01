@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -160,8 +161,18 @@ func (q *QL) HasColumn(tableName string, columnName string) bool {
 }
 
 // LimitAndOffsetSQL return generated SQL with Limit and Offset, as mssql has special case
-func (q *QL) LimitAndOffsetSQL(limit, offset interface{}) string {
-	return ""
+func (q *QL) LimitAndOffsetSQL(limit, offset interface{}) (sql string) {
+	if limit != nil {
+		if parsedLimit, err := strconv.ParseInt(fmt.Sprint(limit), 0, 0); err == nil && parsedLimit > 0 {
+			sql += fmt.Sprintf(" LIMIT %d", parsedLimit)
+		}
+	}
+	if offset != nil {
+		if parsedOffset, err := strconv.ParseInt(fmt.Sprint(offset), 0, 0); err == nil && parsedOffset > 0 {
+			sql += fmt.Sprintf(" OFFSET %d", parsedOffset)
+		}
+	}
+	return
 }
 
 // SelectFromDummyTable return select values, for most dbs, `SELECT values` just works, mysql needs `SELECT value FROM DUAL`
