@@ -627,6 +627,17 @@ func QuotedTableName(e *engine.Engine, value interface{}) string {
 
 //AddToVars add value to e.Scope.SQLVars it retursn the positional binding of
 //the values.
+//
+// The way positional arguments are handled inthe database/sql package relies on
+// fatabase specific setting.
+//
+//  For instance in ql
+//    $1 will bind the value of the first argument.
+//
+// The returned string depends on implementation provided by the
+// Dialect.BindVar, the number that is passed to BindVar is based on the number
+// of items stored in e.Scope.SQLVars. So if the length is 4 it might be $4 for
+// the ql dialect.
 func AddToVars(e *engine.Engine, value interface{}) string {
 	if expr, ok := value.(*model.Expr); ok {
 		exp := expr.Q
