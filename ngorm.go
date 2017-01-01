@@ -50,7 +50,7 @@
 // Functions to help with search  querries building.
 //
 //   [hooks] https://godoc.org/github.com/gernest/ngorm/hooks
-// Callbacks executed byt ngorm. You can easily overide and provide custom ones
+// Callbacks executed by ngorm. You can easily overide and provide custom ones
 // to suit your needs.
 //
 //   [logger] https://godoc.org/github.com/gernest/ngorm/logger
@@ -59,7 +59,7 @@
 //
 //   [dialects] https://godoc.org/github.com/gernest/ngorm/dialects
 // Adopts to different SQL databases supported by ngorm. For now ngorm support
-// mysql, mssql, postgresql, sqlite and ql.
+// ql ,
 package ngorm
 
 // DB contains information for current db connection
