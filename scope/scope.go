@@ -588,7 +588,7 @@ func PrimaryField(e *engine.Engine, value interface{}) *model.Field {
 // If it happens that the model value implements engine.Tabler interface then we
 // go with it.
 //
-// In case we are in search mode, the Tbalename inside the e.Search.TableName is
+// In case we are in search mode, the Tablename inside the e.Search.TableName is
 // what we use.
 func TableName(e *engine.Engine, value interface{}) string {
 	if e.Search != nil && len(e.Search.TableName) > 0 {
@@ -625,19 +625,23 @@ func QuotedTableName(e *engine.Engine, value interface{}) string {
 	return Quote(e, TableName(e, value))
 }
 
-//AddToVars add value to e.Scope.SQLVars it retursn the positional binding of
+//AddToVars add value to e.Scope.SQLVars it returns  the positional binding of
 //the values.
 //
 // The way positional arguments are handled inthe database/sql package relies on
-// fatabase specific setting.
+// database specific setting.
 //
-//  For instance in ql
+// For instance in ql
 //    $1 will bind the value of the first argument.
 //
 // The returned string depends on implementation provided by the
 // Dialect.BindVar, the number that is passed to BindVar is based on the number
 // of items stored in e.Scope.SQLVars. So if the length is 4 it might be $4 for
 // the ql dialect.
+//
+// It is possible to supply *model.Expr as value. The expression will be
+// evaluated accordingly by replacing each occurance of ? in *model.Expr.Q with
+// the positional binding of the *model.Expr.Arg item.
 func AddToVars(e *engine.Engine, value interface{}) string {
 	if expr, ok := value.(*model.Expr); ok {
 		exp := expr.Q
