@@ -39,3 +39,13 @@ func TestLimitAndOffsetSQL(t *testing.T) {
 	}
 
 }
+
+func TestPrepareQuerySQL(t *testing.T) {
+	e := fixture.TestEngine()
+	e.Dialect = ql.Memory()
+	search.Limit(e, 1)
+	search.Where(e, "name=?", "gernest")
+	var user fixture.User
+	s := PrepareQuerySQL(e, &user)
+	fmt.Println(s)
+}
