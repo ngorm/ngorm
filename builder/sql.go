@@ -1,3 +1,9 @@
+// Package builder contains functions for SQL building. Most of the functions
+// builds the SQL from the enine.Engine, and uptates the struct in a convenient
+// manner.
+//
+// Be aware that, you should not pass a raw engine.Engine as some of the
+// functions assumes engine.Engine.Search or engine.Engine.Scope is properly set.
 package builder
 
 import (
@@ -322,19 +328,24 @@ func HavingSQL(e *engine.Engine, modelValue interface{}) string {
 	return " HAVING " + combinedSQL
 }
 
-func PrepareQuerySQL(e *engine.Engine, modelValue interface{}) {
+// PrepareQuery sets the e.Scope.SQL by generating the whole sql query isnide
+// engine.
+func PrepareQuery(e *engine.Engine, modelValue interface{}) {
+	e.Scope.SQL = PrepareQuerySQL(e, modelValue)
+}
+
+func PrepareQuerySQL(e *engine.Engine, modelValue interface{}) string {
 	if e.Search.Raw {
-		e.Scope.SQL = strings.Replace(
+		return strings.Replace(
 			CombinedCondition(e, modelValue),
 			"$$", "?", -1)
-	} else {
-		e.Scope.SQL = strings.Replace(
-			fmt.Sprintf("SELECT %v FROM %v %v",
-				SelectSQL(e, modelValue),
-				scope.QuotedTableName(e, modelValue),
-				CombinedCondition(e, modelValue)),
-			"$$", "?", -1)
 	}
+	return strings.Replace(
+		fmt.Sprintf("SELECT %v FROM %v %v",
+			SelectSQL(e, modelValue),
+			scope.QuotedTableName(e, modelValue),
+			CombinedCondition(e, modelValue)),
+		"$$", "?", -1)
 }
 
 func CombinedCondition(e *engine.Engine, modelValue interface{}) string {

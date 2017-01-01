@@ -1,0 +1,24 @@
+package builder
+
+import (
+	"testing"
+
+	"github.com/gernest/ngorm/fixture"
+	"github.com/gernest/ngorm/search"
+)
+
+func TestGroup(t *testing.T) {
+	e := fixture.TestEngine()
+	s := GroupSQL(e)
+	if s != "" {
+		t.Errorf("expected an empty string got %s", s)
+	}
+	by := "location"
+	search.Group(e, by)
+	s = GroupSQL(e)
+	expect := " GROUP BY " + by
+	if s != expect {
+		t.Errorf("expected %s got %s", expect, s)
+	}
+
+}
