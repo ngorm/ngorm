@@ -1,4 +1,4 @@
-// Package ql exposes implementations and functions that henables ngorm to work
+// Package ql exposes implementations and functions that enables ngorm to work
 // with ql database.
 //
 // ql is an embedded sql database. This database doesn't conform 100% qith the
