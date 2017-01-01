@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gernest/ngorm/model"
+	"github.com/gernest/ngorm/regexes"
 )
 
 //QL implements the dialects.Dialect interface that uses ql database as the SQl
@@ -187,7 +188,9 @@ func (q *QL) LastInsertIDReturningSuffix(tableName, columnName string) string {
 
 // BuildForeignKeyName returns a foreign key name for the given table, field and reference
 func (q *QL) BuildForeignKeyName(tableName, field, dest string) string {
-	return ""
+	keyName := fmt.Sprintf("%s_%s_%s_foreign", tableName, field, dest)
+	keyName = regexes.KeyName.ReplaceAllString(keyName, "_")
+	return keyName
 }
 
 // CurrentDatabase return current database name
