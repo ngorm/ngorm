@@ -304,6 +304,8 @@ func LimitAndOffsetSQL(e *engine.Engine) string {
 	return e.Dialect.LimitAndOffsetSQL(e.Search.Limit, e.Search.Offset)
 }
 
+//GroupSQL generates GROUP BY SQL. This returns an empty string when
+//engine.Engine.Search.Group is empty.
 func GroupSQL(e *engine.Engine) string {
 	if len(e.Search.Group) == 0 {
 		return ""
