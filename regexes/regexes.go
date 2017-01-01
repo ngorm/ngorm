@@ -18,6 +18,6 @@ var (
 	//Comparison matches comparison in sql query
 	Comparison = regexp.MustCompile("(?i) (=|<>|>|<|LIKE|IS|IN) ")
 
-	//CcountingQuery matches cound query.
-	CcountingQuery = regexp.MustCompile("(?i)^count(.+)$")
+	//CountingQuery matches cound query.
+	CountingQuery = regexp.MustCompile("(?i)^count(.+)$")
 )
