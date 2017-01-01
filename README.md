@@ -1,6 +1,6 @@
 # NGORM
 
- The fork of gorm,The fantastic ORM library for Golang, that focus on
+ The fork of gorm,The fantastic ORM( Object Relational Mapping) library for Golang, that focus on
 
 * Performance
 * Maintainability
@@ -23,7 +23,7 @@
 * SQL Builder
 * Auto Migrations
 * Logger
-* Extendable, write Plugins based on GORM callbacks
+* Extendable, write Plugins based on NGORM callbacks
 * Every feature comes with tests
 * Developer Friendly
 
