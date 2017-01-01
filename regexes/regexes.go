@@ -20,4 +20,7 @@ var (
 
 	//CountingQuery matches cound query.
 	CountingQuery = regexp.MustCompile("(?i)^count(.+)$")
+
+	//KeyName matches _ in a string
+	KeyName = regexp.MustCompile("(_*[^a-zA-Z]+_*|_+)")
 )
