@@ -8,6 +8,24 @@ import (
 	"time"
 )
 
+//Model defines common fields that are used for defining SQL Tables. This is a
+//helper that you can embed in your own struct definition.
+//
+// By embedding this, there is no need to define the supplied fields. For
+// example.
+//
+//  type User struct {
+//    Model
+//    Name string
+//  }
+// Is the same as this
+//  type User   struct {
+//    ID        uint `gorm:"primary_key"`
+//    CreatedAt time.Time
+//    UpdatedAt time.Time
+//    DeletedAt *time.Time `sql:"index"`
+//    Name      string
+//  }
 type Model struct {
 	ID        uint `gorm:"primary_key"`
 	CreatedAt time.Time
@@ -15,8 +33,8 @@ type Model struct {
 	DeletedAt *time.Time `sql:"index"`
 }
 
-// ModelStruct model definition
-type ModelStruct struct {
+//Struct model definition
+type Struct struct {
 	PrimaryFields    []*StructField
 	StructFields     []*StructField
 	ModelType        reflect.Type
@@ -43,24 +61,25 @@ type StructField struct {
 	Relationship    *Relationship
 }
 
-func (structField *StructField) Clone() *StructField {
+//Clone retruns a deep copy of the StructField
+func (s *StructField) Clone() *StructField {
 	clone := &StructField{
-		DBName:          structField.DBName,
-		Name:            structField.Name,
-		Names:           structField.Names,
-		IsPrimaryKey:    structField.IsPrimaryKey,
-		IsNormal:        structField.IsNormal,
-		IsIgnored:       structField.IsIgnored,
-		IsScanner:       structField.IsScanner,
-		HasDefaultValue: structField.HasDefaultValue,
-		Tag:             structField.Tag,
+		DBName:          s.DBName,
+		Name:            s.Name,
+		Names:           s.Names,
+		IsPrimaryKey:    s.IsPrimaryKey,
+		IsNormal:        s.IsNormal,
+		IsIgnored:       s.IsIgnored,
+		IsScanner:       s.IsScanner,
+		HasDefaultValue: s.HasDefaultValue,
+		Tag:             s.Tag,
 		TagSettings:     map[string]string{},
-		Struct:          structField.Struct,
-		IsForeignKey:    structField.IsForeignKey,
-		Relationship:    structField.Relationship,
+		Struct:          s.Struct,
+		IsForeignKey:    s.IsForeignKey,
+		Relationship:    s.Relationship,
 	}
 
-	for key, value := range structField.TagSettings {
+	for key, value := range s.TagSettings {
 		clone.TagSettings[key] = value
 	}
 
@@ -79,6 +98,7 @@ type Relationship struct {
 	AssociationForeignDBNames    []string
 }
 
+//ParseTagSetting returns a map[string]string for the tags that are set.
 func ParseTagSetting(tags reflect.StructTag) map[string]string {
 	setting := map[string]string{}
 	for _, str := range []string{tags.Get("sql"), tags.Get("gorm")} {
@@ -96,27 +116,32 @@ func ParseTagSetting(tags reflect.StructTag) map[string]string {
 	return setting
 }
 
-type SafeModelStructsMap struct {
-	m map[reflect.Type]*ModelStruct
+//SafeStructsMap provide safe storage and accessing of *Struct.
+type SafeStructsMap struct {
+	m map[reflect.Type]*Struct
 	l *sync.RWMutex
 }
 
-func (s *SafeModelStructsMap) Set(key reflect.Type, value *ModelStruct) {
+//Set stores value witht the given key.
+func (s *SafeStructsMap) Set(key reflect.Type, value *Struct) {
 	s.l.Lock()
 	defer s.l.Unlock()
 	s.m[key] = value
 }
 
-func (s *SafeModelStructsMap) Get(key reflect.Type) *ModelStruct {
+//Get retrieves the value stored with the gived key.
+func (s *SafeStructsMap) Get(key reflect.Type) *Struct {
 	s.l.RLock()
 	defer s.l.RUnlock()
 	return s.m[key]
 }
 
-func NewModelStructsMap() *SafeModelStructsMap {
-	return &SafeModelStructsMap{l: new(sync.RWMutex), m: make(map[reflect.Type]*ModelStruct)}
+//NewStructsMap returns a safe map for storing *Struct objects.
+func NewStructsMap() *SafeStructsMap {
+	return &SafeStructsMap{l: new(sync.RWMutex), m: make(map[reflect.Type]*Struct)}
 }
 
+//Scope is the scope level of SQL building.
 type Scope struct {
 	Value           interface{}
 	SQL             string
@@ -128,6 +153,7 @@ type Scope struct {
 	SelectAttrs     *[]string
 }
 
+//Search is the search level of SQL buidling
 type Search struct {
 	WhereConditions  []map[string]interface{}
 	OrConditions     []map[string]interface{}
@@ -149,11 +175,13 @@ type Search struct {
 	IgnoreOrderQuery bool
 }
 
+//SearchPreload is the preload search condition.
 type SearchPreload struct {
 	Schema     string
 	Conditions []interface{}
 }
 
+//SQLCommon is the interface for SQL database interactions.
 type SQLCommon interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	Prepare(query string) (*sql.Stmt, error)
@@ -162,7 +190,7 @@ type SQLCommon interface {
 	Begin() (*sql.Tx, error)
 }
 
-// SQL expression
+// Expr is SQL expression
 type Expr struct {
 	Q    string
 	Args []interface{}

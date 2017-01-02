@@ -290,6 +290,6 @@ func TestEngine() *engine.Engine {
 	return &engine.Engine{
 		Search:    &model.Search{},
 		Scope:     &model.Scope{},
-		StructMap: model.NewModelStructsMap(),
+		StructMap: model.NewStructsMap(),
 	}
 }

@@ -25,7 +25,7 @@ type Engine struct {
 
 	Search    *model.Search
 	Scope     *model.Scope
-	StructMap *model.SafeModelStructsMap
+	StructMap *model.SafeStructsMap
 }
 
 //AddError adds err to Engine.Error.

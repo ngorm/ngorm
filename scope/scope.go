@@ -76,19 +76,19 @@ func Fields(e *engine.Engine, value interface{}) []*model.Field {
 	return *e.Scope.Fields
 }
 
-//GetModelStruct construct a *model.ModelStruct from value. This does not set
+//GetModelStruct construct a *model.Struct from value. This does not set
 //the e.Scope.Value to value, you must set this value manually if you want to
 //set the scope value.
 //
-// value must be a go struct. The computed *model.ModelStruct is cached , so
+// value must be a go struct. The computed *model.Struct is cached , so
 // multiple calls to this function with the same value won't compute anything
 // and return the cached copy. It is less unlikely that the structs will be
 // changine at runtime.
 //
 // The value can implement engine.Tabler interface to help easily identify the
 // table name for the model.
-func GetModelStruct(e *engine.Engine, value interface{}) *model.ModelStruct {
-	var m model.ModelStruct
+func GetModelStruct(e *engine.Engine, value interface{}) *model.Struct {
+	var m model.Struct
 	// Scope value can't be nil
 	if value == nil {
 		return &m
@@ -226,7 +226,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.ModelStruct {
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
 //of loggic and no any error should be absorbed.
-func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.ModelStruct, field *model.StructField) {
+func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct, field *model.StructField) {
 	var (
 		rel                    = &model.Relationship{}
 		toScope                = reflect.New(field.Struct.Type).Interface()
@@ -379,7 +379,7 @@ func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.ModelSt
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
 //of loggic and no any error should be absorbed.
-func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.ModelStruct, field *model.StructField) {
+func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct, field *model.StructField) {
 	var (
 		// user has one profile, associationType is User, profile use UserID as foreign key
 		// user belongs to profile, associationType is Profile, user use ProfileID as foreign key
