@@ -20,7 +20,43 @@ import (
 	"github.com/gernest/ngorm/scope"
 )
 
-//Where buiilds the Ehere Condition the sql where condition.
+//Where buiilds the sql where condition. The clause is a map
+//of two important keys, one is query and the second is args. It is possible to
+//use a struct instead of a map for clause, but for now we can stick with this
+//else we will need to do a giant refactoring.
+//
+// query value can be of several types.
+//
+//  string,
+//  int int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64,
+//  sql.Nu[]int,
+//  []int8, []int16, []int32, []int64, []uint, []uint8,
+//  []uint16,[]uint32,[]uint64, []string, []interface{}
+//  map[string]interface{}:
+//  struct
+//
+// Note that if you supply a query as a struct then it should be a model.
+// Example of a clause is,
+//  map[string]interface{}{"query": query, "args": values}
+// Where query can be anything of the above types and values is possibly a slice
+// of positional values. Positional values are values which will be inserted in
+// place of a placeholder e.g ?. For instance s querry,
+//
+//  select * from home where item=? && importance =?
+// Then we can pass
+//
+//  []interface}{"milk", "critical"}
+//
+// The args slice has "milk" as the first thing and "critical" as the second.
+// Now we can reconstruct the querry after appling the positional argument and
+// get the following.
+//
+//  select * from home where item="milk" && importance="critical"
+//
+// In real case, the way the positional arguments are bound is database
+// specific. For example ql uses $1,$2,$3 etc but also supports ?. You don't
+// have to worry about this, it is automatically handled by the supported
+// database dialects.
 func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface{}) (str string) {
 	switch value := clause["query"].(type) {
 	case string:
