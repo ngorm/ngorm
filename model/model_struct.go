@@ -3,7 +3,6 @@ package model
 import (
 	"database/sql"
 	"reflect"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -116,42 +115,6 @@ func (s *SafeModelStructsMap) Get(key reflect.Type) *ModelStruct {
 
 func NewModelStructsMap() *SafeModelStructsMap {
 	return &SafeModelStructsMap{l: new(sync.RWMutex), m: make(map[reflect.Type]*ModelStruct)}
-}
-
-func ParseFieldStructForDialect(field *StructField) (fieldValue reflect.Value, sqlType string, size int, additionalType string) {
-	// Get redirected field type
-	var reflectType = field.Struct.Type
-	for reflectType.Kind() == reflect.Ptr {
-		reflectType = reflectType.Elem()
-	}
-
-	// Get redirected field value
-	fieldValue = reflect.Indirect(reflect.New(reflectType))
-
-	// Get scanner's real value
-	var getScannerValue func(reflect.Value)
-	getScannerValue = func(value reflect.Value) {
-		fieldValue = value
-		if _, isScanner := reflect.New(fieldValue.Type()).Interface().(sql.Scanner); isScanner && fieldValue.Kind() == reflect.Struct {
-			getScannerValue(fieldValue.Field(0))
-		}
-	}
-	getScannerValue(fieldValue)
-
-	// Default Size
-	if num, ok := field.TagSettings["SIZE"]; ok {
-		size, _ = strconv.Atoi(num)
-	} else {
-		size = 255
-	}
-
-	// Default type from tag setting
-	additionalType = field.TagSettings["NOT NULL"] + " " + field.TagSettings["UNIQUE"]
-	if value, ok := field.TagSettings["DEFAULT"]; ok {
-		additionalType = additionalType + " DEFAULT " + value
-	}
-
-	return fieldValue, field.TagSettings["TYPE"], size, strings.TrimSpace(additionalType)
 }
 
 type Scope struct {
