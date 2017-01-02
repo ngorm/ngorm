@@ -20,7 +20,7 @@ import (
 	"github.com/gernest/ngorm/scope"
 )
 
-//Where bilds the Ehere Condition the sql where condition.
+//Where buiilds the Ehere Condition the sql where condition.
 func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface{}) (str string) {
 	switch value := clause["query"].(type) {
 	case string:
@@ -48,17 +48,23 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 			}
 		}
 		return strings.Join(sqls, " AND ")
-	case interface{}:
-		var sqls []string
-		for _, field := range scope.Fields(e, modelValue) {
-			if !field.IsIgnored && !field.IsBlank {
-				sqls = append(sqls, fmt.Sprintf("(%v.%v = %v)",
-					scope.QuotedTableName(e, modelValue),
-					scope.Quote(e, field.DBName),
-					scope.AddToVars(e, field.Field.Interface())))
-			}
+	default:
+		v := reflect.ValueOf(value)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
 		}
-		return strings.Join(sqls, " AND ")
+		if v.Kind() == reflect.Struct {
+			var sqls []string
+			for _, field := range scope.Fields(e, value) {
+				if !field.IsIgnored && !field.IsBlank {
+					sqls = append(sqls, fmt.Sprintf("(%v.%v = %v)",
+						scope.QuotedTableName(e, value),
+						scope.Quote(e, field.DBName),
+						scope.AddToVars(e, field.Field.Interface())))
+				}
+			}
+			return strings.Join(sqls, " AND ")
+		}
 	}
 
 	args := clause["args"].([]interface{})
