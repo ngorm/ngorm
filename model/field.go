@@ -19,11 +19,11 @@ type Field struct {
 // Set set a value to the field
 func (field *Field) Set(value interface{}) (err error) {
 	if !field.Field.IsValid() {
-		return errmsg.InvalidFieldValue
+		return errmsg.ErrInvalidFieldValue
 	}
 
 	if !field.Field.CanAddr() {
-		return errmsg.Unaddressable
+		return errmsg.ErrUnaddressable
 	}
 
 	reflectValue, ok := value.(reflect.Value)

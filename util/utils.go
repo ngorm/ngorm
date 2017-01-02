@@ -238,5 +238,5 @@ func GetInterfaceAsSQL(value interface{}) (string, error) {
 		return fmt.Sprintf("%v", value), nil
 	}
 
-	return "", errmsg.InvalidSQL
+	return "", errmsg.ErrInvalidSQL
 }

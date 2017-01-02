@@ -17,20 +17,20 @@ func TestField_Set(t *testing.T) {
 	err := f.Set(a)
 
 	if err == nil {
-		t.Error("expected ", errmsg.InvalidFieldValue)
+		t.Error("expected ", errmsg.ErrInvalidFieldValue)
 	} else {
-		if err != errmsg.InvalidFieldValue {
-			t.Errorf("expected %v got %v", errmsg.InvalidFieldValue, err)
+		if err != errmsg.ErrInvalidFieldValue {
+			t.Errorf("expected %v got %v", errmsg.ErrInvalidFieldValue, err)
 		}
 	}
 	b := 10
 	f.Field = reflect.ValueOf(&b)
 	err = f.Set(a)
 	if err == nil {
-		t.Error("expected ", errmsg.Unaddressable)
+		t.Error("expected ", errmsg.ErrUnaddressable)
 	} else {
-		if err != errmsg.Unaddressable {
-			t.Errorf("expected %v got %v", errmsg.Unaddressable, err)
+		if err != errmsg.ErrUnaddressable {
+			t.Errorf("expected %v got %v", errmsg.ErrUnaddressable, err)
 		}
 	}
 	s := &sample{}
