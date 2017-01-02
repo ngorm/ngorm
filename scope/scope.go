@@ -665,6 +665,7 @@ func HasColumn(e *engine.Engine, modelValue interface{}, column string) bool {
 	return false
 }
 
+//GetForeignField return the foreign field among the supplied fields.
 func GetForeignField(column string, fields []*model.StructField) *model.StructField {
 	for _, field := range fields {
 		if field.Name == column || field.DBName == column || field.DBName == util.ToDBName(column) {
