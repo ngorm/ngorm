@@ -49,6 +49,13 @@ type Dialect interface {
 	CurrentDatabase() string
 }
 
+//ParseFieldStructForDialect pases metadatab enough to be used by dialects. The values
+//returned are useful for implementing the DataOf method of the Dialect
+//interface.
+//
+// The fieldValue returned is the value of the field. The sqlType value returned
+// is the value specified in the tags for by TYPE key, size is the value of the
+// SIZE tag key it defaults to 255 when not set.
 func ParseFieldStructForDialect(field *model.StructField) (fieldValue reflect.Value, sqlType string, size int, additionalType string) {
 	// Get redirected field type
 	var reflectType = field.Struct.Type
