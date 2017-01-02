@@ -7,8 +7,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/gernest/ngorm/util"
 )
 
 type Model struct {
@@ -80,15 +78,6 @@ type Relationship struct {
 	ForeignDBNames               []string
 	AssociationForeignFieldNames []string
 	AssociationForeignDBNames    []string
-}
-
-func GetForeignField(column string, fields []*StructField) *StructField {
-	for _, field := range fields {
-		if field.Name == column || field.DBName == column || field.DBName == util.ToDBName(column) {
-			return field
-		}
-	}
-	return nil
 }
 
 func ParseTagSetting(tags reflect.StructTag) map[string]string {
