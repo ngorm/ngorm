@@ -47,7 +47,10 @@ func TestPrepareQuerySQL(t *testing.T) {
 	search.Limit(e, 1)
 	search.Where(e, "name=?", "gernest")
 	var user fixture.User
-	s := PrepareQuerySQL(e, &user)
+	s, err := PrepareQuerySQL(e, &user)
+	if err != nil {
+		//t.Error(err)
+	}
 	fmt.Println(s)
 }
 
@@ -58,7 +61,10 @@ func TestWhere(t *testing.T) {
 	// Where using Plain SQL
 	search.Where(e, "name=?", "gernest")
 	var user fixture.User
-	s := Where(e, &user, e.Search.WhereConditions[0])
+	s, err := Where(e, &user, e.Search.WhereConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
 	expect := "(name=$1)"
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
@@ -66,7 +72,10 @@ func TestWhere(t *testing.T) {
 
 	// IN
 	search.Where(e, "name in (?)", []string{"jinzhu", "jinzhu 2"})
-	s = Where(e, &user, e.Search.WhereConditions[1])
+	s, err = Where(e, &user, e.Search.WhereConditions[1])
+	if err != nil {
+		t.Fatal(err)
+	}
 	expect = "(name in ($2,$3))"
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
@@ -74,7 +83,10 @@ func TestWhere(t *testing.T) {
 
 	// LIKE
 	search.Where(e, "name LIKE ?", "%jin%")
-	s = Where(e, &user, e.Search.WhereConditions[2])
+	s, err = Where(e, &user, e.Search.WhereConditions[2])
+	if err != nil {
+		t.Fatal(err)
+	}
 	expect = "(name LIKE $4)"
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
@@ -82,7 +94,10 @@ func TestWhere(t *testing.T) {
 
 	// AND
 	search.Where(e, "name = ? AND age >= ?", "jinzhu", "22")
-	s = Where(e, &user, e.Search.WhereConditions[3])
+	s, err = Where(e, &user, e.Search.WhereConditions[3])
+	if err != nil {
+		t.Fatal(err)
+	}
 	expect = "(name = $5 AND age >= $6)"
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
@@ -92,7 +107,10 @@ func TestWhere(t *testing.T) {
 	e.Search.WhereConditions = nil
 	e.Scope.SQLVars = nil
 	search.Where(e, map[string]interface{}{"name": "jinzhu", "age": 20})
-	s = Where(e, &user, e.Search.WhereConditions[0])
+	s, err = Where(e, &user, e.Search.WhereConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
 	expect = `("users"."name"`
 	if !strings.Contains(s, expect) {
 		t.Errorf("expected %s to containe %s", s, expect)
@@ -102,7 +120,10 @@ func TestWhere(t *testing.T) {
 	e.Search.WhereConditions = nil
 	e.Scope.SQLVars = nil
 	search.Where(e, map[string]interface{}{"name": "jinzhu", "age": nil})
-	s = Where(e, &user, e.Search.WhereConditions[0])
+	s, err = Where(e, &user, e.Search.WhereConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
 	expected := `("users"."age" IS NULL)`
 	if !strings.Contains(s, expected) {
 		t.Errorf("expected %s to contain %s", s, expected)
@@ -112,7 +133,10 @@ func TestWhere(t *testing.T) {
 	e.Search.WhereConditions = nil
 	e.Scope.SQLVars = nil
 	search.Where(e, 10)
-	s = Where(e, &user, e.Search.WhereConditions[0])
+	s, err = Where(e, &user, e.Search.WhereConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
 	expect = `("users"."id" = $1)`
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
@@ -122,7 +146,10 @@ func TestWhere(t *testing.T) {
 	e.Search.WhereConditions = nil
 	e.Scope.SQLVars = nil
 	search.Where(e, []int64{20, 21, 22})
-	s = Where(e, &user, e.Search.WhereConditions[0])
+	s, err = Where(e, &user, e.Search.WhereConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
 	expect = `("users"."id" IN ($1,$2,$3))`
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
@@ -133,7 +160,10 @@ func TestWhere(t *testing.T) {
 	e.Scope.SQLVars = nil
 	e.Scope.Fields = nil
 	search.Where(e, &fixture.User{Name: "jinzhu", Age: 20})
-	s = Where(e, &user, e.Search.WhereConditions[0])
+	s, err = Where(e, &user, e.Search.WhereConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
 	expect = `("users"."age" = $1) AND ("users"."name" = $2)`
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)

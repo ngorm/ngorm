@@ -45,7 +45,7 @@ func Quote(e *engine.Engine, str string) string {
 //Fields extracts []*model.Fields from value, value is obvously a struct or
 //something. This is only done when e.Scope.Fields is nil, for the case of non
 //nil value then *e.Scope.Fiedls is returned without computing anything.
-func Fields(e *engine.Engine, value interface{}) []*model.Field {
+func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
 	if e.Scope.Fields == nil {
 		var fields []*model.Field
 		i := reflect.ValueOf(value)
@@ -53,8 +53,11 @@ func Fields(e *engine.Engine, value interface{}) []*model.Field {
 			i = i.Elem()
 		}
 		isStruct := i.Kind() == reflect.Struct
-
-		for _, structField := range GetModelStruct(e, value).StructFields {
+		m, err := GetModelStruct(e, value)
+		if err != nil {
+			return nil, err
+		}
+		for _, structField := range m.StructFields {
 			if isStruct {
 				fieldValue := i
 				for _, name := range structField.Names {
@@ -73,7 +76,7 @@ func Fields(e *engine.Engine, value interface{}) []*model.Field {
 		e.Scope.Fields = &fields
 	}
 
-	return *e.Scope.Fields
+	return *e.Scope.Fields, nil
 }
 
 //GetModelStruct construct a *model.Struct from value. This does not set
@@ -87,11 +90,11 @@ func Fields(e *engine.Engine, value interface{}) []*model.Field {
 //
 // The value can implement engine.Tabler interface to help easily identify the
 // table name for the model.
-func GetModelStruct(e *engine.Engine, value interface{}) *model.Struct {
+func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) {
 	var m model.Struct
 	// Scope value can't be nil
 	if value == nil {
-		return &m
+		return nil, errors.New("nil value")
 	}
 
 	refType := reflect.ValueOf(value).Type()
@@ -101,12 +104,12 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.Struct {
 
 	// Scope value need to be a struct
 	if refType.Kind() != reflect.Struct {
-		return &m
+		return nil, errors.New("only structs are supported")
 	}
 
 	// Get Cached model struct
 	if v := e.StructMap.Get(refType); v != nil {
-		return v
+		return v, nil
 	}
 
 	m.ModelType = refType
@@ -174,7 +177,11 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.Struct {
 					field.IsNormal = true
 				} else if _, ok := field.TagSettings["EMBEDDED"]; ok || fStruct.Anonymous {
 					// is embedded struct
-					for _, subField := range GetModelStruct(e, fieldValue).StructFields {
+					ms, err := GetModelStruct(e, fieldValue)
+					if err != nil {
+						return nil, err
+					}
+					for _, subField := range ms.StructFields {
 						subField = subField.Clone()
 						subField.Names = append([]string{fStruct.Name}, subField.Names...)
 						if prefix, ok := field.TagSettings["EMBEDDED_PREFIX"]; ok {
@@ -190,9 +197,15 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.Struct {
 					// build relationships
 					switch inType.Kind() {
 					case reflect.Slice:
-						buildRelationSlice(e, refType, &m, field)
+						err := buildRelationSlice(e, refType, &m, field)
+						if err != nil {
+							return nil, err
+						}
 					case reflect.Struct:
-						buildRelationStruct(e, refType, &m, field)
+						err := buildRelationStruct(e, refType, &m, field)
+						if err != nil {
+							return nil, err
+						}
 					default:
 						field.IsNormal = true
 					}
@@ -218,7 +231,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.Struct {
 	}
 
 	e.StructMap.Set(refType, &m)
-	return &m
+	return &m, nil
 }
 
 //BuildRelationSlice builds relationship for a field of kind reflect.Slice. This
@@ -226,7 +239,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) *model.Struct {
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
 //of loggic and no any error should be absorbed.
-func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct, field *model.StructField) {
+func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct, field *model.StructField) error {
 	var (
 		rel                    = &model.Relationship{}
 		toScope                = reflect.New(field.Struct.Type).Interface()
@@ -270,19 +283,25 @@ func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct,
 
 			// if no association foreign keys defined with tag
 			if len(associationForeignKeys) == 0 {
-				for _, field := range PrimaryFields(e, toScope) {
+				pf, err := PrimaryFields(e, toScope)
+				if err != nil {
+					return err
+				}
+				for _, field := range pf {
 					associationForeignKeys = append(associationForeignKeys, field.DBName)
 				}
 			}
 
 			for _, name := range associationForeignKeys {
-				if field, ok := FieldByName(e, toScope, name); ok {
-					// association foreign keys (db names)
-					rel.AssociationForeignFieldNames = append(rel.AssociationForeignFieldNames, field.DBName)
-					// join table foreign keys for association
-					joinTableDBName := util.ToDBName(elemType.Name()) + "_" + field.DBName
-					rel.AssociationForeignDBNames = append(rel.AssociationForeignDBNames, joinTableDBName)
+				field, err := FieldByName(e, toScope, name)
+				if err != nil {
+					return err
 				}
+				// association foreign keys (db names)
+				rel.AssociationForeignFieldNames = append(rel.AssociationForeignFieldNames, field.DBName)
+				// join table foreign keys for association
+				joinTableDBName := util.ToDBName(elemType.Name()) + "_" + field.DBName
+				rel.AssociationForeignDBNames = append(rel.AssociationForeignDBNames, joinTableDBName)
 			}
 
 			//joinTableHandler := JoinTableHandler{}
@@ -292,7 +311,11 @@ func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct,
 		} else {
 			// User has many comments, associationType is User, comment use UserID as foreign key
 			var associationType = refType.Name()
-			var toFields = GetModelStruct(e, toScope).StructFields
+			ms, err := GetModelStruct(e, toScope)
+			if err != nil {
+				return err
+			}
+			var toFields = ms.StructFields
 			rel.Kind = "has_many"
 
 			if polymorphic := field.TagSettings["POLYMORPHIC"]; polymorphic != "" {
@@ -341,12 +364,14 @@ func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct,
 						}
 					}
 					if len(associationForeignKeys) == 0 && len(fks) == 1 {
-						associationForeignKeys = []string{PrimaryKey(e, e.Scope.Value)}
+						pk, err := PrimaryKey(e, e.Scope.Value)
+						if err != nil {
+							return err
+						}
+						associationForeignKeys = []string{pk}
 					}
 				} else if len(fks) != len(associationForeignKeys) {
-					_ = e.AddError(errors.New("invalid foreign keys, should have same length"))
-					// TODO:(grenest) Return this error?
-					return
+					return errors.New("invalid foreign keys, should have same length")
 				}
 			}
 
@@ -372,6 +397,7 @@ func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct,
 	} else {
 		field.IsNormal = true
 	}
+	return nil
 }
 
 //BuildRelationStruct builds relationship for a field of kind reflect.Struct . This
@@ -379,17 +405,21 @@ func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct,
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
 //of loggic and no any error should be absorbed.
-func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct, field *model.StructField) {
+func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct, field *model.StructField) error {
 	var (
 		// user has one profile, associationType is User, profile use UserID as foreign key
 		// user belongs to profile, associationType is Profile, user use ProfileID as foreign key
 		associationType           = refType.Name()
 		rel                       = &model.Relationship{}
 		toScope                   = reflect.New(field.Struct.Type).Interface()
-		toFields                  = GetModelStruct(e, toScope).StructFields
 		tagForeignKeys            []string
 		tagAssociationForeignKeys []string
 	)
+	ms, err := GetModelStruct(e, toScope)
+	if err != nil {
+		return err
+	}
+	toFields := ms.StructFields
 
 	if fk := field.TagSettings["FOREIGNKEY"]; fk != "" {
 		tagForeignKeys = strings.Split(field.TagSettings["FOREIGNKEY"], ",")
@@ -449,12 +479,14 @@ func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct
 					}
 				}
 				if len(associationForeignKeys) == 0 && len(fks) == 1 {
-					associationForeignKeys = []string{PrimaryKey(e, e.Scope.Value)}
+					pk, err := PrimaryKey(e, e.Scope.Value)
+					if err != nil {
+						return err
+					}
+					associationForeignKeys = []string{pk}
 				}
 			} else if len(fks) != len(associationForeignKeys) {
-				_ = e.AddError(errors.New("invalid foreign keys, should have same length"))
-				//TODO:(gernest) Return this error?
-				return
+				return errors.New("invalid foreign keys, should have same length")
 			}
 		}
 
@@ -484,7 +516,11 @@ func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct
 		if len(fks) == 0 {
 			// generate foreign keys & association foreign keys
 			if len(associationForeignKeys) == 0 {
-				for _, primaryField := range PrimaryFields(e, toScope) {
+				pf, err := PrimaryFields(e, toScope)
+				if err != nil {
+					return err
+				}
+				for _, primaryField := range pf {
 					fks = append(fks, field.Name+primaryField.Name)
 					associationForeignKeys = append(associationForeignKeys, primaryField.Name)
 				}
@@ -509,12 +545,14 @@ func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct
 					}
 				}
 				if len(associationForeignKeys) == 0 && len(fks) == 1 {
-					associationForeignKeys = []string{PrimaryKey(e, toScope)}
+					pk, err := PrimaryKey(e, toScope)
+					if err != nil {
+						return err
+					}
+					associationForeignKeys = []string{pk}
 				}
 			} else if len(fks) != len(associationForeignKeys) {
-				_ = e.AddError(errors.New("invalid foreign keys, should have same length"))
-				//TODO:(gernest) Return this error?
-				return
+				return errors.New("invalid foreign keys, should have same length")
 			}
 		}
 
@@ -539,47 +577,67 @@ func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct
 			field.Relationship = rel
 		}
 	}
+	return nil
 }
 
 //FieldByName returns the field in the model struct value with name name.
 //
 //TODO:(gernest) return an error when the field is not found.
-func FieldByName(e *engine.Engine, value interface{}, name string) (*model.Field, bool) {
-	var mostMatchedField *model.Field
+func FieldByName(e *engine.Engine, value interface{}, name string) (*model.Field, error) {
 	dbName := util.ToDBName(name)
-	for _, field := range Fields(e, value) {
+	fds, err := Fields(e, value)
+	if err != nil {
+		return nil, err
+	}
+	for _, field := range fds {
 		if field.Name == name || field.DBName == name {
-			return field, true
-		}
-		if field.DBName == dbName {
-			mostMatchedField = field
+			return field, nil
+		} else {
+			if field.DBName == dbName {
+				return field, nil
+			}
 		}
 	}
-	return mostMatchedField, mostMatchedField != nil
+	return nil, errors.New("field not found")
 }
 
 //PrimaryFields returns fields that have PRIMARY_KEY Tab from the struct value.
-func PrimaryFields(e *engine.Engine, value interface{}) (fields []*model.Field) {
-	for _, field := range Fields(e, value) {
+func PrimaryFields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
+	var fields []*model.Field
+	fds, err := Fields(e, value)
+	if err != nil {
+		return nil, err
+	}
+	for _, field := range fds {
 		if field.IsPrimaryKey {
 			fields = append(fields, field)
 		}
 	}
-	return fields
+	return fields, nil
 }
 
 //PrimaryField returns the field with name id, or any primary field that happens
 //to be the one defined by the model value.
-func PrimaryField(e *engine.Engine, value interface{}) *model.Field {
-	if primaryFields := GetModelStruct(e, value).PrimaryFields; len(primaryFields) > 0 {
-		if len(primaryFields) > 1 {
-			if field, ok := FieldByName(e, value, "id"); ok {
-				return field
-			}
-		}
-		return PrimaryFields(e, value)[0]
+func PrimaryField(e *engine.Engine, value interface{}) (*model.Field, error) {
+	m, err := GetModelStruct(e, value)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	if primaryFields := m.PrimaryFields; len(primaryFields) > 0 {
+		if len(primaryFields) > 1 {
+			field, err := FieldByName(e, value, "id")
+			if err != nil {
+				return nil, err
+			}
+			return field, nil
+		}
+		pf, err := PrimaryFields(e, value)
+		if err != nil {
+			return nil, err
+		}
+		return pf[0], nil
+	}
+	return nil, errors.New("no field found")
 }
 
 // TableName returns a string representation of the possible name of the table
@@ -602,15 +660,21 @@ func TableName(e *engine.Engine, value interface{}) string {
 	if tabler, ok := value.(engine.DBTabler); ok {
 		return tabler.TableName(e)
 	}
-	return GetModelStruct(e, value).DefaultTableName
+	ms, err := GetModelStruct(e, value)
+	if err != nil {
+		//TODO log this?
+		return ""
+	}
+	return ms.DefaultTableName
 }
 
 //PrimaryKey returns the name of the primary key for the model value
-func PrimaryKey(e *engine.Engine, value interface{}) string {
-	if field := PrimaryField(e, value); field != nil {
-		return field.DBName
+func PrimaryKey(e *engine.Engine, value interface{}) (string, error) {
+	pf, err := PrimaryField(e, value)
+	if err != nil {
+		return "", err
 	}
-	return ""
+	return pf.DBName, nil
 }
 
 //QuotedTableName  returns a quoted table name.
@@ -657,7 +721,12 @@ func AddToVars(e *engine.Engine, value interface{}) string {
 
 //HasColumn returns true if the modelValue has column of name column.
 func HasColumn(e *engine.Engine, modelValue interface{}, column string) bool {
-	for _, field := range GetModelStruct(e, modelValue).StructFields {
+	ms, err := GetModelStruct(e, modelValue)
+	if err != nil {
+		//TODO log this?
+		return false
+	}
+	for _, field := range ms.StructFields {
 		if field.IsNormal && (field.Name == column || field.DBName == column) {
 			return true
 		}

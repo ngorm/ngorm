@@ -9,6 +9,7 @@ package builder
 import (
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -57,7 +58,7 @@ import (
 // specific. For example ql uses $1,$2,$3 etc but also supports ?. You don't
 // have to worry about this, it is automatically handled by the supported
 // database dialects.
-func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface{}) (str string) {
+func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface{}) (str string, err error) {
 	switch value := clause["query"].(type) {
 	case string:
 		if regexes.IsNumber.MatchString(value) {
@@ -68,8 +69,12 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, sql.NullInt64:
 		return PrimaryCondition(e, modelValue, scope.AddToVars(e, value))
 	case []int, []int8, []int16, []int32, []int64, []uint, []uint8, []uint16, []uint32, []uint64, []string, []interface{}:
+		pk, err := scope.PrimaryKey(e, modelValue)
+		if err != nil {
+			return "", err
+		}
 		str = fmt.Sprintf("(%v.%v IN (?))", scope.QuotedTableName(e, modelValue),
-			scope.Quote(e, scope.PrimaryKey(e, modelValue)))
+			scope.Quote(e, pk))
 		clause["args"] = []interface{}{value}
 	case map[string]interface{}:
 		var sqls []string
@@ -83,7 +88,7 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 					scope.QuotedTableName(e, modelValue), scope.Quote(e, key)))
 			}
 		}
-		return strings.Join(sqls, " AND ")
+		return strings.Join(sqls, " AND "), nil
 	default:
 		v := reflect.ValueOf(value)
 		if v.Kind() == reflect.Ptr {
@@ -91,7 +96,11 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 		}
 		if v.Kind() == reflect.Struct {
 			var sqls []string
-			for _, field := range scope.Fields(e, value) {
+			fds, err := scope.Fields(e, value)
+			if err != nil {
+				return "", err
+			}
+			for _, field := range fds {
 				if !field.IsIgnored && !field.IsBlank {
 					sqls = append(sqls, fmt.Sprintf("(%v.%v = %v)",
 						scope.QuotedTableName(e, value),
@@ -99,7 +108,7 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 						scope.AddToVars(e, field.Field.Interface())))
 				}
 			}
-			return strings.Join(sqls, " AND ")
+			return strings.Join(sqls, " AND "), nil
 		}
 	}
 
@@ -130,12 +139,16 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 	return
 }
 
-func PrimaryCondition(e *engine.Engine, modelValue, value interface{}) string {
+func PrimaryCondition(e *engine.Engine, modelValue, value interface{}) (string, error) {
+	pk, err := scope.PrimaryKey(e, modelValue)
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf("(%v.%v = %v)", scope.QuotedTableName(e, modelValue),
-		scope.Quote(e, scope.PrimaryKey(e, modelValue)), value)
+		scope.Quote(e, pk), value), nil
 }
 
-func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string) {
+func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) {
 	var (
 		quotedTableName                                = scope.QuotedTableName(e, modelValue)
 		primaryConditions, andConditions, orConditions []string
@@ -146,9 +159,16 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string) {
 		primaryConditions = append(primaryConditions, sql)
 	}
 
-	f := scope.PrimaryField(e, modelValue)
+	f, err := scope.PrimaryField(e, modelValue)
+	if err != nil {
+		return "", err
+	}
 	if !(f == nil || f.IsBlank) {
-		for _, field := range scope.PrimaryFields(e, modelValue) {
+		pfs, err := scope.PrimaryFields(e, modelValue)
+		if err != nil {
+			return "", err
+		}
+		for _, field := range pfs {
 			sql := fmt.Sprintf("%v.%v = %v", quotedTableName,
 				scope.Quote(e, field.DBName), scope.AddToVars(e, field.Field.Interface()))
 			primaryConditions = append(primaryConditions, sql)
@@ -156,21 +176,27 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string) {
 	}
 
 	for _, clause := range e.Search.WhereConditions {
-		if sql := Where(e, modelValue, clause); sql != "" {
-			andConditions = append(andConditions, sql)
+		sql, err := Where(e, modelValue, clause)
+		if err != nil {
+			return "", err
 		}
+		andConditions = append(andConditions, sql)
 	}
 
 	for _, clause := range e.Search.OrConditions {
-		if sql := Where(e, modelValue, clause); sql != "" {
-			orConditions = append(orConditions, sql)
+		sql, err := Where(e, modelValue, clause)
+		if err != nil {
+			return "", err
 		}
+		orConditions = append(orConditions, sql)
 	}
 
 	for _, clause := range e.Search.NotConditions {
-		if sql := Not(e, modelValue, clause); sql != "" {
-			andConditions = append(andConditions, sql)
+		sql, err := Not(e, modelValue, clause)
+		if err != nil {
+			return "", err
 		}
+		andConditions = append(andConditions, sql)
 	}
 
 	orSQL := strings.Join(orConditions, " OR ")
@@ -194,14 +220,17 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string) {
 	return
 }
 
-func Not(e *engine.Engine, modelValue interface{}, clause map[string]interface{}) (str string) {
+func Not(e *engine.Engine, modelValue interface{}, clause map[string]interface{}) (str string, err error) {
 	var notEqualSQL string
-	var primaryKey = scope.PrimaryKey(e, modelValue)
+	primaryKey, err := scope.PrimaryKey(e, modelValue)
+	if err != nil {
+		return "", err
+	}
 	switch value := clause["query"].(type) {
 	case string:
 		if regexes.IsNumber.MatchString(value) {
 			id, _ := strconv.Atoi(value)
-			return fmt.Sprintf("(%v <> %v)", scope.Quote(e, primaryKey), id)
+			return fmt.Sprintf("(%v <> %v)", scope.Quote(e, primaryKey), id), nil
 		} else if regexes.Comparison.MatchString(value) {
 			str = fmt.Sprintf(" NOT (%v) ", value)
 			notEqualSQL = fmt.Sprintf("NOT (%v)", value)
@@ -210,13 +239,13 @@ func Not(e *engine.Engine, modelValue interface{}, clause map[string]interface{}
 			notEqualSQL = fmt.Sprintf("(%v.%v <> ?)", scope.QuotedTableName(e, modelValue), scope.Quote(e, value))
 		}
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, sql.NullInt64:
-		return fmt.Sprintf("(%v.%v <> %v)", scope.QuotedTableName(e, modelValue), scope.Quote(e, primaryKey), value)
+		return fmt.Sprintf("(%v.%v <> %v)", scope.QuotedTableName(e, modelValue), scope.Quote(e, primaryKey), value), nil
 	case []int, []int8, []int16, []int32, []int64, []uint, []uint8, []uint16, []uint32, []uint64, []string:
 		if reflect.ValueOf(value).Len() > 0 {
 			str = fmt.Sprintf("(%v.%v NOT IN (?))", scope.QuotedTableName(e, modelValue), scope.Quote(e, primaryKey))
 			clause["args"] = []interface{}{value}
 		}
-		return ""
+		return "", nil
 	case map[string]interface{}:
 		var sqls []string
 		for key, value := range value {
@@ -228,11 +257,15 @@ func Not(e *engine.Engine, modelValue interface{}, clause map[string]interface{}
 				sqls = append(sqls, fmt.Sprintf("(%v.%v IS NOT NULL)", scope.QuotedTableName(e, modelValue), scope.Quote(e, key)))
 			}
 		}
-		return strings.Join(sqls, " AND ")
+		return strings.Join(sqls, " AND "), nil
 	case interface{}:
 		var sqls []string
 		//var newScope = scope.New(value)
-		for _, field := range scope.Fields(e, value) {
+		fds, err := scope.Fields(e, value)
+		if err != nil {
+			return "", err
+		}
+		for _, field := range fds {
 			if !field.IsBlank {
 				sqls = append(sqls, fmt.Sprintf("(%v.%v <> %v)",
 					scope.QuotedTableName(e, modelValue),
@@ -240,7 +273,7 @@ func Not(e *engine.Engine, modelValue interface{}, clause map[string]interface{}
 					scope.AddToVars(e, field.Field.Interface())))
 			}
 		}
-		return strings.Join(sqls, " AND ")
+		return strings.Join(sqls, " AND "), nil
 	}
 
 	args := clause["args"].([]interface{})
@@ -307,14 +340,16 @@ func Select(e *engine.Engine, modelValue interface{}, clause map[string]interfac
 	return
 }
 
-func JoinSQL(e *engine.Engine, modelValue interface{}) string {
+func JoinSQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	var j []string
 	for _, clause := range e.Search.JoinConditions {
-		if sql := Where(e, modelValue, clause); sql != "" {
-			j = append(j, strings.TrimSuffix(strings.TrimPrefix(sql, "("), ")"))
+		sql, err := Where(e, modelValue, clause)
+		if err != nil {
+			return "", err
 		}
+		j = append(j, strings.TrimSuffix(strings.TrimPrefix(sql, "("), ")"))
 	}
-	return strings.Join(j, " ") + " "
+	return strings.Join(j, " ") + " ", nil
 }
 
 func OrderSQL(e *engine.Engine, modelValue interface{}) string {
@@ -355,52 +390,69 @@ func GroupSQL(e *engine.Engine) string {
 	return " GROUP BY " + e.Search.Group
 }
 
-func HavingSQL(e *engine.Engine, modelValue interface{}) string {
+func HavingSQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	if len(e.Search.HavingConditions) == 0 {
-		return ""
+		return "", errors.New("no having search conditions found")
 	}
-
 	var andConditions []string
 	for _, clause := range e.Search.HavingConditions {
-		if sql := Where(e, modelValue, clause); sql != "" {
-			andConditions = append(andConditions, sql)
+		sql, err := Where(e, modelValue, clause)
+		if err != nil {
+			return "", err
 		}
+		andConditions = append(andConditions, sql)
 	}
 	combinedSQL := strings.Join(andConditions, " AND ")
-	if len(combinedSQL) == 0 {
-		return ""
-	}
-
-	return " HAVING " + combinedSQL
+	return " HAVING " + combinedSQL, nil
 }
 
 // PrepareQuery sets the e.Scope.SQL by generating the whole sql query isnide
 // engine.
-func PrepareQuery(e *engine.Engine, modelValue interface{}) {
-	e.Scope.SQL = PrepareQuerySQL(e, modelValue)
+func PrepareQuery(e *engine.Engine, modelValue interface{}) error {
+	sql, err := PrepareQuerySQL(e, modelValue)
+	if err != nil {
+		return err
+	}
+	e.Scope.SQL = sql
+	return nil
 }
 
-func PrepareQuerySQL(e *engine.Engine, modelValue interface{}) string {
+func PrepareQuerySQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	if e.Search.Raw {
-		return strings.Replace(
-			CombinedCondition(e, modelValue),
-			"$$", "?", -1)
+		c, err := CombinedCondition(e, modelValue)
+		if err != nil {
+			return "", err
+		}
+		return strings.Replace(c, "$$", "?", -1), nil
+	}
+	c, err := CombinedCondition(e, modelValue)
+	if err != nil {
+		return "", err
 	}
 	return strings.Replace(
 		fmt.Sprintf("SELECT %v FROM %v %v",
 			SelectSQL(e, modelValue),
 			scope.QuotedTableName(e, modelValue),
-			CombinedCondition(e, modelValue)),
-		"$$", "?", -1)
+			c),
+		"$$", "?", -1), nil
 }
 
-func CombinedCondition(e *engine.Engine, modelValue interface{}) string {
-	joinSql := JoinSQL(e, modelValue)
-	whereSql := WhereSQL(e, modelValue)
+func CombinedCondition(e *engine.Engine, modelValue interface{}) (string, error) {
+	joinSql, err := JoinSQL(e, modelValue)
+	if err != nil {
+		return "", err
+	}
+	whereSql, err := WhereSQL(e, modelValue)
+	if err != nil {
+		return "", err
+	}
 	if e.Search.Raw {
 		whereSql = strings.TrimSuffix(strings.TrimPrefix(whereSql, "WHERE ("), ")")
 	}
-	return joinSql + whereSql + GroupSQL(e) +
-		HavingSQL(e, modelValue) +
-		OrderSQL(e, modelValue) + LimitAndOffsetSQL(e)
+	having, err := HavingSQL(e, modelValue)
+	if err != nil {
+		return "", err
+	}
+	return joinSql + whereSql + GroupSQL(e) + having +
+		OrderSQL(e, modelValue) + LimitAndOffsetSQL(e), nil
 }

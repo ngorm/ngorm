@@ -13,8 +13,9 @@ func TestFieldByName(t *testing.T) {
 	e := fixture.TestEngine()
 	e.Parent = e
 	var field fixture.CalculateField
-	if f, ok := FieldByName(e, &field, "Children"); !ok || f.Relationship == nil {
-		t.Errorf("Should calculate fields correctly for the first time")
+	_, err := FieldByName(e, &field, "Children")
+	if err != nil {
+		t.Error(err)
 	}
 }
 
@@ -54,7 +55,10 @@ func TestPrimaryKey(t *testing.T) {
 	e.Dialect = &ql.QL{}
 	e.Parent = e
 	expect := "mapped_id"
-	key := PrimaryKey(e, &fixture.CustomizeColumn{ID: 10})
+	key, err := PrimaryKey(e, &fixture.CustomizeColumn{ID: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if key != expect {
 		t.Errorf("expected %s got %s", expect, key)
 	}
