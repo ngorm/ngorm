@@ -36,3 +36,11 @@ Database support
 - [ ] mysql
 - [ ] mssql
 - [ ] sqlite
+
+
+##  Motivation
+
+I wanted to contribute to gorm by improving performance , I ended up being
+enlightened.
+
+
