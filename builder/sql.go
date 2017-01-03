@@ -141,7 +141,7 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 
 //PrimaryCondition generates WHERE clause with the value set for primary key.
 //This will return an error if the modelValue doesn't have primary key, the
-//reason for modelValue not to have a primary key might be due to hte modelValue
+//reason for modelValue not to have a primary key might be due to the modelValue
 //not being a valid ngorm model, please check scope.PrimaryKey for more details.
 //
 // So, if the modelValue has primary key field id, and the value supplied is an
