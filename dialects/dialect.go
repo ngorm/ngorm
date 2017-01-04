@@ -1,3 +1,5 @@
+//Package dialects defines a uniform interface for creating custom support for
+//different SQL databases.
 package dialects
 
 import (
