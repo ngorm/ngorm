@@ -8,6 +8,7 @@ package scope
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"go/ast"
 	"reflect"
 	"strings"
@@ -75,7 +76,6 @@ func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
 		}
 		e.Scope.Fields = &fields
 	}
-
 	return *e.Scope.Fields, nil
 }
 
@@ -83,7 +83,7 @@ func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
 //the e.Scope.Value to value, you must set this value manually if you want to
 //set the scope value.
 //
-// value must be a go struct. The computed *model.Struct is cached , so
+// value must be a go struct or a slict of go struct. The computed *model.Struct is cached , so
 // multiple calls to this function with the same value won't compute anything
 // and return the cached copy. It is less unlikely that the structs will be
 // changine at runtime.
@@ -98,13 +98,19 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 	}
 
 	refType := reflect.ValueOf(value).Type()
-	for refType.Kind() == reflect.Slice || refType.Kind() == reflect.Ptr {
+	if refType.Kind() == reflect.Ptr {
 		refType = refType.Elem()
+	}
+	if refType.Kind() == reflect.Slice {
+		refType = refType.Elem()
+		if refType.Kind() == reflect.Ptr {
+			refType = refType.Elem()
+		}
 	}
 
 	// Scope value need to be a struct
 	if refType.Kind() != reflect.Struct {
-		return nil, errors.New("only structs are supported")
+		return nil, fmt.Errorf("%s is not supported, value should be a struct%s ", refType.Kind())
 	}
 
 	// Get Cached model struct
@@ -197,12 +203,12 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 					// build relationships
 					switch inType.Kind() {
 					case reflect.Slice:
-						err := buildRelationSlice(e, refType, &m, field)
+						err := buildRelationSlice(e, value, refType, &m, field)
 						if err != nil {
 							return nil, err
 						}
 					case reflect.Struct:
-						err := buildRelationStruct(e, refType, &m, field)
+						err := buildRelationStruct(e, value, refType, &m, field)
 						if err != nil {
 							return nil, err
 						}
@@ -239,7 +245,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
 //of loggic and no any error should be absorbed.
-func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct, field *model.StructField) error {
+func buildRelationSlice(e *engine.Engine, modelValue interface{}, refType reflect.Type, m *model.Struct, field *model.StructField) error {
 	var (
 		rel                    = &model.Relationship{}
 		toScope                = reflect.New(field.Struct.Type).Interface()
@@ -364,7 +370,7 @@ func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct,
 						}
 					}
 					if len(associationForeignKeys) == 0 && len(fks) == 1 {
-						pk, err := PrimaryKey(e, e.Scope.Value)
+						pk, err := PrimaryKey(e, modelValue)
 						if err != nil {
 							return err
 						}
@@ -405,7 +411,7 @@ func buildRelationSlice(e *engine.Engine, refType reflect.Type, m *model.Struct,
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
 //of loggic and no any error should be absorbed.
-func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct, field *model.StructField) error {
+func buildRelationStruct(e *engine.Engine, modelValue interface{}, refType reflect.Type, m *model.Struct, field *model.StructField) error {
 	var (
 		// user has one profile, associationType is User, profile use UserID as foreign key
 		// user belongs to profile, associationType is Profile, user use ProfileID as foreign key
@@ -440,7 +446,7 @@ func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct
 			if value, ok := field.TagSettings["POLYMORPHIC_VALUE"]; ok {
 				rel.PolymorphicValue = value
 			} else {
-				rel.PolymorphicValue = TableName(e, e.Scope.Value)
+				rel.PolymorphicValue = TableName(e, modelValue)
 			}
 			polymorphicType.IsForeignKey = true
 		}
@@ -479,7 +485,7 @@ func buildRelationStruct(e *engine.Engine, refType reflect.Type, m *model.Struct
 					}
 				}
 				if len(associationForeignKeys) == 0 && len(fks) == 1 {
-					pk, err := PrimaryKey(e, e.Scope.Value)
+					pk, err := PrimaryKey(e, modelValue)
 					if err != nil {
 						return err
 					}
