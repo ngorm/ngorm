@@ -749,3 +749,6 @@ func GetForeignField(column string, fields []*model.StructField) *model.StructFi
 	}
 	return nil
 }
+
+func Scan(rows *sql.Rows, columns []string, fields []*model.Field) {
+}

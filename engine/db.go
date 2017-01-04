@@ -26,6 +26,7 @@ type Engine struct {
 	Search    *model.Search
 	Scope     *model.Scope
 	StructMap *model.SafeStructsMap
+	SQLDB     model.SQLCommon
 }
 
 //AddError adds err to Engine.Error.

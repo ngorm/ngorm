@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+const (
+	OrderByPK        = "ngorm:order_by_primary_key"
+	QueryDestination = "ngorm:query_destination"
+	QueryOption      = "ngorm:query_option"
+)
+
 //Model defines common fields that are used for defining SQL Tables. This is a
 //helper that you can embed in your own struct definition.
 //
@@ -151,6 +157,21 @@ type Scope struct {
 	SkipLeft        bool
 	Fields          *[]*Field
 	SelectAttrs     *[]string
+	mu              sync.RWMutex
+	data            map[string]interface{}
+}
+
+func (s *Scope) Set(key string, value interface{}) {
+	s.mu.Lock()
+	s.data[key] = value
+	s.mu.Unlock()
+}
+
+func (s *Scope) Get(key string) (interface{}, bool) {
+	s.mu.RLock()
+	v, ok := s.data[key]
+	s.mu.RUnlock()
+	return v, ok
 }
 
 //Search is the search level of SQL buidling

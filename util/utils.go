@@ -224,7 +224,7 @@ func getValueFromFields(value reflect.Value, fieldNames []string) (results []int
 	return
 }
 
-func addExtraSpaceIfExist(str string) string {
+func AddExtraSpaceIfExist(str string) string {
 	if str != "" {
 		return " " + str
 	}
