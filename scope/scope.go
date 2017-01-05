@@ -200,15 +200,10 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 					// build relationships
 					switch inType.Kind() {
 					case reflect.Slice:
-						err := buildRelationSlice(e, value, refType, &m, field)
-						if err != nil {
-							return nil, err
-						}
+						defer buildRelationSlice(e, value, refType, &m, field)
+
 					case reflect.Struct:
-						err := buildRelationStruct(e, value, refType, &m, field)
-						if err != nil {
-							return nil, err
-						}
+						defer buildRelationStruct(e, value, refType, &m, field)
 					default:
 						field.IsNormal = true
 					}
