@@ -234,7 +234,7 @@ func TestNot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expect = ``
+	expect = `("users"."email" <> $1)`
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
 	}
