@@ -13,7 +13,7 @@ import (
 	"github.com/gernest/ngorm/util"
 )
 
-func Query(e *engine.Engine) error {
+func Query(b *HooksBook, e *engine.Engine) error {
 	var isSlice, isPtr bool
 	var resultType reflect.Type
 	results := reflect.ValueOf(e.Scope.Value)
@@ -78,6 +78,14 @@ func Query(e *engine.Engine) error {
 				results.Set(reflect.Append(results, elem))
 			}
 		}
+	}
+	return nil
+}
+
+func AfterQuery(b *HooksBook, e *engine.Engine) error {
+	af, ok := b.Query.Get(model.QueryAfterFindHook)
+	if ok {
+		return af.Exec(b, e)
 	}
 	return nil
 }
