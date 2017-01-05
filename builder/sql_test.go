@@ -169,3 +169,77 @@ func TestWhere(t *testing.T) {
 		t.Errorf("expected %s got %s", expect, s)
 	}
 }
+
+func TestNot(t *testing.T) {
+	e := fixture.TestEngine()
+	e.Dialect = ql.Memory()
+
+	search.Not(e, "name", "gernest")
+	var user fixture.User
+	s, err := Not(e, &user, e.Search.NotConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := `("users"."name" <> $1)`
+	if s != expect {
+		t.Errorf("expected %s got %s", expect, s)
+	}
+
+	// Not in
+	e.Search.NotConditions = nil
+	e.Scope.SQLVars = nil
+	e.Scope.Fields = nil
+	search.Not(e, "name", []string{"jinzhu", "jinzhu 2"})
+	s, err = Not(e, &user, e.Search.NotConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect = `("users"."name" NOT IN ($1,$2))`
+	if s != expect {
+		t.Errorf("expected %s got %s", expect, s)
+	}
+
+	// Not in slice of primary keys
+	e.Search.NotConditions = nil
+	e.Scope.SQLVars = nil
+	search.Not(e, []int64{1, 2, 3})
+	s, err = Not(e, &user, e.Search.NotConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expect = `("users"."id" NOT IN ($1,$2,$3))`
+	if s != expect {
+		t.Errorf("expected %s got %s", expect, s)
+	}
+
+	// Not in with empty slice
+	e.Search.NotConditions = nil
+	e.Scope.SQLVars = nil
+	search.Not(e, []int64{})
+	s, err = Not(e, &user, e.Search.NotConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expect = ``
+	if s != expect {
+		t.Errorf("expected %s got %s", expect, s)
+	}
+
+	// Struct
+	e.Search.NotConditions = nil
+	e.Scope.SQLVars = nil
+	e.Scope.Fields = nil
+	search.Not(e, &fixture.Email{Email: "jinzhu"})
+	s, err = Not(e, &user, e.Search.NotConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expect = ``
+	if s != expect {
+		t.Errorf("expected %s got %s", expect, s)
+	}
+
+}

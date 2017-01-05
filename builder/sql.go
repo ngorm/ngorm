@@ -252,8 +252,9 @@ func Not(e *engine.Engine, modelValue interface{}, clause map[string]interface{}
 		if reflect.ValueOf(value).Len() > 0 {
 			str = fmt.Sprintf("(%v.%v NOT IN (?))", scope.QuotedTableName(e, modelValue), scope.Quote(e, primaryKey))
 			clause["args"] = []interface{}{value}
+		} else {
+			return "", nil
 		}
-		return "", nil
 	case map[string]interface{}:
 		var sqls []string
 		for key, value := range value {
@@ -267,21 +268,27 @@ func Not(e *engine.Engine, modelValue interface{}, clause map[string]interface{}
 		}
 		return strings.Join(sqls, " AND "), nil
 	case interface{}:
-		var sqls []string
-		//var newScope = scope.New(value)
-		fds, err := scope.Fields(e, value)
-		if err != nil {
-			return "", err
+		v := reflect.ValueOf(value)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
 		}
-		for _, field := range fds {
-			if !field.IsBlank {
-				sqls = append(sqls, fmt.Sprintf("(%v.%v <> %v)",
-					scope.QuotedTableName(e, modelValue),
-					scope.Quote(e, field.DBName),
-					scope.AddToVars(e, field.Field.Interface())))
+		if v.Kind() == reflect.Struct {
+			var sqls []string
+			fds, err := scope.Fields(e, value)
+			if err != nil {
+				return "", err
 			}
+			for _, field := range fds {
+				if !field.IsBlank {
+					sqls = append(sqls, fmt.Sprintf("(%v.%v <> %v)",
+						scope.QuotedTableName(e, modelValue),
+						scope.Quote(e, field.DBName),
+						scope.AddToVars(e, field.Field.Interface())))
+				}
+			}
+			return strings.Join(sqls, " AND "), nil
 		}
-		return strings.Join(sqls, " AND "), nil
+
 	}
 
 	args := clause["args"].([]interface{})
