@@ -62,6 +62,55 @@
 // ql ,
 package ngorm
 
+import (
+	"context"
+
+	"github.com/gernest/ngorm/dialects"
+	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/model"
+)
+
+type Opener interface {
+	Open(dialect string, args ...interface{}) (model.SQLCommon, dialects.Dialect, error)
+}
+
 // DB contains information for current db connection
 type DB struct {
+	db            model.SQLCommon
+	dialect       dialects.Dialect
+	connStr       string
+	ctx           context.Context
+	cancel        func()
+	singularTable bool
+	structMap     *model.SafeStructsMap
+	engine        *engine.Engine
+}
+
+func Open(opener Opener, dialect string, args ...interface{}) (*DB, error) {
+	db, dia, err := opener.Open(dialect, args...)
+	if err != nil {
+		return nil, err
+	}
+	dia.SetDB(db)
+	ctx, cancel := context.WithCancel(context.Background())
+	return &DB{
+		db:        db,
+		dialect:   dia,
+		structMap: model.NewStructsMap(),
+		ctx:       ctx,
+		cancel:    cancel,
+	}, nil
+}
+
+// NewEngine returns an initialized engine ready to kick some ass.
+func (db *DB) NewEngine() *engine.Engine {
+	return &engine.Engine{
+		Search:        &model.Search{},
+		Scope:         &model.Scope{},
+		StructMap:     db.structMap,
+		SingularTable: db.singularTable,
+		Ctx:           db.ctx,
+		Dialect:       db.dialect,
+		SQLDB:         db.db,
+	}
 }

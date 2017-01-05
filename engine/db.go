@@ -20,7 +20,7 @@ type Engine struct {
 	//The default behaviour is to plurarize table names e.g Order struct will
 	//give orders table name.
 	SingularTable bool
-	ctx           context.Context
+	Ctx           context.Context
 	Dialect       dialects.Dialect
 
 	Search    *model.Search
