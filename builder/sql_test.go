@@ -239,4 +239,30 @@ func TestNot(t *testing.T) {
 		t.Errorf("expected %s got %s", expect, s)
 	}
 
+	// Map when value is nil
+	e.Search.NotConditions = nil
+	e.Scope.SQLVars = nil
+	search.Not(e, map[string]interface{}{"name": "jinzhu", "age": nil})
+	s, err = Not(e, &user, e.Search.NotConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := `("users"."age" IS NOT NULL)`
+	if !strings.Contains(s, expected) {
+		t.Errorf("expected %s to contain %s", s, expected)
+	}
+
+	// Primary Key
+	e.Search.NotConditions = nil
+	e.Scope.SQLVars = nil
+	search.Not(e, 10)
+	s, err = Not(e, &user, e.Search.NotConditions[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect = `("users"."id" <> 10)`
+	if s != expect {
+		t.Errorf("expected %s got %s", expect, s)
+	}
+
 }
