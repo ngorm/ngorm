@@ -11,7 +11,7 @@ import (
 //can be a way to overide default behaviour.
 type Hook interface {
 	Name() string
-	Exec(e *engine.Engine) error
+	Exec(h *HooksBook, e *engine.Engine) error
 }
 
 type Hooks struct {
@@ -38,17 +38,25 @@ func NewHooks() *Hooks {
 
 type simpleHook struct {
 	name string
-	e    func(*engine.Engine) error
+	e    func(*HooksBook, *engine.Engine) error
 }
 
 func (s *simpleHook) Name() string {
 	return s.name
 }
 
-func (s *simpleHook) Exec(e *engine.Engine) error {
-	return s.e(e)
+func (s *simpleHook) Exec(h *HooksBook, e *engine.Engine) error {
+	return s.e(h, e)
 }
 
-func HookFunc(name string, f func(*engine.Engine) error) Hook {
+func HookFunc(name string, f func(*HooksBook, *engine.Engine) error) Hook {
 	return &simpleHook{name: name, e: f}
+}
+
+type HooksBook struct {
+	Create *Hooks
+	Delete *Hooks
+	Update *Hooks
+	Save   *Hooks
+	Query  *Hooks
 }

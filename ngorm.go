@@ -67,6 +67,7 @@ import (
 
 	"github.com/gernest/ngorm/dialects"
 	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/hooks"
 	"github.com/gernest/ngorm/model"
 )
 
@@ -83,7 +84,7 @@ type DB struct {
 	cancel        func()
 	singularTable bool
 	structMap     *model.SafeStructsMap
-	engine        *engine.Engine
+	hooks         *hooks.HooksBook
 }
 
 func Open(opener Opener, dialect string, args ...interface{}) (*DB, error) {
