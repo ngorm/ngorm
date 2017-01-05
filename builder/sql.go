@@ -228,6 +228,18 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) 
 	return
 }
 
+//Not generates sql for NOT condition. This accepts clause with two keys, one
+//for query and the other for args( positional arguments)
+//
+// query value can be of several types.
+//
+//  string,
+//  int int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64,
+//  sql.Nu[]int,
+//  []int8, []int16, []int32, []int64, []uint, []uint8,
+//  []uint16,[]uint32,[]uint64, []string, []interface{}
+//  map[string]interface{}:
+//  struct
 func Not(e *engine.Engine, modelValue interface{}, clause map[string]interface{}) (str string, err error) {
 	var notEqualSQL string
 	primaryKey, err := scope.PrimaryKey(e, modelValue)
