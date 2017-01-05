@@ -19,11 +19,9 @@ type Engine struct {
 	//When this field is set to true. The table names will not be pluarized.
 	//The default behaviour is to plurarize table names e.g Order struct will
 	//give orders table name.
-	SingularTable     bool
-	source            string
-	blockGlobalUpdate bool
-	ctx               context.Context
-	Dialect           dialects.Dialect
+	SingularTable bool
+	ctx           context.Context
+	Dialect       dialects.Dialect
 
 	Search    *model.Search
 	Scope     *model.Scope
