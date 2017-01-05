@@ -158,7 +158,6 @@ func TestWhere(t *testing.T) {
 	// Struct
 	e.Search.WhereConditions = nil
 	e.Scope.SQLVars = nil
-	e.Scope.Fields = nil
 	search.Where(e, &fixture.User{Name: "jinzhu", Age: 20})
 	s, err = Where(e, &user, e.Search.WhereConditions[0])
 	if err != nil {
@@ -188,7 +187,6 @@ func TestNot(t *testing.T) {
 	// Not in
 	e.Search.NotConditions = nil
 	e.Scope.SQLVars = nil
-	e.Scope.Fields = nil
 	search.Not(e, "name", []string{"jinzhu", "jinzhu 2"})
 	s, err = Not(e, &user, e.Search.NotConditions[0])
 	if err != nil {
@@ -230,7 +228,6 @@ func TestNot(t *testing.T) {
 	// Struct
 	e.Search.NotConditions = nil
 	e.Scope.SQLVars = nil
-	e.Scope.Fields = nil
 	search.Not(e, &fixture.Email{Email: "jinzhu"})
 	s, err = Not(e, &user, e.Search.NotConditions[0])
 	if err != nil {

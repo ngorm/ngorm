@@ -155,7 +155,6 @@ type Scope struct {
 	InstanceID      string
 	PrimaryKeyField *Field
 	SkipLeft        bool
-	Fields          *[]*Field
 	SelectAttrs     *[]string
 	mu              sync.RWMutex
 	data            map[string]interface{}

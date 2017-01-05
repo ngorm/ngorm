@@ -47,36 +47,33 @@ func Quote(e *engine.Engine, str string) string {
 //something. This is only done when e.Scope.Fields is nil, for the case of non
 //nil value then *e.Scope.Fiedls is returned without computing anything.
 func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
-	if e.Scope.Fields == nil {
-		var fields []*model.Field
-		i := reflect.ValueOf(value)
-		if i.Kind() == reflect.Ptr {
-			i = i.Elem()
-		}
-		isStruct := i.Kind() == reflect.Struct
-		m, err := GetModelStruct(e, value)
-		if err != nil {
-			return nil, err
-		}
-		for _, structField := range m.StructFields {
-			if isStruct {
-				fieldValue := i
-				for _, name := range structField.Names {
-					fieldValue = reflect.Indirect(fieldValue).FieldByName(name)
-				}
-				fields = append(fields, &model.Field{
-					StructField: structField,
-					Field:       fieldValue,
-					IsBlank:     util.IsBlank(fieldValue)})
-			} else {
-				fields = append(fields, &model.Field{
-					StructField: structField,
-					IsBlank:     true})
-			}
-		}
-		e.Scope.Fields = &fields
+	var fields []*model.Field
+	i := reflect.ValueOf(value)
+	if i.Kind() == reflect.Ptr {
+		i = i.Elem()
 	}
-	return *e.Scope.Fields, nil
+	isStruct := i.Kind() == reflect.Struct
+	m, err := GetModelStruct(e, value)
+	if err != nil {
+		return nil, err
+	}
+	for _, structField := range m.StructFields {
+		if isStruct {
+			fieldValue := i
+			for _, name := range structField.Names {
+				fieldValue = reflect.Indirect(fieldValue).FieldByName(name)
+			}
+			fields = append(fields, &model.Field{
+				StructField: structField,
+				Field:       fieldValue,
+				IsBlank:     util.IsBlank(fieldValue)})
+		} else {
+			fields = append(fields, &model.Field{
+				StructField: structField,
+				IsBlank:     true})
+		}
+	}
+	return fields, nil
 }
 
 //GetModelStruct construct a *model.Struct from value. This does not set
