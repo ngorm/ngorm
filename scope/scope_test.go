@@ -11,7 +11,6 @@ import (
 
 func TestFieldByName(t *testing.T) {
 	e := fixture.TestEngine()
-	e.Parent = e
 	var field fixture.CalculateField
 	_, err := FieldByName(e, &field, "Children")
 	if err != nil {
@@ -22,7 +21,6 @@ func TestFieldByName(t *testing.T) {
 func TestQuote(t *testing.T) {
 	e := fixture.TestEngine()
 	e.Dialect = &ql.QL{}
-	e.Parent = e
 	sample := []struct {
 		src, expetc string
 	}{
@@ -41,7 +39,6 @@ func TestQuote(t *testing.T) {
 func TestQuotedTableName(t *testing.T) {
 	e := fixture.TestEngine()
 	e.Dialect = &ql.QL{}
-	e.Parent = e
 	tname := "my_table"
 	e.Search.TableName = tname
 	name := QuotedTableName(e, tname)
@@ -53,7 +50,6 @@ func TestQuotedTableName(t *testing.T) {
 func TestPrimaryKey(t *testing.T) {
 	e := fixture.TestEngine()
 	e.Dialect = &ql.QL{}
-	e.Parent = e
 	expect := "mapped_id"
 	key, err := PrimaryKey(e, &fixture.CustomizeColumn{ID: 10})
 	if err != nil {
@@ -83,7 +79,6 @@ func (w *withDBTabler) TableName(e *engine.Engine) string {
 func TestTableName(t *testing.T) {
 	e := fixture.TestEngine()
 	e.Dialect = &ql.QL{}
-	e.Parent = e
 	table := "serach_table"
 	tabler := "with_tabler"
 	e.Search.TableName = table

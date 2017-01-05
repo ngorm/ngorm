@@ -14,7 +14,6 @@ type Engine struct {
 	Value             interface{}
 	Error             error
 	RowsAffected      int64
-	Parent            *Engine
 	logMode           int
 	SingularTable     bool
 	source            string

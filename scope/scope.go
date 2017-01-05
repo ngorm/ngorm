@@ -36,7 +36,7 @@ func Quote(e *engine.Engine, str string) string {
 	if strings.Index(str, ".") != -1 {
 		newStrs := []string{}
 		for _, s := range strings.Split(str, ".") {
-			newStrs = append(newStrs, e.Parent.Dialect.Quote(s))
+			newStrs = append(newStrs, e.Dialect.Quote(s))
 		}
 		return strings.Join(newStrs, ".")
 	}
