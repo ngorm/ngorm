@@ -43,4 +43,8 @@ Database support
 I wanted to contribute to gorm by improving performance , I ended up being
 enlightened.
 
+## Installation
+
+	go get -u github.com/gernest/ngorm
+
 
