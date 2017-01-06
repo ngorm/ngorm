@@ -71,7 +71,7 @@ func TestWhere(t *testing.T) {
 	}
 
 	// IN
-	search.Where(e, "name in (?)", []string{"jinzhu", "jinzhu 2"})
+	search.Where(e, "name in (?)", []string{"gernest", "gernest 2"})
 	s, err = Where(e, &user, e.Search.WhereConditions[1])
 	if err != nil {
 		t.Fatal(err)
@@ -93,7 +93,7 @@ func TestWhere(t *testing.T) {
 	}
 
 	// AND
-	search.Where(e, "name = ? AND age >= ?", "jinzhu", "22")
+	search.Where(e, "name = ? AND age >= ?", "gernest", "22")
 	s, err = Where(e, &user, e.Search.WhereConditions[3])
 	if err != nil {
 		t.Fatal(err)
@@ -106,7 +106,7 @@ func TestWhere(t *testing.T) {
 	// Where with  Map
 	e.Search.WhereConditions = nil
 	e.Scope.SQLVars = nil
-	search.Where(e, map[string]interface{}{"name": "jinzhu", "age": 20})
+	search.Where(e, map[string]interface{}{"name": "gernest", "age": 20})
 	s, err = Where(e, &user, e.Search.WhereConditions[0])
 	if err != nil {
 		t.Fatal(err)
@@ -119,7 +119,7 @@ func TestWhere(t *testing.T) {
 	// Map when value is nil
 	e.Search.WhereConditions = nil
 	e.Scope.SQLVars = nil
-	search.Where(e, map[string]interface{}{"name": "jinzhu", "age": nil})
+	search.Where(e, map[string]interface{}{"name": "gernest", "age": nil})
 	s, err = Where(e, &user, e.Search.WhereConditions[0])
 	if err != nil {
 		t.Fatal(err)
@@ -158,7 +158,7 @@ func TestWhere(t *testing.T) {
 	// Struct
 	e.Search.WhereConditions = nil
 	e.Scope.SQLVars = nil
-	search.Where(e, &fixture.User{Name: "jinzhu", Age: 20})
+	search.Where(e, &fixture.User{Name: "gernest", Age: 20})
 	s, err = Where(e, &user, e.Search.WhereConditions[0])
 	if err != nil {
 		t.Fatal(err)
@@ -187,7 +187,7 @@ func TestNot(t *testing.T) {
 	// Not in
 	e.Search.NotConditions = nil
 	e.Scope.SQLVars = nil
-	search.Not(e, "name", []string{"jinzhu", "jinzhu 2"})
+	search.Not(e, "name", []string{"gernest", "gernest 2"})
 	s, err = Not(e, &user, e.Search.NotConditions[0])
 	if err != nil {
 		t.Fatal(err)
@@ -228,7 +228,7 @@ func TestNot(t *testing.T) {
 	// Struct
 	e.Search.NotConditions = nil
 	e.Scope.SQLVars = nil
-	search.Not(e, &fixture.Email{Email: "jinzhu"})
+	search.Not(e, &fixture.Email{Email: "gernest"})
 	s, err = Not(e, &user, e.Search.NotConditions[0])
 	if err != nil {
 		t.Fatal(err)
@@ -242,7 +242,7 @@ func TestNot(t *testing.T) {
 	// Map when value is nil
 	e.Search.NotConditions = nil
 	e.Scope.SQLVars = nil
-	search.Not(e, map[string]interface{}{"name": "jinzhu", "age": nil})
+	search.Not(e, map[string]interface{}{"name": "gernest", "age": nil})
 	s, err = Not(e, &user, e.Search.NotConditions[0])
 	if err != nil {
 		t.Fatal(err)
