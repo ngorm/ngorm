@@ -802,3 +802,22 @@ func SelectAttrs(e *engine.Engine) []string {
 	}
 	return *e.Scope.SelectAttrs
 }
+
+func ChangeableField(e *engine.Engine, field *model.Field) bool {
+	if selectAttrs := SelectAttrs(e); len(selectAttrs) > 0 {
+		for _, attr := range selectAttrs {
+			if field.Name == attr || field.DBName == attr {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, attr := range e.Search.Omits {
+		if field.Name == attr || field.DBName == attr {
+			return false
+		}
+	}
+
+	return true
+}
