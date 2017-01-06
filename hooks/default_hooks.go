@@ -83,9 +83,27 @@ func Query(b *HooksBook, e *engine.Engine) error {
 }
 
 func AfterQuery(b *HooksBook, e *engine.Engine) error {
-	af, ok := b.Query.Get(model.QueryAfterFindHook)
+	af, ok := b.Query.Get(model.HookQueryAfterFind)
 	if ok {
 		return af.Exec(b, e)
+	}
+	return nil
+}
+
+func BeforeCreate(b *HooksBook, e *engine.Engine) error {
+	bs, ok := b.Create.Get(model.HookBeforeSave)
+	if ok {
+		err := bs.Exec(b, e)
+		if err != nil {
+			return err
+		}
+	}
+	bc, ok := b.Create.Get(model.HookBeforeCreate)
+	if ok {
+		err := bc.Exec(b, e)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

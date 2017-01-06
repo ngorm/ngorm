@@ -12,9 +12,12 @@ const (
 	OrderByPK          = "ngorm:order_by_primary_key"
 	QueryDestination   = "ngorm:query_destination"
 	QueryOption        = "ngorm:query_option"
-	QueryHook          = "ngorm:query"
-	QueryAfterHook     = "ngorm:query_after"
-	QueryAfterFindHook = "ngorm:query_after_find"
+	Query              = "ngorm:query"
+	HookQueryAfter     = "ngorm:query_after"
+	HookQueryAfterFind = "ngorm:query_after_find"
+	HookBeforeCreate   = "ngorm:before_create_hook"
+	HookBeforeSave     = "ngorm:before_save_hook"
+	BeforeCreate       = "ngorm:before_create"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a
