@@ -107,7 +107,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 
 	// Scope value need to be a struct
 	if refType.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("%s is not supported, value should be a struct%s ", refType.Kind())
+		return nil, fmt.Errorf("%s is not supported, value should be a struct ", refType.Kind())
 	}
 
 	// Get Cached model struct
@@ -200,10 +200,14 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 					// build relationships
 					switch inType.Kind() {
 					case reflect.Slice:
-						defer buildRelationSlice(e, value, refType, &m, field)
+						defer func() {
+							_ = buildRelationSlice(e, value, refType, &m, field)
+						}()
 
 					case reflect.Struct:
-						defer buildRelationStruct(e, value, refType, &m, field)
+						defer func() {
+							_ = buildRelationStruct(e, value, refType, &m, field)
+						}()
 					default:
 						field.IsNormal = true
 					}
@@ -590,10 +594,9 @@ func FieldByName(e *engine.Engine, value interface{}, name string) (*model.Field
 	for _, field := range fds {
 		if field.Name == name || field.DBName == name {
 			return field, nil
-		} else {
-			if field.DBName == dbName {
-				return field, nil
-			}
+		}
+		if field.DBName == dbName {
+			return field, nil
 		}
 	}
 	return nil, errors.New("field not found")
@@ -742,9 +745,11 @@ func GetForeignField(column string, fields []*model.StructField) *model.StructFi
 	return nil
 }
 
+//Scan scans restult from the rows into fields.
 func Scan(rows *sql.Rows, columns []string, fields []*model.Field) {
 }
 
+//SetColumn sets the column value.
 func SetColumn(e *engine.Engine, column interface{}, value interface{}) error {
 	var updateAttrs = map[string]interface{}{}
 	if attrs, ok := e.Scope.Get(model.UpdateAttrs); ok {
@@ -784,6 +789,7 @@ func SetColumn(e *engine.Engine, column interface{}, value interface{}) error {
 	return errors.New("could not convert column to field")
 }
 
+//SelectAttrs returns the attributes in the select query.
 func SelectAttrs(e *engine.Engine) []string {
 	if e.Scope.SelectAttrs == nil {
 		attrs := []string{}
@@ -803,6 +809,7 @@ func SelectAttrs(e *engine.Engine) []string {
 	return *e.Scope.SelectAttrs
 }
 
+//ChangeableField returns true if the field's value can be changed.
 func ChangeableField(e *engine.Engine, field *model.Field) bool {
 	if selectAttrs := SelectAttrs(e); len(selectAttrs) > 0 {
 		for _, attr := range selectAttrs {
