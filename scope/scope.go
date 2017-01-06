@@ -744,3 +744,42 @@ func GetForeignField(column string, fields []*model.StructField) *model.StructFi
 
 func Scan(rows *sql.Rows, columns []string, fields []*model.Field) {
 }
+
+func SetColumn(e *engine.Engine, column interface{}, value interface{}) error {
+	var updateAttrs = map[string]interface{}{}
+	if attrs, ok := e.Scope.Get(model.UpdateAttrs); ok {
+		if u, ok := attrs.(map[string]interface{}); ok {
+			updateAttrs = u
+			defer e.Scope.Set(model.UpdateAttrs, updateAttrs)
+		}
+	}
+
+	if field, ok := column.(*model.Field); ok {
+		updateAttrs[field.DBName] = value
+		return field.Set(value)
+	} else if name, ok := column.(string); ok {
+		var (
+			dbName           = util.ToDBName(name)
+			mostMatchedField *model.Field
+		)
+		fds, err := Fields(e, e.Scope.Value)
+		if err != nil {
+			return err
+		}
+		for _, field := range fds {
+			if field.DBName == value {
+				updateAttrs[field.DBName] = value
+				return field.Set(value)
+			}
+			if (field.DBName == dbName) || (field.Name == name && mostMatchedField == nil) {
+				mostMatchedField = field
+			}
+		}
+
+		if mostMatchedField != nil {
+			updateAttrs[mostMatchedField.DBName] = value
+			return mostMatchedField.Set(value)
+		}
+	}
+	return errors.New("could not convert column to field")
+}

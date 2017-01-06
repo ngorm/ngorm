@@ -18,6 +18,7 @@ const (
 	HookBeforeCreate   = "ngorm:before_create_hook"
 	HookBeforeSave     = "ngorm:before_save_hook"
 	BeforeCreate       = "ngorm:before_create"
+	UpdateAttrs        = "ngorm:update_attrs"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a
