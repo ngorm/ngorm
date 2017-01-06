@@ -39,6 +39,9 @@
 // Table of Ccntents
 //
 // The following are links to packages under this project.
+//
+// WARNING: You will never be touching most of these  packages. They are the
+// building block of the high level API.
 //   [engine] https://godoc.org/github.com/gernest/ngorm/engine
 // This is what drives the whole project, helps with query building and provides
 // conveinet structure to help with query execution.
@@ -59,7 +62,7 @@
 //
 //   [dialects] https://godoc.org/github.com/gernest/ngorm/dialects
 // Adopts to different SQL databases supported by ngorm. For now ngorm support
-// ql ,
+// ql .
 package ngorm
 
 import (
