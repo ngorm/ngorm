@@ -17,6 +17,7 @@ const (
 	HookQueryAfterFind = "ngorm:query_after_find"
 	HookBeforeCreate   = "ngorm:before_create_hook"
 	HookBeforeSave     = "ngorm:before_save_hook"
+	Create             = "ngorm:create"
 	BeforeCreate       = "ngorm:before_create"
 	AfterCreate        = "ngorm:after_create"
 	HookAfterCreate    = "ngorm:after_create"
