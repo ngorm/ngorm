@@ -225,3 +225,21 @@ func Create(b *HooksBook, e *engine.Engine) error {
 	}
 	return nil
 }
+
+func AfterCreate(b *HooksBook, e *engine.Engine) error {
+	ac, ok := b.Create.Get(model.HookAfterCreate)
+	if ok {
+		err := ac.Exec(b, e)
+		if err != nil {
+			return err
+		}
+	}
+	as, ok := b.Create.Get(model.HookAfterSave)
+	if ok {
+		err := as.Exec(b, e)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

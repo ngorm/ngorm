@@ -18,6 +18,9 @@ const (
 	HookBeforeCreate   = "ngorm:before_create_hook"
 	HookBeforeSave     = "ngorm:before_save_hook"
 	BeforeCreate       = "ngorm:before_create"
+	AfterCreate        = "ngorm:after_create"
+	HookAfterCreate    = "ngorm:after_create"
+	HookAfterSave      = "ngorm:after_save_hook"
 	UpdateAttrs        = "ngorm:update_attrs"
 )
 
