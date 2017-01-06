@@ -30,8 +30,6 @@ import (
 // In case of a string without a dot example one it will be quoted using the
 // current dialect e.Dialect
 //
-//TODO: (gernest) Understand why we use the Parent.Dialect here as it seems
-//unlikely the dialect to be different.
 func Quote(e *engine.Engine, str string) string {
 	if strings.Index(str, ".") != -1 {
 		newStrs := []string{}
