@@ -87,7 +87,7 @@ type DB struct {
 	cancel        func()
 	singularTable bool
 	structMap     *model.SafeStructsMap
-	hooks         *hooks.HooksBook
+	hooks         *hooks.Book
 }
 
 func Open(opener Opener, dialect string, args ...interface{}) (*DB, error) {

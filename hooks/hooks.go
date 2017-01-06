@@ -11,20 +11,24 @@ import (
 //can be a way to overide default behaviour.
 type Hook interface {
 	Name() string
-	Exec(h *HooksBook, e *engine.Engine) error
+	Exec(h *Book, e *engine.Engine) error
 }
 
+//Hooks a safe struct that holds a map of hooks. Use this to provide a safe
+//group of related hooks.
 type Hooks struct {
 	h  map[string]Hook
 	mu sync.RWMutex
 }
 
+//Set saves the hook.
 func (h *Hooks) Set(hk Hook) {
 	h.mu.Lock()
 	h.h[hk.Name()] = hk
 	h.mu.Unlock()
 }
 
+//Get returns a saved hook.
 func (h *Hooks) Get(name string) (Hook, bool) {
 	h.mu.RLock()
 	hk, ok := h.h[name]
@@ -32,28 +36,31 @@ func (h *Hooks) Get(name string) (Hook, bool) {
 	return hk, ok
 }
 
+//NewHooks retruns an initalized Hooks instance.
 func NewHooks() *Hooks {
 	return &Hooks{h: make(map[string]Hook)}
 }
 
 type simpleHook struct {
 	name string
-	e    func(*HooksBook, *engine.Engine) error
+	e    func(*Book, *engine.Engine) error
 }
 
 func (s *simpleHook) Name() string {
 	return s.name
 }
 
-func (s *simpleHook) Exec(h *HooksBook, e *engine.Engine) error {
+func (s *simpleHook) Exec(h *Book, e *engine.Engine) error {
 	return s.e(h, e)
 }
 
-func HookFunc(name string, f func(*HooksBook, *engine.Engine) error) Hook {
+//HookFunc wraps the function f into a struct that statisfies Hook interface.
+func HookFunc(name string, f func(*Book, *engine.Engine) error) Hook {
 	return &simpleHook{name: name, e: f}
 }
 
-type HooksBook struct {
+//Book a collection of hooks used by ngorm.
+type Book struct {
 	Create *Hooks
 	Delete *Hooks
 	Update *Hooks

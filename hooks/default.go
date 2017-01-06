@@ -15,7 +15,8 @@ import (
 	"github.com/gernest/ngorm/util"
 )
 
-func Query(b *HooksBook, e *engine.Engine) error {
+//Query executes SQL querries.
+func Query(b *Book, e *engine.Engine) error {
 	var isSlice, isPtr bool
 	var resultType reflect.Type
 	results := reflect.ValueOf(e.Scope.Value)
@@ -59,7 +60,9 @@ func Query(b *HooksBook, e *engine.Engine) error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	columns, _ := rows.Columns()
 	for rows.Next() {
@@ -84,7 +87,9 @@ func Query(b *HooksBook, e *engine.Engine) error {
 	return nil
 }
 
-func AfterQuery(b *HooksBook, e *engine.Engine) error {
+//AfterQuery executes any call back after the  Qeery hook has been executed. Any
+//callback registered with qeky model.HookQueryAfterFind will be executed.
+func AfterQuery(b *Book, e *engine.Engine) error {
 	af, ok := b.Query.Get(model.HookQueryAfterFind)
 	if ok {
 		return af.Exec(b, e)
@@ -92,7 +97,8 @@ func AfterQuery(b *HooksBook, e *engine.Engine) error {
 	return nil
 }
 
-func BeforeCreate(b *HooksBook, e *engine.Engine) error {
+//BeforeCreate a callback excecuted before crating anew record.
+func BeforeCreate(b *Book, e *engine.Engine) error {
 	bs, ok := b.Create.Get(model.HookBeforeSave)
 	if ok {
 		err := bs.Exec(b, e)
@@ -110,7 +116,8 @@ func BeforeCreate(b *HooksBook, e *engine.Engine) error {
 	return nil
 }
 
-func Create(b *HooksBook, e *engine.Engine) error {
+//Create the hook executed to create a new record.
+func Create(b *Book, e *engine.Engine) error {
 	var (
 		columns, placeholders []string
 
@@ -137,13 +144,11 @@ func Create(b *HooksBook, e *engine.Engine) error {
 					foreignField, err := scope.FieldByName(e, e.Scope.Value, foreignKey)
 					if err != nil {
 						return err
-					} else {
-						if !scope.ChangeableField(e, foreignField) {
-							columns = append(columns, scope.Quote(e, foreignField.DBName))
-							placeholders = append(placeholders, scope.AddToVars(e, foreignField.Field.Interface()))
-						}
 					}
-
+					if !scope.ChangeableField(e, foreignField) {
+						columns = append(columns, scope.Quote(e, foreignField.DBName))
+						placeholders = append(placeholders, scope.AddToVars(e, foreignField.Field.Interface()))
+					}
 				}
 			}
 		}
@@ -206,7 +211,7 @@ func Create(b *HooksBook, e *engine.Engine) error {
 			if err != nil {
 				return err
 			}
-			primaryField.Set(primaryValue)
+			_ = primaryField.Set(primaryValue)
 		}
 	} else {
 		if primaryField.Field.CanAddr() {
@@ -226,7 +231,8 @@ func Create(b *HooksBook, e *engine.Engine) error {
 	return nil
 }
 
-func AfterCreate(b *HooksBook, e *engine.Engine) error {
+//AfterCreate hook executed after a new record has been created.
+func AfterCreate(b *Book, e *engine.Engine) error {
 	ac, ok := b.Create.Get(model.HookAfterCreate)
 	if ok {
 		err := ac.Exec(b, e)
