@@ -783,3 +783,22 @@ func SetColumn(e *engine.Engine, column interface{}, value interface{}) error {
 	}
 	return errors.New("could not convert column to field")
 }
+
+func SelectAttrs(e *engine.Engine) []string {
+	if e.Scope.SelectAttrs == nil {
+		attrs := []string{}
+		for _, value := range e.Search.Selects {
+			if str, ok := value.(string); ok {
+				attrs = append(attrs, str)
+			} else if strs, ok := value.([]string); ok {
+				attrs = append(attrs, strs...)
+			} else if strs, ok := value.([]interface{}); ok {
+				for _, str := range strs {
+					attrs = append(attrs, fmt.Sprintf("%v", str))
+				}
+			}
+		}
+		e.Scope.SelectAttrs = &attrs
+	}
+	return *e.Scope.SelectAttrs
+}
