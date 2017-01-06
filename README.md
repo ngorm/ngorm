@@ -23,7 +23,7 @@
 * SQL Builder
 * Auto Migrations
 * Logger
-* Extendable, write Plugins based on NGORM callbacks
+* Extendible, write Plugins based on NGORM hooks
 * Every feature comes with tests
 * Developer Friendly
 
