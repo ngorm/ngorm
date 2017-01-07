@@ -25,6 +25,8 @@ type Engine struct {
 
 	Search    *model.Search
 	Scope     *model.Scope
+	MultiExpr bool
+	Expr      []*model.Expr
 	StructMap *model.SafeStructsMap
 	SQLDB     model.SQLCommon
 }

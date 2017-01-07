@@ -23,6 +23,7 @@ const (
 	HookAfterCreate    = "ngorm:after_create"
 	HookAfterSave      = "ngorm:after_save_hook"
 	UpdateAttrs        = "ngorm:update_attrs"
+	TableOptions       = "ngorm:table_options"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a
@@ -113,6 +114,7 @@ type Relationship struct {
 	ForeignDBNames               []string
 	AssociationForeignFieldNames []string
 	AssociationForeignDBNames    []string
+	JoinTableHandler             *JoinTableHandler
 }
 
 //ParseTagSetting returns a map[string]string for the tags that are set.
@@ -167,6 +169,8 @@ type Scope struct {
 	PrimaryKeyField *Field
 	SkipLeft        bool
 	SelectAttrs     *[]string
+	MultiExpr       bool
+	Exprs           []*Expr
 	mu              sync.RWMutex
 	data            map[string]interface{}
 }
@@ -225,4 +229,22 @@ type SQLCommon interface {
 type Expr struct {
 	Q    string
 	Args []interface{}
+}
+
+type JoinTableForeignKey struct {
+	DBName            string
+	AssociationDBName string
+}
+
+// JoinTableSource is a struct that contains model type and foreign keys
+type JoinTableSource struct {
+	ModelType   reflect.Type
+	ForeignKeys []JoinTableForeignKey
+}
+
+// JoinTableHandler default join table handler
+type JoinTableHandler struct {
+	TableName   string          `sql:"-"`
+	Source      JoinTableSource `sql:"-"`
+	Destination JoinTableSource `sql:"-"`
 }

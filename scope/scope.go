@@ -16,6 +16,7 @@ import (
 
 	"github.com/gernest/ngorm/engine"
 	"github.com/gernest/ngorm/model"
+	"github.com/gernest/ngorm/regexes"
 	"github.com/gernest/ngorm/util"
 	"github.com/jinzhu/inflection"
 )
@@ -304,9 +305,9 @@ func buildRelationSlice(e *engine.Engine, modelValue interface{}, refType reflec
 				rel.AssociationForeignDBNames = append(rel.AssociationForeignDBNames, joinTableDBName)
 			}
 
-			//joinTableHandler := JoinTableHandler{}
-			//joinTableHandler.Setup(relationship, many2many, refType, elemType)
-			//relationship.JoinTableHandler = &joinTableHandler
+			joinTableHandler := &model.JoinTableHandler{}
+			SetupJoinTable(joinTableHandler, rel, many2many, refType, elemType)
+			rel.JoinTableHandler = joinTableHandler
 			field.Relationship = rel
 		} else {
 			// User has many comments, associationType is User, comment use UserID as foreign key
@@ -825,4 +826,134 @@ func ChangeableField(e *engine.Engine, field *model.Field) bool {
 	}
 
 	return true
+}
+
+func CreateTable(e *engine.Engine, value interface{}) error {
+	var tags []string
+	var primaryKeys []string
+	var primaryKeyInColumnType = false
+	m, err := GetModelStruct(e, value)
+	if err != nil {
+		return err
+	}
+	for _, field := range m.StructFields {
+		if field.IsNormal {
+			sqlTag, err := e.Dialect.DataTypeOf(field)
+			if err != nil {
+				return err
+			}
+
+			// Check if the primary key constraint was specified as
+			// part of the column type. If so, we can only support
+			// one column as the primary key.
+			if strings.Contains(strings.ToLower(sqlTag), "primary key") {
+				primaryKeyInColumnType = true
+			}
+
+			tags = append(tags, Quote(e, field.DBName)+" "+sqlTag)
+		}
+
+		if field.IsPrimaryKey {
+			primaryKeys = append(primaryKeys, Quote(e, field.DBName))
+		}
+		err = CreateJoinTable(e, field)
+		if err != nil {
+			return err
+		}
+	}
+
+	var primaryKeyStr string
+	if len(primaryKeys) > 0 && !primaryKeyInColumnType {
+		primaryKeyStr = fmt.Sprintf(", PRIMARY KEY (%v)", strings.Join(primaryKeys, ","))
+	}
+	var options string
+	opts, ok := e.Scope.Get(model.TableOptions)
+	if ok {
+		options = opts.(string)
+	}
+	e.Scope.SQL = fmt.Sprintf("CREATE TABLE %v (%v %v) %s",
+		QuotedTableName(e, value), strings.Join(tags, ","),
+		primaryKeyStr, options)
+
+	//scope.autoIndex()
+	return nil
+}
+
+func CreateJoinTable(e *engine.Engine, field *model.StructField) error {
+	return nil
+}
+
+func AutoIndex(e *engine.Engine, value interface{}) error {
+	var indexes = map[string][]string{}
+	var uniqueIndexes = map[string][]string{}
+	m, err := GetModelStruct(e, value)
+	if err != nil {
+		return err
+	}
+	for _, field := range m.StructFields {
+		if name, ok := field.TagSettings["INDEX"]; ok {
+			names := strings.Split(name, ",")
+
+			for _, name := range names {
+				if name == "INDEX" || name == "" {
+					name = fmt.Sprintf("idx_%v_%v", TableName(e, value), field.DBName)
+				}
+				indexes[name] = append(indexes[name], field.DBName)
+			}
+		}
+
+		if name, ok := field.TagSettings["UNIQUE_INDEX"]; ok {
+			names := strings.Split(name, ",")
+
+			for _, name := range names {
+				if name == "UNIQUE_INDEX" || name == "" {
+					name = fmt.Sprintf("uix_%v_%v", TableName(e, value), field.DBName)
+				}
+				uniqueIndexes[name] = append(uniqueIndexes[name], field.DBName)
+			}
+		}
+	}
+
+	for name, columns := range indexes {
+		err = AddIndex(e, false, value, name, columns...)
+		if err != nil {
+			return err
+		}
+	}
+
+	for name, columns := range uniqueIndexes {
+		err = AddIndex(e, true, value, name, columns...)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func AddIndex(e *engine.Engine, unique bool, value interface{}, indexName string, column ...string) error {
+	if e.Dialect.HasIndex(TableName(e, value), indexName) {
+		return nil
+	}
+	var columns []string
+	for _, name := range column {
+		if regexes.Column.MatchString(name) {
+			name = Quote(e, name)
+		}
+		columns = append(columns, name)
+	}
+
+	sqlCreate := "CREATE INDEX"
+	if unique {
+		sqlCreate = "CREATE UNIQUE INDEX"
+	}
+	if !e.Scope.MultiExpr {
+		e.Scope.MultiExpr = true
+	}
+
+	//NOTE: I removed whereSQl on the create index.
+	sql := fmt.Sprintf("%s %v ON %v(%v)", sqlCreate,
+		indexName, QuotedTableName(e, value), strings.Join(columns, ", "))
+	e.Scope.Exprs = append(e.Scope.Exprs, &model.Expr{Q: sql})
+	return nil
 }
