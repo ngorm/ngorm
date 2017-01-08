@@ -53,4 +53,8 @@ COMMIT;`
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
+	_, err = db.CreateTable(&fixture.User{})
+	if err != nil {
+		t.Error(err)
+	}
 }
