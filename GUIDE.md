@@ -2,27 +2,27 @@
 
 ## Table of contents
 
-- Getting started
- - Installation
- - Connecting to databases
- - Migrations
- - Create
- - Query
- - Preload
- - Update
- - Delete
- - Associations
-  - Belogs To
-  - Has one
-  - Has many
-  - Many to many
-  - Polymorphism
+- [Getting started](#getting-started)
+ - [Installation](#installation)
+ - [Connecting to databases](#connecting-to-database)
+ - [Migrations](#migrations)
+ - [Create](#create)
+ - [Query](#query)
+ - [Preload](#preload)
+ - [Update](#update)
+ - [Delete](#delete)
+ - [Associations](#associations)
+    - [Belogs To](#belongs-to)
+    - [Has one](#has-one)
+    - [Has many](#has-many)
+    - [Many to many](many-to-many)
+    - [Polymorphism](#polymorphism)
 
-- Advanced
- - Hooks
- - Logging
- - SQL building
- - SQL execution
- - Transactions
+- [Advanced](#advanced)
+ - [Hooks](#hooks)
+ - [Logging](#logging)
+ - [SQL building](#sql-building)
+ - [SQL execution](#sql-execution)
+ - [Transactions](#transactions)
 
-- Primer on `database/sql` package
+- [Primer on `database/sql` package](#primer-on-database-sql-package)
