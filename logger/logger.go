@@ -51,7 +51,7 @@ func (z *Zapper) StartWithTime() *Zapper {
 func (z *Zapper) Log(level zap.Level, val string, fields ...zap.Field) {
 	if z.withTime {
 		now := time.Now()
-		z.fiedls = append(z.fiedls, zap.Duration("elapsed time", now.Sub(z.start)))
+		z.fiedls = append(z.fiedls, zap.Stringer("elapsed time", now.Sub(z.start)))
 		z.start = now
 	}
 	var f []zap.Field
@@ -71,7 +71,7 @@ func (z *Zapper) Info(arg string, fields ...zap.Field) {
 
 // Debug logs with level set to debug
 func (z *Zapper) Debug(arg string, fields ...zap.Field) {
-	z.Log(zap.InfoLevel, arg, fields...)
+	z.Log(zap.DebugLevel, arg, fields...)
 }
 
 //Warn logs warnings

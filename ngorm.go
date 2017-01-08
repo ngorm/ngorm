@@ -109,7 +109,7 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 	}
 	dia.SetDB(db)
 	o := zap.New(
-		zap.NewTextEncoder(), // drop timestamps in tests
+		zap.NewTextEncoder(zap.TextNoTime()), // drop timestamps in tests
 	)
 	ctx, cancel := context.WithCancel(context.Background())
 	return &DB{

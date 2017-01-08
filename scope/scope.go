@@ -841,6 +841,7 @@ func CreateTable(e *engine.Engine, value interface{}) error {
 		if field.IsNormal {
 			sqlTag, err := e.Dialect.DataTypeOf(field)
 			if err != nil {
+
 				return err
 			}
 
@@ -859,6 +860,7 @@ func CreateTable(e *engine.Engine, value interface{}) error {
 		}
 		err = CreateJoinTable(e, field)
 		if err != nil {
+			e.Log.Info(err.Error() + field.Name)
 			return err
 		}
 	}
@@ -886,14 +888,13 @@ func CreateJoinTable(e *engine.Engine, field *model.StructField) error {
 		j := rel.JoinTableHandler
 		if !e.Dialect.HasTable(j.TableName) {
 			value := reflect.New(field.Struct.Type).Interface()
-
 			var sqlTypes, primaryKeys []string
 			for idx, fieldName := range rel.ForeignFieldNames {
-				field, err := FieldByName(e, e.Scope.Value, fieldName)
+				f, err := FieldByName(e, value, fieldName)
 				if err != nil {
 					return err
 				}
-				fk := field.Clone()
+				fk := f.Clone()
 				fk.IsPrimaryKey = false
 				fk.TagSettings["IS_JOINTABLE_FOREIGNKEY"] = "true"
 				delete(fk.TagSettings, "AUTO_INCREMENT")
@@ -904,6 +905,7 @@ func CreateJoinTable(e *engine.Engine, field *model.StructField) error {
 				sqlTypes = append(sqlTypes,
 					Quote(e, rel.ForeignDBNames[idx])+" "+data)
 				primaryKeys = append(primaryKeys, Quote(e, rel.ForeignDBNames[idx]))
+
 			}
 
 			for idx, fieldName := range rel.AssociationForeignFieldNames {
@@ -923,19 +925,28 @@ func CreateJoinTable(e *engine.Engine, field *model.StructField) error {
 					Quote(e, rel.AssociationForeignDBNames[idx])+" "+data)
 				primaryKeys = append(primaryKeys, Quote(e, rel.AssociationForeignDBNames[idx]))
 			}
-
+			var primaryKeyStr string
+			if len(primaryKeys) > 0 {
+				primaryKeyStr = e.Dialect.PrimaryKey(primaryKeys)
+				if primaryKeyStr != "" {
+					primaryKeyStr = ", " + primaryKeyStr
+				}
+			}
+			if primaryKeyStr != "" {
+				primaryKeyStr = ", PRIMARY KEY (" + primaryKeyStr + ")"
+			}
 			var tableOpts string
 			opts, ok := e.Scope.Get(model.TableOptions)
 			if ok {
 				tableOpts = opts.(string)
 			}
 
-			sql := fmt.Sprintf("CREATE TABLE %v (%v, PRIMARY KEY (%v)) %s",
+			sql := fmt.Sprintf("CREATE TABLE %v (%v %v) %s",
 				Quote(e, j.TableName),
 				strings.Join(sqlTypes, ","),
-				strings.Join(primaryKeys, ","), tableOpts)
-			if !e.MultiExpr {
-				e.MultiExpr = true
+				primaryKeyStr, tableOpts)
+			if !e.Scope.MultiExpr {
+				e.Scope.MultiExpr = true
 			}
 			e.Scope.Exprs = append(e.Scope.Exprs, &model.Expr{Q: sql})
 		}
