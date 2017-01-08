@@ -1,6 +1,7 @@
 package ngorm
 
 import (
+	"fmt"
 	"testing"
 
 	_ "github.com/cznic/ql/driver"
@@ -18,7 +19,12 @@ func TestDB(t *testing.T) {
 	}
 
 	// create table tests
-	err = db.CreateTable(&Foo{})
+	sql, err := db.CreateTableSQL(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(sql.Q)
+	_, err = db.CreateTable(&Foo{})
 	if err != nil {
 		t.Error(err)
 	}

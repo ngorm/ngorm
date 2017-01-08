@@ -137,7 +137,32 @@ func (db *DB) NewEngine() *engine.Engine {
 	}
 }
 
-func (db *DB) CreateTable(models ...interface{}) error {
+func (db *DB) CreateTable(models ...interface{}) (sql.Result, error) {
+	query, err := db.CreateTableSQL(models...)
+	if err != nil {
+		return nil, err
+	}
+	return db.ExecTx(query.Q, query.Args...)
+}
+
+func (db *DB) ExecTx(query string, args ...interface{}) (sql.Result, error) {
+	tx, err := db.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	r, err := tx.Exec(query, args...)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
 	var buf bytes.Buffer
 	buf.WriteString("BEGIN TRANSACTION; \n")
 	for _, m := range models {
@@ -146,27 +171,17 @@ func (db *DB) CreateTable(models ...interface{}) error {
 		// Firste we generate the SQL
 		err := scope.CreateTable(e, m)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		buf.WriteString("	" + e.Scope.SQL + ";\n")
+		buf.WriteString("\t" + e.Scope.SQL + ";\n")
 		if e.Scope.MultiExpr {
 			for _, expr := range e.Scope.Exprs {
-				buf.WriteString("	" + expr.Q + ";\n")
+				buf.WriteString("\t" + expr.Q + ";\n")
 			}
 		}
 	}
 	buf.WriteString("COMMIT;")
-	db.log.Info(buf.String())
-	tx, err := db.db.Begin()
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(buf.String())
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	return tx.Commit()
+	return &model.Expr{Q: buf.String()}, nil
 }
 
 type DefaultOpener struct {
