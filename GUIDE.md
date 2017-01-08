@@ -1,1 +1,1 @@
-# Definitive Guide to Object Relational Mapping with gnorm
+# Definitive Guide to Object Relational Mapping with ngorm
