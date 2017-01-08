@@ -49,4 +49,6 @@ enlightened.
 
 
 
+## Usage
+
 See [GUIDE](GUIDE.md) for getting started, examples and so much more.
