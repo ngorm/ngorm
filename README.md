@@ -48,3 +48,5 @@ enlightened.
 	go get -u github.com/gernest/ngorm
 
 
+
+See [GUIDE](GUIDE.md) for getting started, examples and so much more.
