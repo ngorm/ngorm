@@ -1,5 +1,11 @@
 # Definitive Guide to Object Relational Mapping with ngorm
 
+Welcome! Thanks you for taking your time to check out on ngorm. This is a rather
+TL:DR doc which will walk you through all things necessary to get started with
+ngorm. Please check godoc reference too, there is a lot of good details there.
+
+Enjoy!
+
 ## Table of contents
 
 - [Getting started](#getting-started)
