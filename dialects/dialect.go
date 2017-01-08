@@ -23,6 +23,7 @@ type Dialect interface {
 	BindVar(i int) string
 	// Quote quotes field name to avoid SQL parsing exceptions by using a reserved word as a field name
 	Quote(key string) string
+
 	// DataTypeOf return data's sql type
 	DataTypeOf(field *model.StructField) (string, error)
 
@@ -49,6 +50,8 @@ type Dialect interface {
 
 	// CurrentDatabase return current database name
 	CurrentDatabase() string
+
+	PrimaryKey([]string) string
 }
 
 //ParseFieldStructForDialect pases metadatab enough to be used by dialects. The values

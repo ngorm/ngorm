@@ -836,6 +836,7 @@ func CreateTable(e *engine.Engine, value interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	for _, field := range m.StructFields {
 		if field.IsNormal {
 			sqlTag, err := e.Dialect.DataTypeOf(field)
@@ -864,7 +865,10 @@ func CreateTable(e *engine.Engine, value interface{}) error {
 
 	var primaryKeyStr string
 	if len(primaryKeys) > 0 && !primaryKeyInColumnType {
-		primaryKeyStr = fmt.Sprintf(", PRIMARY KEY (%v)", strings.Join(primaryKeys, ","))
+		primaryKeyStr = e.Dialect.PrimaryKey(primaryKeys)
+		if primaryKeyStr != "" {
+			primaryKeyStr = ", " + primaryKeyStr
+		}
 	}
 	var options string
 	opts, ok := e.Scope.Get(model.TableOptions)
@@ -946,6 +950,7 @@ func AutoIndex(e *engine.Engine, value interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	for _, field := range m.StructFields {
 		if name, ok := field.TagSettings["INDEX"]; ok {
 			names := strings.Split(name, ",")

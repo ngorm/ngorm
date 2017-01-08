@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/gernest/ngorm/dialects"
+	"github.com/gernest/ngorm/logger"
 	"github.com/gernest/ngorm/model"
 )
 
@@ -29,6 +30,7 @@ type Engine struct {
 	Expr      []*model.Expr
 	StructMap *model.SafeStructsMap
 	SQLDB     model.SQLCommon
+	Log       *logger.Zapper
 }
 
 //AddError adds err to Engine.Error.

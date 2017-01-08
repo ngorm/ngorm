@@ -90,7 +90,7 @@ func Query(b *Book, e *engine.Engine) error {
 //AfterQuery executes any call back after the  Qeery hook has been executed. Any
 //callback registered with qeky model.HookQueryAfterFind will be executed.
 func AfterQuery(b *Book, e *engine.Engine) error {
-	af, ok := b.Query.Get(model.HookQueryAfterFind)
+	af, ok := b.Query.Get(model.HookAfterFindQuery)
 	if ok {
 		return af.Exec(b, e)
 	}

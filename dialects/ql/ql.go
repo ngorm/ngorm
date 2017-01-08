@@ -60,7 +60,12 @@ func (q QL) BindVar(i int) string {
 
 // Quote quotes field name to avoid SQL parsing exceptions by using a reserved word as a field name
 func (q *QL) Quote(key string) string {
-	return fmt.Sprintf(`"%s"`, key)
+	//return fmt.Sprintf(`"%s"`, key)
+	return key
+}
+
+func (q *QL) PrimaryKey(keys []string) string {
+	return ""
 }
 
 // DataTypeOf return data's sql type

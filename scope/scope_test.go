@@ -24,8 +24,8 @@ func TestQuote(t *testing.T) {
 	sample := []struct {
 		src, expetc string
 	}{
-		{"quote", `"quote"`},
-		{"quote.quote.quote", `"quote"."quote"."quote"`},
+		{"quote", `quote`},
+		{"quote.quote.quote", `quote.quote.quote`},
 	}
 
 	for _, v := range sample {

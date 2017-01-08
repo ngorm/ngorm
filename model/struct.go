@@ -13,8 +13,8 @@ const (
 	QueryDestination   = "ngorm:query_destination"
 	QueryOption        = "ngorm:query_option"
 	Query              = "ngorm:query"
-	HookQueryAfter     = "ngorm:query_after"
-	HookQueryAfterFind = "ngorm:query_after_find"
+	HookAfterQuery     = "ngorm:query_after"
+	HookAfterFindQuery = "ngorm:query_after_find"
 	HookBeforeCreate   = "ngorm:before_create_hook"
 	HookBeforeSave     = "ngorm:before_save_hook"
 	Create             = "ngorm:create"
@@ -223,6 +223,7 @@ type SQLCommon interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
 	Begin() (*sql.Tx, error)
+	Close() error
 }
 
 // Expr is SQL expression

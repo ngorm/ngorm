@@ -66,12 +66,19 @@
 package ngorm
 
 import (
+	"bytes"
 	"context"
+	"database/sql"
+	"fmt"
 
 	"github.com/gernest/ngorm/dialects"
+	"github.com/gernest/ngorm/dialects/ql"
 	"github.com/gernest/ngorm/engine"
 	"github.com/gernest/ngorm/hooks"
+	"github.com/gernest/ngorm/logger"
 	"github.com/gernest/ngorm/model"
+	"github.com/gernest/ngorm/scope"
+	"github.com/uber-go/zap"
 )
 
 type Opener interface {
@@ -88,21 +95,31 @@ type DB struct {
 	singularTable bool
 	structMap     *model.SafeStructsMap
 	hooks         *hooks.Book
+	log           *logger.Zapper
 }
 
-func Open(opener Opener, dialect string, args ...interface{}) (*DB, error) {
+func Open(dialect string, args ...interface{}) (*DB, error) {
+	return OpenWithOpener(&DefaultOpener{}, dialect, args...)
+}
+
+func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, error) {
 	db, dia, err := opener.Open(dialect, args...)
 	if err != nil {
 		return nil, err
 	}
 	dia.SetDB(db)
+	o := zap.New(
+		zap.NewTextEncoder(), // drop timestamps in tests
+	)
 	ctx, cancel := context.WithCancel(context.Background())
 	return &DB{
 		db:        db,
 		dialect:   dia,
 		structMap: model.NewStructsMap(),
 		ctx:       ctx,
+		hooks:     hooks.DefaultBook(),
 		cancel:    cancel,
+		log:       logger.New(o),
 	}, nil
 }
 
@@ -116,5 +133,76 @@ func (db *DB) NewEngine() *engine.Engine {
 		Ctx:           db.ctx,
 		Dialect:       db.dialect,
 		SQLDB:         db.db,
+		Log:           db.log,
 	}
+}
+
+func (db *DB) CreateTable(models ...interface{}) error {
+	var buf bytes.Buffer
+	buf.WriteString("BEGIN TRANSACTION; \n")
+	for _, m := range models {
+		e := db.NewEngine()
+
+		// Firste we generate the SQL
+		err := scope.CreateTable(e, m)
+		if err != nil {
+			return err
+		}
+		buf.WriteString("	" + e.Scope.SQL + ";\n")
+		if e.Scope.MultiExpr {
+			for _, expr := range e.Scope.Exprs {
+				buf.WriteString("	" + expr.Q + ";\n")
+			}
+		}
+	}
+	buf.WriteString("COMMIT;")
+	db.log.Info(buf.String())
+	tx, err := db.db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(buf.String())
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
+type DefaultOpener struct {
+}
+
+func (d *DefaultOpener) Open(dialect string, args ...interface{}) (model.SQLCommon, dialects.Dialect, error) {
+	var source string
+	var dia dialects.Dialect
+	var common model.SQLCommon
+	var err error
+
+	switch value := args[0].(type) {
+	case string:
+		var driver = dialect
+		if len(args) == 1 {
+			source = value
+		} else if len(args) >= 2 {
+			driver = value
+			source = args[1].(string)
+		}
+		common, err = sql.Open(driver, source)
+		if err != nil {
+			return nil, nil, err
+		}
+	case model.SQLCommon:
+		common = value
+	default:
+		return nil, nil, fmt.Errorf("unknown argument %v", value)
+	}
+	switch dialect {
+	case "ql":
+		dia = ql.File()
+	case "ql-mem":
+		dia = ql.Memory()
+	default:
+		return nil, nil, fmt.Errorf("unsupported dialect %s", dialect)
+	}
+	return common, dia, nil
 }

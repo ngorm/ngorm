@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/model"
 )
 
 //Hook is a nterface that is executed at a particular point in time. This allows
@@ -66,4 +67,21 @@ type Book struct {
 	Update *Hooks
 	Save   *Hooks
 	Query  *Hooks
+}
+
+func DefaultBook() *Book {
+	b := &Book{
+		Create: NewHooks(),
+		Delete: NewHooks(),
+		Update: NewHooks(),
+		Save:   NewHooks(),
+		Query:  NewHooks(),
+	}
+	b.Create.Set(HookFunc(model.Create, Create))
+	b.Create.Set(HookFunc(model.HookAfterCreate, AfterCreate))
+	b.Create.Set(HookFunc(model.HookBeforeCreate, BeforeCreate))
+
+	b.Query.Set(HookFunc(model.Query, Query))
+	b.Query.Set(HookFunc(model.HookAfterQuery, AfterQuery))
+	return b
 }

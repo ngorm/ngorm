@@ -79,7 +79,7 @@ func TestDialect(t *testing.T) {
 func TestQL_Quote(t *testing.T) {
 	q := &QL{}
 	src := "quote"
-	expect := `"quote"`
+	expect := `quote`
 	v := q.Quote(src)
 	if v != expect {
 		t.Errorf("expected %s got %s", expect, v)
