@@ -224,6 +224,8 @@ func getValueFromFields(value reflect.Value, fieldNames []string) (results []int
 	return
 }
 
+//AddExtraSpaceIfExist adds an extra space  at the beginning of the string
+//if the string is not empty.
 func AddExtraSpaceIfExist(str string) string {
 	if str != "" {
 		return " " + str
