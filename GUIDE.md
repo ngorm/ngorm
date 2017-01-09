@@ -57,3 +57,40 @@ queries for the supported databases.
 ## Installation
 
 	go get -u github.com/gernest/ngorm
+
+## Connecting to a database
+
+NGORM uses a similar API as the one used by `database/sql` package to connect
+to a database.
+
+```go
+package main
+
+import (
+	"log"
+
+	// You must import the driver for the database you wish to connect to. In
+	// this example I am using the ql driver, this should work similar for the
+	// other supported databases.
+	_ "github.com/cznic/ql/driver"
+	"github.com/gernest/ngorm"
+)
+
+func main() {
+
+	// The frist armunet is the dialect or the name of the database driver that
+	// you wish to to connect to, the second argument is connection information
+	// please check the appropriate driver for more information on the arguments
+	// that are passed to database/sql Open.
+	db, err := ngorm.Open("ql-mem", "est.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Do something with db
+}
+```
+
+The return `ngorm.DB` instance is safe. It is a good idea to have only one
+instance of this object throughout your application life cycle. Make it a global
+or pass it in context.
