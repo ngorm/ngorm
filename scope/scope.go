@@ -1029,3 +1029,9 @@ func AddIndex(e *engine.Engine, unique bool, value interface{}, indexName string
 	e.Scope.Exprs = append(e.Scope.Exprs, &model.Expr{Q: sql})
 	return nil
 }
+
+//DropTable generates SQL query for DROP TABLE.
+func DropTable(e *engine.Engine, value interface{}) error {
+	e.Scope.SQL = fmt.Sprintf("DROP TABLE %v", QuotedTableName(e, value))
+	return nil
+}
