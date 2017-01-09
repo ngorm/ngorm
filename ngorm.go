@@ -287,7 +287,7 @@ func (db *DB) DropTable(models ...interface{}) (sql.Result, error) {
 
 //Automigrate creates tables that map to models if the tables don't exist yet in
 //the database. This also takes care of situation where the models's fields have
-//been updated(canged)
+//been updated(changed)
 func (db *DB) Automigrate(models ...interface{}) (sql.Result, error) {
 	query, err := db.AutomigrateSQL(models...)
 	if err != nil {
