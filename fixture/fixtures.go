@@ -1,4 +1,4 @@
-//Package fixture conatins all stuctures neesessary for consinstent testing on a
+//Package fixture contains all stuctures neesessary for consinstent testing on a
 //wide range of SQL database dialects.
 package fixture
 
