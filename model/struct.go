@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// All important keys
 const (
 	OrderByPK          = "ngorm:order_by_primary_key"
 	QueryDestination   = "ngorm:query_destination"
@@ -175,12 +176,14 @@ type Scope struct {
 	data            map[string]interface{}
 }
 
+//Set sets a scope specific key value. This is only available in the scope.
 func (s *Scope) Set(key string, value interface{}) {
 	s.mu.Lock()
 	s.data[key] = value
 	s.mu.Unlock()
 }
 
+//Get retrieves the value with key from the scope.
 func (s *Scope) Get(key string) (interface{}, bool) {
 	s.mu.RLock()
 	v, ok := s.data[key]
@@ -232,6 +235,7 @@ type Expr struct {
 	Args []interface{}
 }
 
+//JoinTableForeignKey info that point to a key to use in join table.
 type JoinTableForeignKey struct {
 	DBName            string
 	AssociationDBName string
