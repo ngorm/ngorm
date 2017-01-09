@@ -299,7 +299,7 @@ func (db *DB) Automigrate(models ...interface{}) (sql.Result, error) {
 //AutomigrateSQL generates sql query for running migrations on models.
 func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 	var buf bytes.Buffer
-	_, _ = buf.WriteString("BEGIN TRANSACTION; \n")
+	_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
 	for _, m := range models {
 		e := db.NewEngine()
 

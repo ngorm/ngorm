@@ -59,3 +59,40 @@ COMMIT;`
 		t.Error(err)
 	}
 }
+
+func TestDB_DropTable(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+
+	_, err = db.DropTable(&Foo{})
+	if err == nil {
+		t.Error("expected error")
+	}
+
+	_, err = db.CreateTable(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = db.DropTable(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sql, err := db.DropTableSQL(&Foo{}, &fixture.User{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := `
+BEGIN TRANSACTION; 
+	DROP TABLE foos;
+	DROP TABLE users;
+COMMIT;`
+	expect = strings.TrimSpace(expect)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+}
