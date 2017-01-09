@@ -64,6 +64,11 @@ func (q *QL) Quote(key string) string {
 	return key
 }
 
+//PrimaryKey implements dialects.Dialect interface. This is supposed to return a
+//comma separated string of primary keys.
+//
+// ql does not support PRIMARY KEY so no matter how many keys are passed this
+// method will return an empty string.
 func (q *QL) PrimaryKey(keys []string) string {
 	return ""
 }
