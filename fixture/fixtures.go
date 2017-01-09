@@ -1,3 +1,5 @@
+//Package fixture conatins all stuctures neesessary for consinstent testing on a
+//wide range of SQL database dialects.
 package fixture
 
 import (
@@ -11,6 +13,7 @@ import (
 	"github.com/gernest/ngorm/model"
 )
 
+//CalculateField fixture
 type CalculateField struct {
 	model.Model
 	Name     string
@@ -19,28 +22,33 @@ type CalculateField struct {
 	EmbeddedField
 }
 
+//EmbeddedField fixture
 type EmbeddedField struct {
 	EmbeddedName string `sql:"NOT NULL;DEFAULT:'hello'"`
 }
 
+//CalculateFieldChild fixture
 type CalculateFieldChild struct {
 	model.Model
 	CalculateFieldID uint
 	Name             string
 }
 
+//CalculateFieldCategory fixture
 type CalculateFieldCategory struct {
 	model.Model
 	CalculateFieldID uint
 	Name             string
 }
 
+//CustomizeColumn fixture
 type CustomizeColumn struct {
 	ID   int64      `gorm:"column:mapped_id; primary_key:yes"`
 	Name string     `gorm:"column:mapped_name"`
 	Date *time.Time `gorm:"column:mapped_time"`
 }
 
+//CustomColumnAndIgnoredFieldClash fixture
 // Make sure an ignored field does not interfere with another field's custom
 // column name that matches the ignored field.
 type CustomColumnAndIgnoredFieldClash struct {
@@ -48,34 +56,39 @@ type CustomColumnAndIgnoredFieldClash struct {
 	RawBody string `gorm:"column:body"`
 }
 
+//Cat fixture
 type Cat struct {
-	Id   int
+	ID   int
 	Name string
 	Toy  Toy `gorm:"polymorphic:Owner;"`
 }
 
+//Dog fixture
 type Dog struct {
-	Id   int
+	ID   int
 	Name string
 	Toys []Toy `gorm:"polymorphic:Owner;"`
 }
 
+//Hamster fixture
 type Hamster struct {
-	Id           int
+	ID           int
 	Name         string
 	PreferredToy Toy `gorm:"polymorphic:Owner;polymorphic_value:hamster_preferred"`
 	OtherToy     Toy `gorm:"polymorphic:Owner;polymorphic_value:hamster_other"`
 }
 
+//Toy fixture
 type Toy struct {
-	Id        int
+	ID        int
 	Name      string
-	OwnerId   int
+	OwnerID   int
 	OwnerType string
 }
 
+//User fixture
 type User struct {
-	Id                int64
+	ID                int64
 	Age               int64
 	UserNum           Num
 	Name              string `sql:"size:255"`
@@ -87,7 +100,7 @@ type User struct {
 	BillingAddress    Address       // Embedded struct
 	BillingAddressID  sql.NullInt64 // Embedded struct's foreign key
 	ShippingAddress   Address       // Embedded struct
-	ShippingAddressId int64         // Embedded struct's foreign key
+	ShippingAddressID int64         // Embedded struct's foreign key
 	CreditCard        CreditCard
 	Latitude          float64
 	Languages         []Language `gorm:"many2many:user_languages;"`
@@ -102,43 +115,50 @@ type User struct {
 	IgnoredPointer    *User                 `sql:"-"`
 }
 
+//NotSoLongTableName fixture
 type NotSoLongTableName struct {
-	Id                int64
+	ID                int64
 	ReallyLongThingID int64
 	ReallyLongThing   ReallyLongTableNameToTestMySQLNameLengthLimit
 }
 
+//ReallyLongTableNameToTestMySQLNameLengthLimit fixture
 type ReallyLongTableNameToTestMySQLNameLengthLimit struct {
-	Id int64
+	ID int64
 }
 
+//ReallyLongThingThatReferencesShort fixture
 type ReallyLongThingThatReferencesShort struct {
-	Id      int64
+	ID      int64
 	ShortID int64
 	Short   Short
 }
 
+//Short fixture
 type Short struct {
-	Id int64
+	ID int64
 }
 
+//CreditCard fixture
 type CreditCard struct {
 	ID        int8
 	Number    string
-	UserId    sql.NullInt64
+	UserID    sql.NullInt64
 	CreatedAt time.Time `sql:"not null"`
 	UpdatedAt time.Time
 	DeletedAt *time.Time
 }
 
+//Email fixture
 type Email struct {
-	Id        int16
-	UserId    int
+	ID        int16
+	UserID    int
 	Email     string `sql:"type:varchar(100);"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
+//Address fixture
 type Address struct {
 	ID        int
 	Address1  string
@@ -149,14 +169,16 @@ type Address struct {
 	DeletedAt *time.Time
 }
 
+//Language fixture
 type Language struct {
 	model.Model
 	Name  string
 	Users []User `gorm:"many2many:user_languages;"`
 }
 
+//Product fixture
 type Product struct {
-	Id                    int64
+	ID                    int64
 	Code                  string
 	Price                 int64
 	CreatedAt             time.Time
@@ -172,16 +194,19 @@ type Product struct {
 	AfterDeleteCallTimes  int64
 }
 
+//Company fixture
 type Company struct {
-	Id    int64
+	ID    int64
 	Name  string
 	Owner *User `sql:"-"`
 }
 
+//Role fixture
 type Role struct {
 	Name string `gorm:"size:256"`
 }
 
+//Scan implements sql.Scanner
 func (role *Role) Scan(value interface{}) error {
 	if b, ok := value.([]uint8); ok {
 		role.Name = string(b)
@@ -191,16 +216,20 @@ func (role *Role) Scan(value interface{}) error {
 	return nil
 }
 
+//Value implements sql driver.Valuer
 func (role Role) Value() (driver.Value, error) {
 	return role.Name, nil
 }
 
+//IsAdmin return true if the role is admin
 func (role Role) IsAdmin() bool {
 	return role.Name == "admin"
 }
 
+//Num custom int64 type
 type Num int64
 
+//Scan implements sql.Scanner
 func (i *Num) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
@@ -212,6 +241,7 @@ func (i *Num) Scan(src interface{}) error {
 	return nil
 }
 
+//Animal fixture
 type Animal struct {
 	Counter    uint64    `gorm:"primary_key:yes"`
 	Name       string    `sql:"DEFAULT:'galeone'"`
@@ -222,16 +252,18 @@ type Animal struct {
 	UpdatedAt  time.Time
 }
 
+//JoinTable fixture
 type JoinTable struct {
 	From uint64
 	To   uint64
 	Time time.Time `sql:"default: null"`
 }
 
+//Post fixture
 type Post struct {
-	Id             int64
-	CategoryId     sql.NullInt64
-	MainCategoryId int64
+	ID             int64
+	CategoryID     sql.NullInt64
+	MainCategoryID int64
 	Title          string
 	Body           string
 	Comments       []*Comment
@@ -239,6 +271,7 @@ type Post struct {
 	MainCategory   Category
 }
 
+//Category fixture
 type Category struct {
 	model.Model
 	Name string
@@ -247,16 +280,17 @@ type Category struct {
 	CategoryID *uint
 }
 
+//Comment fixture
 type Comment struct {
 	model.Model
-	PostId  int64
+	PostID  int64
 	Content string
 	Post    Post
 }
 
-// Scanner
+//NullValue fixture
 type NullValue struct {
-	Id      int64
+	ID      int64
 	Name    sql.NullString  `sql:"not null"`
 	Gender  *sql.NullString `sql:"not null"`
 	Age     sql.NullInt64
@@ -265,11 +299,13 @@ type NullValue struct {
 	AddedAt NullTime
 }
 
+//NullTime fixture
 type NullTime struct {
 	Time  time.Time
 	Valid bool
 }
 
+//Scan implents sql.Scanner
 func (nt *NullTime) Scan(value interface{}) error {
 	if value == nil {
 		nt.Valid = false
@@ -279,6 +315,7 @@ func (nt *NullTime) Scan(value interface{}) error {
 	return nil
 }
 
+//Value implements driver.valuer
 func (nt NullTime) Value() (driver.Value, error) {
 	if !nt.Valid {
 		return nil, nil
@@ -286,6 +323,7 @@ func (nt NullTime) Value() (driver.Value, error) {
 	return nt.Time, nil
 }
 
+//TestEngine returns an *engine.Engine instance suitable for testing
 func TestEngine() *engine.Engine {
 	return &engine.Engine{
 		Search:    &model.Search{},
