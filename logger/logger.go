@@ -79,7 +79,7 @@ func (z *Zapper) Warn(arg string, fields ...zap.Field) {
 	z.Log(zap.WarnLevel, arg, fields...)
 }
 
-//Fields Add fiels
+//Fields Add fields
 func (z *Zapper) Fields(f ...zap.Field) {
 	z.fiedls = append(z.fiedls, f...)
 }
