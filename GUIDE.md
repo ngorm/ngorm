@@ -10,7 +10,7 @@ Enjoy!
 
 - [Getting started](#getting-started)
  - [Installation](#installation)
- - [Connecting to databases](connecting-to-a-database)
+ - [Connecting to databases](#connecting-to-a-database)
  - [Migrations](#migrations)
  - [Create](#create)
  - [Query](#query)
