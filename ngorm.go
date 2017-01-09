@@ -218,7 +218,7 @@ func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
 type DefaultOpener struct {
 }
 
-//Open opens up database connection using the database/sql packge.
+//Open opens up database connection using the database/sql package.
 func (d *DefaultOpener) Open(dialect string, args ...interface{}) (model.SQLCommon, dialects.Dialect, error) {
 	var source string
 	var dia dialects.Dialect
