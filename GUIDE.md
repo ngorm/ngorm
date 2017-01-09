@@ -94,3 +94,13 @@ func main() {
 The return `ngorm.DB` instance is safe. It is a good idea to have only one
 instance of this object throughout your application life cycle. Make it a global
 or pass it in context.
+
+
+# Migrations
+NGORM offers auto migrations. `DB.Automigrate` handless creation of the database
+table if the database doesn't exist yet. It also handles changes in the fields.
+
+Bonus point , you can use `DB.AtomirateSQL` to see the SQL query that will be
+executed without executing anything.
+
+
