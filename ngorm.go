@@ -81,11 +81,12 @@ import (
 	"github.com/uber-go/zap"
 )
 
+//Opener is an interface that is used to open up connection to SQL databases.
 type Opener interface {
 	Open(dialect string, args ...interface{}) (model.SQLCommon, dialects.Dialect, error)
 }
 
-// DB contains information for current db connection
+// DB provide an API for interacting with SQL databases using Go data structures.
 type DB struct {
 	db            model.SQLCommon
 	dialect       dialects.Dialect
@@ -98,10 +99,34 @@ type DB struct {
 	log           *logger.Zapper
 }
 
+//Open opens a database connection and returns *DB instance., dialect is the
+//name of the driver that you want to use. The underlying connections are
+//handled by database/sql package. Arguments that are accepted by database/sql
+//Open function are valid here.
+//
+// Not all databases are supported. There is still an ongoing efforts to add
+// more databases but for now the following are the databases  supported by this
+// library,
+//
+//   * ql https://github.com/cznic/ql
+//
+// The drivers for the libraries must be imported inside your application in the
+// same package as you invoke this function.
+//
+// Example
+//
+//   import _ "github.com/cznic/ql/driver"  // imports ql driver
 func Open(dialect string, args ...interface{}) (*DB, error) {
 	return OpenWithOpener(&DefaultOpener{}, dialect, args...)
 }
 
+// OpenWithOpener uses the opener to initialize the dialects and establish
+// database connection. In fact Open does not do anything by itself, it just
+// calls this function with the default Opener.
+//
+// Please see Open function for details. The only difference is here you need to
+// pass an Opener. See the Opener interface for details about what the Opener is
+// and what it is used for.
 func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, error) {
 	db, dia, err := opener.Open(dialect, args...)
 	if err != nil {
@@ -137,6 +162,7 @@ func (db *DB) NewEngine() *engine.Engine {
 	}
 }
 
+//CreateTable creates new database tables that maps to the models.
 func (db *DB) CreateTable(models ...interface{}) (sql.Result, error) {
 	query, err := db.CreateTableSQL(models...)
 	if err != nil {
@@ -145,6 +171,8 @@ func (db *DB) CreateTable(models ...interface{}) (sql.Result, error) {
 	return db.ExecTx(query.Q, query.Args...)
 }
 
+//ExecTx wraps the query execution in a Transaction. This ensure all operations
+//are Rolled back in case the execution fials.
 func (db *DB) ExecTx(query string, args ...interface{}) (sql.Result, error) {
 	tx, err := db.db.Begin()
 	if err != nil {
@@ -152,7 +180,7 @@ func (db *DB) ExecTx(query string, args ...interface{}) (sql.Result, error) {
 	}
 	r, err := tx.Exec(query, args...)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return nil, err
 	}
 	err = tx.Commit()
@@ -162,9 +190,11 @@ func (db *DB) ExecTx(query string, args ...interface{}) (sql.Result, error) {
 	return r, nil
 }
 
+//CreateTableSQL return the sql query for creating tables for all the given
+//models. The queries are wrapped in a TRANSACTION block.
 func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
 	var buf bytes.Buffer
-	buf.WriteString("BEGIN TRANSACTION; \n")
+	_, _ = buf.WriteString("BEGIN TRANSACTION; \n")
 	for _, m := range models {
 		e := db.NewEngine()
 
@@ -173,20 +203,22 @@ func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
 		if err != nil {
 			return nil, err
 		}
-		buf.WriteString("\t" + e.Scope.SQL + ";\n")
+		_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
 		if e.Scope.MultiExpr {
 			for _, expr := range e.Scope.Exprs {
-				buf.WriteString("\t" + expr.Q + ";\n")
+				_, _ = buf.WriteString("\t" + expr.Q + ";\n")
 			}
 		}
 	}
-	buf.WriteString("COMMIT;")
+	_, _ = buf.WriteString("COMMIT;")
 	return &model.Expr{Q: buf.String()}, nil
 }
 
+//DefaultOpener implements Opener interface.
 type DefaultOpener struct {
 }
 
+//Open opens up database connection using the database/sql packge.
 func (d *DefaultOpener) Open(dialect string, args ...interface{}) (model.SQLCommon, dialects.Dialect, error) {
 	var source string
 	var dia dialects.Dialect

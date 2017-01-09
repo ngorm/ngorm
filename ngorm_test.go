@@ -9,7 +9,7 @@ import (
 )
 
 type Foo struct {
-	Id    int
+	ID    int
 	Stuff string
 }
 
