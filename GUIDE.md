@@ -32,3 +32,28 @@ Enjoy!
  - [Transactions](#transactions)
 
 - [Primer on `database/sql` package](#primer-on-database-sql-package)
+
+
+# Getting started
+
+NGORM is a fork of gorm. I initially forked gorm for the purpose of improving
+performance, after navigating through the whole code base it dawned to me that
+there was no straight way to benchmark and any efforts won't be conveying the
+truth about what is happening.
+
+Queries are executed using `database/sql` package, majority of the time is spent
+generating the queries from models. So there can be two places for
+benchmarking.
+
+First is the code that is responsible to take models and generate SQl. Second is the
+code that uses `database/sql` to run the queries i.e measure how fast/efficient
+are the generated queries.
+
+The second part is too broad and vague, and might have different outcomes based
+on the nature of the database. So the focus of ngorm is to make sure all the
+cases are addressed, in a way that it the library generates the best possible
+queries for the supported databases.
+
+## Installation
+
+	go get -u github.com/gernest/ngorm
