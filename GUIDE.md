@@ -4,6 +4,11 @@ Welcome! Thanks you for taking your time to check out on ngorm. This is a rather
 TL:DR doc which will walk you through all things necessary to get started with
 ngorm. Please check godoc reference too, there is a lot of good details there.
 
+
+**NOTE**: The SQL shown in this doc is based on the ql dialect, which is SQL
+like. You might see different results if you use other dialect. To have the same
+result use ql database.
+
 Enjoy!
 
 ## Table of contents
