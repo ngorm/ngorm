@@ -828,6 +828,7 @@ func ChangeableField(e *engine.Engine, field *model.Field) bool {
 	return true
 }
 
+//CreateTable generates CREATE TABLE SQL
 func CreateTable(e *engine.Engine, value interface{}) error {
 	var tags []string
 	var primaryKeys []string
@@ -883,6 +884,11 @@ func CreateTable(e *engine.Engine, value interface{}) error {
 	return AutoIndex(e, value)
 }
 
+//CreateJoinTable creates a join table that handles many to many relationship.
+//
+//For instance if users have many to many relation to languages then the join
+//table will be users_language and containing keys that point to both users and
+//languages table.
 func CreateJoinTable(e *engine.Engine, field *model.StructField) error {
 	if rel := field.Relationship; rel != nil && rel.JoinTableHandler != nil {
 		j := rel.JoinTableHandler
@@ -954,6 +960,7 @@ func CreateJoinTable(e *engine.Engine, field *model.StructField) error {
 	return nil
 }
 
+//AutoIndex generates CREATE INDEX SQL
 func AutoIndex(e *engine.Engine, value interface{}) error {
 	var indexes = map[string][]string{}
 	var uniqueIndexes = map[string][]string{}
@@ -1003,6 +1010,12 @@ func AutoIndex(e *engine.Engine, value interface{}) error {
 	return nil
 }
 
+//AddIndex add extra queries fo creating database index. The indexes are packed
+//on e.Sope.Exprs and it sets the e.Scope.MultiExpr to true signaling that there
+//are additional multiple SQL queries bundled in the e.Scope.
+//
+// if unique is true this will generate CREATE UNIQUE INDEX and in case of false
+// it generates CREATE INDEX.
 func AddIndex(e *engine.Engine, unique bool, value interface{}, indexName string, column ...string) error {
 	if e.Dialect.HasIndex(TableName(e, value), indexName) {
 		return nil

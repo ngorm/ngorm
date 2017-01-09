@@ -9,7 +9,7 @@ import (
 	"github.com/gernest/ngorm/model"
 )
 
-// Setup initialize a default join table handler
+// SetupJoinTable  initialize a default join table handler
 func SetupJoinTable(s *model.JoinTableHandler, relationship *model.Relationship,
 	tableName string, source reflect.Type, destination reflect.Type) {
 	s.TableName = tableName
@@ -30,6 +30,8 @@ func SetupJoinTable(s *model.JoinTableHandler, relationship *model.Relationship,
 	}
 }
 
+//GetSearchMap return a map of  fiels that are related  as in foreign keys
+//between the source model and destination model.
 func GetSearchMap(e *engine.Engine, s *model.JoinTableHandler, sources ...interface{}) map[string]interface{} {
 	values := map[string]interface{}{}
 
@@ -63,7 +65,7 @@ func GetSearchMap(e *engine.Engine, s *model.JoinTableHandler, sources ...interf
 	return values
 }
 
-// Add create relationship in join table for source and destination
+// AddJoinRelation  create relationship in join table for source and destination
 func AddJoinRelation(table string, s *model.JoinTableHandler,
 	e *engine.Engine, source interface{},
 	destination interface{}) (*model.Expr, error) {
