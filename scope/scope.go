@@ -1048,3 +1048,40 @@ func DropTable(e *engine.Engine, value interface{}) error {
 	e.Scope.SQL = fmt.Sprintf("DROP TABLE %v", QuotedTableName(e, value))
 	return nil
 }
+
+//Automigrate generates  sql for creting database table for model value if the
+//table doesnt exist yet. It also alters fields if the model has been updated.
+func Automigrate(e *engine.Engine, value interface{}) error {
+	tableName := TableName(e, value)
+	quotedTableName := QuotedTableName(e, value)
+	if !e.Dialect.HasTable(tableName) {
+		return CreateTable(e, value)
+	}
+	m, err := GetModelStruct(e, value)
+	if err != nil {
+		return err
+	}
+	for _, field := range m.StructFields {
+		if !e.Dialect.HasColumn(tableName, field.DBName) {
+			if field.IsNormal {
+				sqlTag, err := e.Dialect.DataTypeOf(field)
+				if err != nil {
+					return err
+				}
+				if !e.Scope.MultiExpr {
+					e.Scope.MultiExpr = true
+				}
+				expr := &model.Expr{
+					Q: fmt.Sprintf("ALTER TABLE %v ADD %v %v;", quotedTableName,
+						Quote(e, field.DBName), sqlTag),
+				}
+				e.Scope.Exprs = append(e.Scope.Exprs, expr)
+			}
+		}
+		err = CreateJoinTable(e, field)
+		if err != nil {
+			return err
+		}
+	}
+	return AutoIndex(e, value)
+}

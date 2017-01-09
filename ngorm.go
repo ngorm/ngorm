@@ -278,9 +278,45 @@ func (db *DB) DropTableSQL(models ...interface{}) (*model.Expr, error) {
 //DropTable drops tables that are mapped to models. You can also pass the name
 //of the table as astring and it will be handled.
 func (db *DB) DropTable(models ...interface{}) (sql.Result, error) {
-	query, err := db.DropTableSQL(models)
+	query, err := db.DropTableSQL(models...)
 	if err != nil {
 		return nil, err
 	}
 	return db.ExecTx(query.Q, query.Args...)
+}
+
+//Automigrate creates tables that map to models if the tables don't exist yet in
+//the database. This also takes care of situation where the models's fields have
+//been updated(canged)
+func (db *DB) Automigrate(models ...interface{}) (sql.Result, error) {
+	query, err := db.AutomigrateSQL(models...)
+	if err != nil {
+		return nil, err
+	}
+	return db.ExecTx(query.Q, query.Args...)
+}
+
+//AutomigrateSQL generates sql query for running migrations on models.
+func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
+	var buf bytes.Buffer
+	_, _ = buf.WriteString("BEGIN TRANSACTION; \n")
+	for _, m := range models {
+		e := db.NewEngine()
+
+		// Firste we generate the SQL
+		err := scope.Automigrate(e, m)
+		if err != nil {
+			return nil, err
+		}
+		if e.Scope.SQL != "" {
+			_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
+		}
+		if e.Scope.MultiExpr {
+			for _, expr := range e.Scope.Exprs {
+				_, _ = buf.WriteString("\t" + expr.Q + ";\n")
+			}
+		}
+	}
+	_, _ = buf.WriteString("COMMIT;")
+	return &model.Expr{Q: buf.String()}, nil
 }
