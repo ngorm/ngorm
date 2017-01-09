@@ -97,7 +97,7 @@ func AfterQuery(b *Book, e *engine.Engine) error {
 	return nil
 }
 
-//BeforeCreate a callback excecuted before crating anew record.
+//BeforeCreate a callback executed before crating anew record.
 func BeforeCreate(b *Book, e *engine.Engine) error {
 	bs, ok := b.Create.Get(model.HookBeforeSave)
 	if ok {
