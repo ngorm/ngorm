@@ -13,11 +13,12 @@ type Foo struct {
 	Stuff string
 }
 
-func TestDB(t *testing.T) {
+func TestDB_CreateTable(t *testing.T) {
 	db, err := Open("ql-mem", "test.db")
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer func() { _ = db.Close() }()
 
 	// create table tests
 	sql, err := db.CreateTableSQL(&Foo{})
