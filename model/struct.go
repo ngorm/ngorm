@@ -142,7 +142,7 @@ type SafeStructsMap struct {
 	l *sync.RWMutex
 }
 
-//Set stores value witht the given key.
+//Set stores value with the given key.
 func (s *SafeStructsMap) Set(key reflect.Type, value *Struct) {
 	s.l.Lock()
 	defer s.l.Unlock()
@@ -191,7 +191,7 @@ func (s *Scope) Get(key string) (interface{}, bool) {
 	return v, ok
 }
 
-//Search is the search level of SQL buidling
+//Search is the search level of SQL building
 type Search struct {
 	WhereConditions  []map[string]interface{}
 	OrConditions     []map[string]interface{}
