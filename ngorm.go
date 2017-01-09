@@ -320,3 +320,10 @@ func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 	_, _ = buf.WriteString("COMMIT;")
 	return &model.Expr{Q: buf.String()}, nil
 }
+
+//Close closes the database connection and sends Done signal across all
+//goroutines that subscribed to this instance context.
+func (db *DB) Close() error {
+	db.cancel()
+	return db.db.Close()
+}
