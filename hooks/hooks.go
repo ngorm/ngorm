@@ -37,7 +37,7 @@ func (h *Hooks) Get(name string) (Hook, bool) {
 	return hk, ok
 }
 
-//NewHooks retruns an initalized Hooks instance.
+//NewHooks retruns an initialized Hooks instance.
 func NewHooks() *Hooks {
 	return &Hooks{h: make(map[string]Hook)}
 }
