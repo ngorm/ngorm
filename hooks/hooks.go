@@ -69,6 +69,7 @@ type Book struct {
 	Query  *Hooks
 }
 
+//DefaultBook returns the default ngorm Book. This has all default hooks set.
 func DefaultBook() *Book {
 	b := &Book{
 		Create: NewHooks(),
