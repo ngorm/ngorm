@@ -146,7 +146,7 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 //
 // So, if the modelValue has primary key field id, and the value supplied is an
 // integrer 14.The string generated will be id=$1 provided value is the first
-// positional argument. Practially speaking it is the same as id=14.
+// positional argument. Practically speaking it is the same as id=14.
 func PrimaryCondition(e *engine.Engine, modelValue, value interface{}) (string, error) {
 	pk, err := scope.PrimaryKey(e, modelValue)
 	if err != nil {
