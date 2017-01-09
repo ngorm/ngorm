@@ -51,7 +51,7 @@ are the generated queries.
 
 The second part is too broad and vague, and might have different outcomes based
 on the nature of the database. So the focus of ngorm is to make sure all the
-cases are addressed, in a way that it the library generates the best possible
+cases are addressed, in a way that  the library generates the best possible
 queries for the supported databases.
 
 ## Installation
