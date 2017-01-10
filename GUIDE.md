@@ -249,5 +249,5 @@ COMMIT;
 
 To run the Actual migration just do this
 ```go
-	DB.Automigrate{&User{},&Email{},&Language{},&Company{},&CreditCard{},&Address{}}
+	db.Automigrate{&User{},&Email{},&Language{},&Company{},&CreditCard{},&Address{}}
 ```
