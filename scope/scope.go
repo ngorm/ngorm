@@ -892,70 +892,71 @@ func CreateTable(e *engine.Engine, value interface{}) error {
 func CreateJoinTable(e *engine.Engine, field *model.StructField) error {
 	if rel := field.Relationship; rel != nil && rel.JoinTableHandler != nil {
 		j := rel.JoinTableHandler
-		if !e.Dialect.HasTable(j.TableName) {
-			value := reflect.New(field.Struct.Type).Interface()
-			var sqlTypes, primaryKeys []string
-			for idx, fieldName := range rel.ForeignFieldNames {
-				f, err := FieldByName(e, value, fieldName)
-				if err != nil {
-					return err
-				}
-				fk := f.Clone()
-				fk.IsPrimaryKey = false
-				fk.TagSettings["IS_JOINTABLE_FOREIGNKEY"] = "true"
-				delete(fk.TagSettings, "AUTO_INCREMENT")
-				data, err := e.Dialect.DataTypeOf(fk)
-				if err != nil {
-					return err
-				}
-				sqlTypes = append(sqlTypes,
-					Quote(e, rel.ForeignDBNames[idx])+" "+data)
-				primaryKeys = append(primaryKeys, Quote(e, rel.ForeignDBNames[idx]))
-
-			}
-
-			for idx, fieldName := range rel.AssociationForeignFieldNames {
-				field, err := FieldByName(e, value, fieldName)
-				if err != nil {
-					return err
-				}
-				fk := field.Clone()
-				fk.IsPrimaryKey = false
-				fk.TagSettings["IS_JOINTABLE_FOREIGNKEY"] = "true"
-				delete(fk.TagSettings, "AUTO_INCREMENT")
-				data, err := e.Dialect.DataTypeOf(fk)
-				if err != nil {
-					return err
-				}
-				sqlTypes = append(sqlTypes,
-					Quote(e, rel.AssociationForeignDBNames[idx])+" "+data)
-				primaryKeys = append(primaryKeys, Quote(e, rel.AssociationForeignDBNames[idx]))
-			}
-			var primaryKeyStr string
-			if len(primaryKeys) > 0 {
-				primaryKeyStr = e.Dialect.PrimaryKey(primaryKeys)
-				if primaryKeyStr != "" {
-					primaryKeyStr = ", " + primaryKeyStr
-				}
-			}
-			if primaryKeyStr != "" {
-				primaryKeyStr = ", PRIMARY KEY (" + primaryKeyStr + ")"
-			}
-			var tableOpts string
-			opts, ok := e.Scope.Get(model.TableOptions)
-			if ok {
-				tableOpts = opts.(string)
-			}
-
-			sql := fmt.Sprintf("CREATE TABLE %v (%v %v) %s",
-				Quote(e, j.TableName),
-				strings.Join(sqlTypes, ","),
-				primaryKeyStr, tableOpts)
-			if !e.Scope.MultiExpr {
-				e.Scope.MultiExpr = true
-			}
-			e.Scope.Exprs = append(e.Scope.Exprs, &model.Expr{Q: sql})
+		if e.Dialect.HasTable(j.TableName) {
+			return nil
 		}
+		value := reflect.New(field.Struct.Type).Interface()
+		var sqlTypes, primaryKeys []string
+		for idx, fieldName := range rel.ForeignFieldNames {
+			f, err := FieldByName(e, value, fieldName)
+			if err != nil {
+				return err
+			}
+			fk := f.Clone()
+			fk.IsPrimaryKey = false
+			fk.TagSettings["IS_JOINTABLE_FOREIGNKEY"] = "true"
+			delete(fk.TagSettings, "AUTO_INCREMENT")
+			data, err := e.Dialect.DataTypeOf(fk)
+			if err != nil {
+				return err
+			}
+			sqlTypes = append(sqlTypes,
+				Quote(e, rel.ForeignDBNames[idx])+" "+data)
+			primaryKeys = append(primaryKeys, Quote(e, rel.ForeignDBNames[idx]))
+
+		}
+
+		for idx, fieldName := range rel.AssociationForeignFieldNames {
+			field, err := FieldByName(e, value, fieldName)
+			if err != nil {
+				return err
+			}
+			fk := field.Clone()
+			fk.IsPrimaryKey = false
+			fk.TagSettings["IS_JOINTABLE_FOREIGNKEY"] = "true"
+			delete(fk.TagSettings, "AUTO_INCREMENT")
+			data, err := e.Dialect.DataTypeOf(fk)
+			if err != nil {
+				return err
+			}
+			sqlTypes = append(sqlTypes,
+				Quote(e, rel.AssociationForeignDBNames[idx])+" "+data)
+			primaryKeys = append(primaryKeys, Quote(e, rel.AssociationForeignDBNames[idx]))
+		}
+		var primaryKeyStr string
+		if len(primaryKeys) > 0 {
+			primaryKeyStr = e.Dialect.PrimaryKey(primaryKeys)
+			if primaryKeyStr != "" {
+				primaryKeyStr = ", " + primaryKeyStr
+			}
+		}
+		if primaryKeyStr != "" {
+			primaryKeyStr = ", PRIMARY KEY (" + primaryKeyStr + ")"
+		}
+		var tableOpts string
+		opts, ok := e.Scope.Get(model.TableOptions)
+		if ok {
+			tableOpts = opts.(string)
+		}
+
+		sql := fmt.Sprintf("CREATE TABLE %v (%v %v) %s",
+			Quote(e, j.TableName),
+			strings.Join(sqlTypes, ","),
+			primaryKeyStr, tableOpts)
+		if !e.Scope.MultiExpr {
+			e.Scope.MultiExpr = true
+		}
+		e.Scope.Exprs = append(e.Scope.Exprs, &model.Expr{Q: sql})
 	}
 	return nil
 }

@@ -76,41 +76,37 @@ func (q *QL) PrimaryKey(keys []string) string {
 // DataTypeOf return data's sql type
 func (q *QL) DataTypeOf(field *model.StructField) (string, error) {
 	var dataValue, sqlType, _, additionalType = dialects.ParseFieldStructForDialect(field)
-
-	if sqlType == "" {
-		switch dataValue.Kind() {
-		case reflect.Bool:
-			sqlType = "boolean"
-		case reflect.Int,
-			reflect.Int8,
-			reflect.Int16,
-			reflect.Int32,
-			reflect.Int64,
-			reflect.Uint,
-			reflect.Uint8,
-			reflect.Uint16,
-			reflect.Uint32,
-			reflect.Uint64,
-			reflect.Float32,
-			reflect.Float64,
-			reflect.String:
-			sqlType = dataValue.Kind().String()
-		case reflect.Struct:
-			switch dataValue.Interface().(type) {
-			case time.Time:
-				sqlType = "time"
-			case big.Int:
-				sqlType = "bigint"
-			case big.Rat:
-				sqlType = "bigrat"
-			}
-		default:
-			if _, ok := dataValue.Interface().([]byte); ok {
-				sqlType = "blob"
-			}
+	switch dataValue.Kind() {
+	case reflect.Bool:
+		sqlType = "boolean"
+	case reflect.Int,
+		reflect.Int8,
+		reflect.Int16,
+		reflect.Int32,
+		reflect.Int64,
+		reflect.Uint,
+		reflect.Uint8,
+		reflect.Uint16,
+		reflect.Uint32,
+		reflect.Uint64,
+		reflect.Float32,
+		reflect.Float64,
+		reflect.String:
+		sqlType = dataValue.Kind().String()
+	case reflect.Struct:
+		switch dataValue.Interface().(type) {
+		case time.Time:
+			sqlType = "time"
+		case big.Int:
+			sqlType = "bigint"
+		case big.Rat:
+			sqlType = "bigrat"
+		}
+	default:
+		if _, ok := dataValue.Interface().([]byte); ok {
+			sqlType = "blob"
 		}
 	}
-
 	if sqlType == "" {
 		return "", fmt.Errorf("invalid sql type %s (%s) for ql", dataValue.Type().Name(), dataValue.Kind().String())
 	}
@@ -118,6 +114,7 @@ func (q *QL) DataTypeOf(field *model.StructField) (string, error) {
 	if strings.TrimSpace(additionalType) == "" {
 		return sqlType, nil
 	}
+
 	return fmt.Sprintf("%v %v", sqlType, additionalType), nil
 }
 

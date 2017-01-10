@@ -1,6 +1,7 @@
 package ngorm
 
 import (
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -98,5 +99,53 @@ COMMIT;`
 	expect = strings.TrimSpace(expect)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+}
+
+func TestDB_Automirate(t *testing.T) {
+	db, err := Open("ql-mem", "est.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+
+	sql, err := db.AutomigrateSQL(
+		&fixture.User{},
+		&fixture.Email{},
+		&fixture.Language{},
+		&fixture.Company{},
+		&fixture.CreditCard{},
+		&fixture.Address{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ioutil.WriteFile("txt", []byte(sql.Q), 0600)
+	expect := `
+BEGIN TRANSACTION;
+	CREATE TABLE users (id int64,age int64,user_num int64,name string,email string,birthday time,created_at time,updated_at time,billing_address_id int64,shipping_address_id int64,latitude float64,company_id int,role string,password_hash blob,sequence uint ) ;
+	CREATE TABLE user_languages (user_id uint,language_id uint ) ;
+	CREATE TABLE emails (id int16,user_id int,email string,created_at time,updated_at time ) ;
+	CREATE TABLE languages (id uint,created_at time,updated_at time,deleted_at time,name string ) ;
+	CREATE INDEX idx_languages_deleted_at ON languages(deleted_at);
+	CREATE TABLE companies (id int64,name string ) ;
+	CREATE TABLE credit_cards (id int8,number string,user_id int64,created_at time NOT NULL,updated_at time,deleted_at time ) ;
+	CREATE TABLE addresses (id int,address1 string,address2 string,post string,created_at time,updated_at time,deleted_at time ) ;
+COMMIT;`
+
+	expect = strings.TrimSpace(expect)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+	_, err = db.Automigrate(
+		&fixture.User{},
+		&fixture.Email{},
+		&fixture.Language{},
+		&fixture.Company{},
+		&fixture.CreditCard{},
+		&fixture.Address{},
+	)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

@@ -70,6 +70,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/gernest/ngorm/dialects"
 	"github.com/gernest/ngorm/dialects/ql"
@@ -300,6 +301,7 @@ func (db *DB) Automigrate(models ...interface{}) (sql.Result, error) {
 func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 	var buf bytes.Buffer
 	_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+	keys := make(map[string]bool)
 	for _, m := range models {
 		e := db.NewEngine()
 
@@ -309,11 +311,21 @@ func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 			return nil, err
 		}
 		if e.Scope.SQL != "" {
-			_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
+			i := strings.Index(e.Scope.SQL, "(")
+			k := e.Scope.SQL[:i]
+			if _, ok := keys[k]; !ok {
+				_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
+				keys[k] = true
+			}
 		}
 		if e.Scope.MultiExpr {
 			for _, expr := range e.Scope.Exprs {
-				_, _ = buf.WriteString("\t" + expr.Q + ";\n")
+				i := strings.Index(expr.Q, "(")
+				k := expr.Q[:i]
+				if _, ok := keys[k]; !ok {
+					_, _ = buf.WriteString("\t" + expr.Q + ";\n")
+					keys[k] = true
+				}
 			}
 		}
 	}

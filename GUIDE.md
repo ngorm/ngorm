@@ -137,3 +137,117 @@ BEGIN TRANSACTION;
 COMMIT;
 ```
 
+
+## Automigrate
+
+Given that you have the following models.
+
+```go
+
+type User struct {
+	ID                int64
+	Age               int64
+	UserNum           Num
+	Name              string `sql:"size:255"`
+	Email             string
+	Birthday          *time.Time    // Time
+	CreatedAt         time.Time     // CreatedAt: Time of record is created, will be insert automatically
+	UpdatedAt         time.Time     // UpdatedAt: Time of record is updated, will be updated automatically
+	Emails            []Email       // Embedded structs
+	BillingAddress    Address       // Embedded struct
+	BillingAddressID  sql.NullInt64 // Embedded struct's foreign key
+	ShippingAddress   Address       // Embedded struct
+	ShippingAddressID int64         // Embedded struct's foreign key
+	CreditCard        CreditCard
+	Latitude          float64
+	Languages         []Language `gorm:"many2many:user_languages;"`
+	CompanyID         *int
+	Company           Company
+	Role
+	PasswordHash      []byte
+	Sequence          uint                  `gorm:"AUTO_INCREMENT"`
+	IgnoreMe          int64                 `sql:"-"`
+	IgnoreStringSlice []string              `sql:"-"`
+	Ignored           struct{ Name string } `sql:"-"`
+	IgnoredPointer    *User                 `sql:"-"`
+}
+
+
+type CreditCard struct {
+	ID        int8
+	Number    string
+	UserID    sql.NullInt64
+	CreatedAt time.Time `sql:"not null"`
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+}
+
+type Email struct {
+	ID        int16
+	UserID    int
+	Email     string `sql:"type:varchar(100);"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type Address struct {
+	ID        int
+	Address1  string
+	Address2  string
+	Post      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+}
+
+type Language struct {
+	model.Model
+	Name  string
+	Users []User `gorm:"many2many:user_languages;"`
+}
+
+type Company struct {
+	ID    int64
+	Name  string
+	Owner *User `sql:"-"`
+}
+
+```
+
+We can observe what SQL is generated when we run automigration on these models.
+
+```go
+	sql, err := db.AutomigrateSQL(
+		&User{},
+		&Email{},
+		&Language{},
+		&Company{},
+		&CreditCard{},
+		&Address{},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(sql.Q)
+```
+
+Will print
+
+```sql
+
+BEGIN TRANSACTION;
+	CREATE TABLE users (id int64,age int64,user_num int64,name string,email string,birthday time,created_at time,updated_at time,billing_address_id int64,shipping_address_id int64,latitude float64,company_id int,role string,password_hash blob,sequence uint ) ;
+	CREATE TABLE user_languages (user_id uint,language_id uint ) ;
+	CREATE TABLE emails (id int16,user_id int,email string,created_at time,updated_at time ) ;
+	CREATE TABLE languages (id uint,created_at time,updated_at time,deleted_at time,name string ) ;
+	CREATE INDEX idx_languages_deleted_at ON languages(deleted_at);
+	CREATE TABLE companies (id int64,name string ) ;
+	CREATE TABLE credit_cards (id int8,number string,user_id int64,created_at time NOT NULL,updated_at time,deleted_at time ) ;
+	CREATE TABLE addresses (id int,address1 string,address2 string,post string,created_at time,updated_at time,deleted_at time ) ;
+COMMIT;
+```
+
+To run the Actual migration just do this
+```go
+	DB.Automigrate{&User{},&Email{},&Language{},&Company{},&CreditCard{},&Address{}}
+```
