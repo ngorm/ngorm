@@ -82,6 +82,10 @@ func TestDB_DropTable(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if db.dialect.HasTable("foos") {
+		t.Error("expected the table to disappear")
+	}
+
 	sql, err := db.DropTableSQL(&Foo{}, &fixture.User{})
 	if err != nil {
 		t.Fatal(err)
