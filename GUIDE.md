@@ -103,7 +103,7 @@ or pass it in context.
 
 # Migrations
 NGORM offers auto migrations. `DB.Automigrate` handless creation of the database
-table if the database doesn't exist yet. It also handles changes in the fields.
+table if the table doesn't exist yet. It also handles changes in the fields.
 
 Bonus point , you can use `DB.AtomirateSQL` to see the SQL query that will be
 executed without executing anything.
