@@ -342,6 +342,9 @@ func (db *DB) Close() error {
 }
 
 //Create creates a new record.
+//
+// You can hijack the execution of the generated SQL by overiding
+// model.HookCreateExec hook.
 func (db *DB) Create(value interface{}) error {
 	sql, err := db.CreateSQL(value)
 	if err != nil {
@@ -360,7 +363,7 @@ func (db *DB) Create(value interface{}) error {
 
 //CreateSQL generates SQl query for creating a new record/records for value. This
 //uses Hooks to allow more flexibility.
-
+//
 // There is no error propagation. Each step/hook execution must pass. Any error
 // indicate the end of the execution.
 //
