@@ -69,6 +69,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -153,7 +154,7 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 func (db *DB) NewEngine() *engine.Engine {
 	return &engine.Engine{
 		Search:        &model.Search{},
-		Scope:         &model.Scope{},
+		Scope:         model.NewScope(),
 		StructMap:     db.structMap,
 		SingularTable: db.singularTable,
 		Ctx:           db.ctx,
@@ -338,6 +339,23 @@ func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 func (db *DB) Close() error {
 	db.cancel()
 	return db.db.Close()
+}
+
+//Create creates a new record.
+func (db *DB) Create(value interface{}) error {
+	sql, err := db.CreateSQL(value)
+	if err != nil {
+		return err
+	}
+	c, ok := db.hooks.Create.Get(model.HookCreateExec)
+	if !ok {
+		return errors.New("missing execution hook")
+	}
+	e := db.NewEngine()
+	e.Scope.Value = value
+	e.Scope.SQL = sql.Q
+	e.Scope.SQLVars = sql.Args
+	return c.Exec(db.hooks, e)
 }
 
 //CreateSQL generates SQl query for creating a new record/records for value. This

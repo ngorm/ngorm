@@ -8,6 +8,7 @@ import (
 
 	"github.com/gernest/ngorm/builder"
 	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/errmsg"
 	"github.com/gernest/ngorm/model"
 	"github.com/gernest/ngorm/scope"
 	"github.com/gernest/ngorm/search"
@@ -195,38 +196,66 @@ func Create(b *Book, e *engine.Engine) error {
 		e.Scope.SQL = strings.Replace(sql, "$$", "?", -1)
 	}
 
-	// execute create sql
-	//if lastInsertIDReturningSuffix == "" || primaryField == nil {
-	//result, err := e.SQLDB.Exec(e.Scope.SQL, e.Scope.SQLVars...)
-	//if err != nil {
-	//return err
-	//}
-	//// set rows affected count
-	//e.RowsAffected, _ = result.RowsAffected()
+	return nil
+}
 
-	//// set primary value to primary field
-	//if primaryField != nil && primaryField.IsBlank {
-	//primaryValue, err := result.LastInsertId()
-	//if err != nil {
-	//return err
-	//}
-	//_ = primaryField.Set(primaryValue)
-	//}
-	//} else {
-	//if primaryField.Field.CanAddr() {
-	//err := e.SQLDB.QueryRow(
-	//e.Scope.SQL,
-	//e.Scope.SQLVars...,
-	//).Scan(primaryField.Field.Addr().Interface())
-	//if err != nil {
-	//return err
-	//}
-	//primaryField.IsBlank = false
-	//e.RowsAffected = 1
-	//} else {
-	//return errmsg.ErrUnaddressable
-	//}
-	//}
+//CreateExec executes the INSERT query and assigns primary key if it is not set
+//assuming the primary key is the ID field.
+func CreateExec(b *Book, e *engine.Engine) error {
+	primaryField, err := scope.PrimaryField(e, e.Scope.Value)
+	if err != nil {
+		return err
+	}
+	returningColumn := "*"
+	if primaryField != nil {
+		returningColumn = scope.Quote(e, primaryField.DBName)
+	}
+	tableName := scope.QuotedTableName(e, e.Scope.Value)
+	lastInsertIDReturningSuffix :=
+		e.Dialect.LastInsertIDReturningSuffix(tableName, returningColumn)
+	if lastInsertIDReturningSuffix == "" || primaryField == nil {
+		tx, err := e.SQLDB.Begin()
+		if err != nil {
+			return err
+		}
+		result, err := tx.Exec(e.Scope.SQL, e.Scope.SQLVars...)
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				return rerr
+			}
+			return err
+		}
+		err = tx.Commit()
+		if err != nil {
+			return err
+		}
+		// set rows affected count
+		e.RowsAffected, _ = result.RowsAffected()
+
+		// set primary value to primary field
+		if primaryField != nil && primaryField.IsBlank {
+			primaryValue, err := result.LastInsertId()
+			if err != nil {
+				return err
+			}
+			_ = primaryField.Set(primaryValue)
+		}
+	} else {
+		if primaryField.Field.CanAddr() {
+			err := e.SQLDB.QueryRow(
+				e.Scope.SQL,
+				e.Scope.SQLVars...,
+			).Scan(primaryField.Field.Addr().Interface())
+			if err != nil {
+				return err
+			}
+			primaryField.IsBlank = false
+			e.RowsAffected = 1
+		} else {
+			return errmsg.ErrUnaddressable
+		}
+	}
 	return nil
 }
 

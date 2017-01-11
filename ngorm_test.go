@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/cznic/ql/driver"
 	"github.com/gernest/ngorm/fixture"
@@ -145,6 +146,35 @@ COMMIT;`
 		&fixture.CreditCard{},
 		&fixture.Address{},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDb_Create(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(
+		&fixture.User{},
+		&fixture.Email{},
+		&fixture.Language{},
+		&fixture.Company{},
+		&fixture.CreditCard{},
+		&fixture.Address{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := time.Now()
+	user := fixture.User{Name: "Jinzhu", Age: 18, Birthday: &n}
+	_, err = db.CreateSQL(&user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = db.Create(&user)
 	if err != nil {
 		t.Fatal(err)
 	}

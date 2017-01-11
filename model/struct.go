@@ -19,6 +19,7 @@ const (
 	HookBeforeCreate    = "ngorm:before_create_hook"
 	HookBeforeSave      = "ngorm:before_save_hook"
 	Create              = "ngorm:create"
+	HookCreateExec      = "ngorm:create_exec"
 	BeforeCreate        = "ngorm:before_create"
 	AfterCreate         = "ngorm:after_create"
 	HookAfterCreate     = "ngorm:after_create"
@@ -176,6 +177,12 @@ type Scope struct {
 	Exprs           []*Expr
 	mu              sync.RWMutex
 	data            map[string]interface{}
+}
+
+func NewScope() *Scope {
+	return &Scope{
+		data: make(map[string]interface{}),
+	}
 }
 
 //Set sets a scope specific key value. This is only available in the scope.
