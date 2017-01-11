@@ -8,7 +8,6 @@ import (
 
 	"github.com/gernest/ngorm/builder"
 	"github.com/gernest/ngorm/engine"
-	"github.com/gernest/ngorm/errmsg"
 	"github.com/gernest/ngorm/model"
 	"github.com/gernest/ngorm/scope"
 	"github.com/gernest/ngorm/search"
@@ -197,37 +196,37 @@ func Create(b *Book, e *engine.Engine) error {
 	}
 
 	// execute create sql
-	if lastInsertIDReturningSuffix == "" || primaryField == nil {
-		result, err := e.SQLDB.Exec(e.Scope.SQL, e.Scope.SQLVars...)
-		if err != nil {
-			return err
-		}
-		// set rows affected count
-		e.RowsAffected, _ = result.RowsAffected()
+	//if lastInsertIDReturningSuffix == "" || primaryField == nil {
+	//result, err := e.SQLDB.Exec(e.Scope.SQL, e.Scope.SQLVars...)
+	//if err != nil {
+	//return err
+	//}
+	//// set rows affected count
+	//e.RowsAffected, _ = result.RowsAffected()
 
-		// set primary value to primary field
-		if primaryField != nil && primaryField.IsBlank {
-			primaryValue, err := result.LastInsertId()
-			if err != nil {
-				return err
-			}
-			_ = primaryField.Set(primaryValue)
-		}
-	} else {
-		if primaryField.Field.CanAddr() {
-			err := e.SQLDB.QueryRow(
-				e.Scope.SQL,
-				e.Scope.SQLVars...,
-			).Scan(primaryField.Field.Addr().Interface())
-			if err != nil {
-				return err
-			}
-			primaryField.IsBlank = false
-			e.RowsAffected = 1
-		} else {
-			return errmsg.ErrUnaddressable
-		}
-	}
+	//// set primary value to primary field
+	//if primaryField != nil && primaryField.IsBlank {
+	//primaryValue, err := result.LastInsertId()
+	//if err != nil {
+	//return err
+	//}
+	//_ = primaryField.Set(primaryValue)
+	//}
+	//} else {
+	//if primaryField.Field.CanAddr() {
+	//err := e.SQLDB.QueryRow(
+	//e.Scope.SQL,
+	//e.Scope.SQLVars...,
+	//).Scan(primaryField.Field.Addr().Interface())
+	//if err != nil {
+	//return err
+	//}
+	//primaryField.IsBlank = false
+	//e.RowsAffected = 1
+	//} else {
+	//return errmsg.ErrUnaddressable
+	//}
+	//}
 	return nil
 }
 
