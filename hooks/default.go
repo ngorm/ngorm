@@ -134,7 +134,7 @@ func Create(b *Book, e *engine.Engine) error {
 			if field.IsNormal {
 				if field.IsBlank && field.HasDefaultValue {
 					cv = append(cv, scope.Quote(e, field.DBName))
-					e.Scope.Set("gorm:blank_columns_with_default_value", cv)
+					e.Scope.Set(model.BlankColWithValue, cv)
 				} else if !field.IsPrimaryKey || !field.IsBlank {
 					columns = append(columns, scope.Quote(e, field.DBName))
 					placeholders = append(placeholders, scope.AddToVars(e, field.Field.Interface()))
@@ -165,7 +165,7 @@ func Create(b *Book, e *engine.Engine) error {
 	if err != nil {
 		return err
 	}
-	if str, ok := e.Scope.Get("gorm:insert_option"); ok {
+	if str, ok := e.Scope.Get(model.InsertOptions); ok {
 		extraOption = fmt.Sprint(str)
 	}
 
