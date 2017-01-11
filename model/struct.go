@@ -10,21 +10,23 @@ import (
 
 // All important keys
 const (
-	OrderByPK          = "ngorm:order_by_primary_key"
-	QueryDestination   = "ngorm:query_destination"
-	QueryOption        = "ngorm:query_option"
-	Query              = "ngorm:query"
-	HookAfterQuery     = "ngorm:query_after"
-	HookAfterFindQuery = "ngorm:query_after_find"
-	HookBeforeCreate   = "ngorm:before_create_hook"
-	HookBeforeSave     = "ngorm:before_save_hook"
-	Create             = "ngorm:create"
-	BeforeCreate       = "ngorm:before_create"
-	AfterCreate        = "ngorm:after_create"
-	HookAfterCreate    = "ngorm:after_create"
-	HookAfterSave      = "ngorm:after_save_hook"
-	UpdateAttrs        = "ngorm:update_attrs"
-	TableOptions       = "ngorm:table_options"
+	OrderByPK           = "ngorm:order_by_primary_key"
+	QueryDestination    = "ngorm:query_destination"
+	QueryOption         = "ngorm:query_option"
+	Query               = "ngorm:query"
+	HookAfterQuery      = "ngorm:query_after"
+	HookAfterFindQuery  = "ngorm:query_after_find"
+	HookBeforeCreate    = "ngorm:before_create_hook"
+	HookBeforeSave      = "ngorm:before_save_hook"
+	Create              = "ngorm:create"
+	BeforeCreate        = "ngorm:before_create"
+	AfterCreate         = "ngorm:after_create"
+	HookAfterCreate     = "ngorm:after_create"
+	HookAfterSave       = "ngorm:after_save_hook"
+	UpdateAttrs         = "ngorm:update_attrs"
+	TableOptions        = "ngorm:table_options"
+	HookSaveBeforeAss   = "ngorm:save_before_associations"
+	HookUpdateTimestamp = "ngorm:update_time_stamp"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a

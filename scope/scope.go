@@ -1086,3 +1086,16 @@ func Automigrate(e *engine.Engine, value interface{}) error {
 	}
 	return AutoIndex(e, value)
 }
+
+func ShouldSaveAssociation(e *engine.Engine) bool {
+	s, ok := e.Scope.Get("ngorm:save_association")
+	if ok {
+		if v, k := s.(bool); k {
+			return v
+		}
+		if v, k := s.(string); k && v == "skip" {
+			return false
+		}
+	}
+	return true
+}

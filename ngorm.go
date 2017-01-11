@@ -339,3 +339,78 @@ func (db *DB) Close() error {
 	db.cancel()
 	return db.db.Close()
 }
+
+//CreateSQL generates SQl query for creating a new record/records for value. This
+//uses Hooks to allow more flexibility.
+
+// There is no error propagation. Each step/hook execution must pass. Any error
+// indicate the end of the execution.
+//
+// The hooks that are used here are all defined in model package  as constants. You can
+// easily overide them by using DB.SetCreateHook method.
+//
+//	model.BeforeCreate
+//If set, this is the first hook to be executed. The default hook that is used
+//is defined in hooks.BeforeCreate. If by any chance the hook returns an error
+//then execution is halted and the error is returned.
+//
+//	model.HookSaveBeforeAss
+// If the model value has association and  this is set then it will be executed.
+// This is useful if you also want to save associations.
+//
+//	model.HookUpdateTimestamp
+// New record needs to have CreatedAt and UpdatedAt properly set. This is
+// excuted to update the record timestamps( The default hook for this assumes
+// you used model.Model convention for naming the timestamp fields).
+//
+//	model.Create
+// The last hook to be executed.
+//
+// NOTE: All the hooks must be tailored towards generating SQL not executing
+// anything that might change the state of the table.
+//
+// All the other hooks apart from model.Create should write SQQL gerries in
+// e.Scope.Epxrs only model.Create hook should write to e.Scope.SQL.
+//
+// The end query is wrapped under TRANSACTION block.
+func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
+	e := db.NewEngine()
+	e.Scope.Value = value
+	if bc, ok := db.hooks.Create.Get(model.BeforeCreate); ok {
+		err := bc.Exec(db.hooks, e)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if scope.ShouldSaveAssociation(e) {
+		if ba, ok := db.hooks.Create.Get(model.HookSaveBeforeAss); ok {
+			err := ba.Exec(db.hooks, e)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if ts, ok := db.hooks.Create.Get(model.HookUpdateTimestamp); ok {
+		err := ts.Exec(db.hooks, e)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if c, ok := db.hooks.Create.Get(model.Create); ok {
+		err := c.Exec(db.hooks, e)
+		if err != nil {
+			return nil, err
+		}
+	}
+	var buf bytes.Buffer
+	_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+	if e.Scope.MultiExpr {
+		for _, expr := range e.Scope.Exprs {
+			_, _ = buf.WriteString("\t" + expr.Q + ";\n")
+		}
+	}
+	_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
+	_, _ = buf.WriteString("COMMIT;")
+	return &model.Expr{Q: buf.String(), Args: e.Scope.SQLVars}, nil
+}
