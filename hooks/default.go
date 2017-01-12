@@ -297,8 +297,37 @@ func BeforeUpdate(b *Book, e *engine.Engine) error {
 				return err
 			}
 		}
-		if bu, ok := b.Save.Get(model.HookBeforeUpdate); ok {
+		if bu, ok := b.Update.Get(model.HookBeforeUpdate); ok {
 			err := bu.Exec(b, e)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+//AfterUpdate handles things needed to be done after updating records. This just
+//calls two hooks
+//
+//	model.HookAfterUpdate
+//
+// If this hook succeds then It calls
+//
+//	model.HookAfterSave
+func AfterUpdate(b *Book, e *engine.Engine) error {
+	if !scope.HasConditions(e, e.Scope.Value) {
+		return errors.New("missing WHERE condition for update")
+	}
+	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
+		if au, ok := b.Update.Get(model.HookAfterUpdate); ok {
+			err := au.Exec(b, e)
+			if err != nil {
+				return err
+			}
+		}
+		if as, ok := b.Save.Get(model.HookAfterSave); ok {
+			err := as.Exec(b, e)
 			if err != nil {
 				return err
 			}
