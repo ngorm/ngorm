@@ -2,6 +2,17 @@ package ngorm
 
 import "fmt"
 
+func ExampleOpen() {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		defer func() { _ = db.Close() }()
+		fmt.Println(db.Dialect().GetName())
+	}
+
+	//Output:ql-mem
+}
 func ExampleDB_CreateSQL() {
 	db, err := Open("ql-mem", "test.db")
 	if err != nil {

@@ -435,3 +435,7 @@ func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
 	_, _ = buf.WriteString("COMMIT;")
 	return &model.Expr{Q: buf.String(), Args: e.Scope.SQLVars}, nil
 }
+
+func (db *DB) Dialect() dialects.Dialect {
+	return db.dialect
+}
