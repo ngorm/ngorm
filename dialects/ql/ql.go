@@ -78,7 +78,7 @@ func (q *QL) DataTypeOf(field *model.StructField) (string, error) {
 	var dataValue, sqlType, _, additionalType = dialects.ParseFieldStructForDialect(field)
 	switch dataValue.Kind() {
 	case reflect.Bool:
-		sqlType = "boolean"
+		sqlType = "bool"
 	case reflect.Int,
 		reflect.Int8,
 		reflect.Int16,
