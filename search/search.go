@@ -1,3 +1,4 @@
+//Package search contains search functions for ngorm.
 package search
 
 import (
