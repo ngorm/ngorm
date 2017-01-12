@@ -156,6 +156,8 @@ func PrimaryCondition(e *engine.Engine, modelValue, value interface{}) (string, 
 		scope.Quote(e, pk), value), nil
 }
 
+//WhereSQL builds WHERE SQL clause of modelValue using the given engine e as
+//context.
 func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) {
 	var (
 		quotedTableName                                = scope.QuotedTableName(e, modelValue)
@@ -328,6 +330,7 @@ func Not(e *engine.Engine, modelValue interface{}, clause map[string]interface{}
 	return
 }
 
+//SelectSQL builds SELECT clause for modelValue using engine e as context.
 func SelectSQL(e *engine.Engine, modelValue interface{}) string {
 	if len(e.Search.Selects) == 0 {
 		if len(e.Search.JoinConditions) > 0 {
@@ -367,6 +370,7 @@ func Select(e *engine.Engine, modelValue interface{}, clause map[string]interfac
 	return
 }
 
+//JoinSQL bilds JOIN SQL clause for modelValue using engine e as context.
 func JoinSQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	var j []string
 	for _, clause := range e.Search.JoinConditions {
@@ -379,6 +383,7 @@ func JoinSQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	return strings.Join(j, " ") + " ", nil
 }
 
+//OrderSQL builds ORDER BY SQL clause
 func OrderSQL(e *engine.Engine, modelValue interface{}) string {
 	if len(e.Search.Orders) == 0 || e.Search.IgnoreOrderQuery {
 		return ""
@@ -417,6 +422,7 @@ func GroupSQL(e *engine.Engine) string {
 	return " GROUP BY " + e.Search.Group
 }
 
+//HavingSQL builds HAVING SQL clause
 func HavingSQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	if len(e.Search.HavingConditions) == 0 {
 		return "", errors.New("no having search conditions found")
@@ -444,6 +450,8 @@ func PrepareQuery(e *engine.Engine, modelValue interface{}) error {
 	return nil
 }
 
+//PrepareQuerySQL returns SQL that has been built on the engine e for the
+//modelValue.
 func PrepareQuerySQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	if e.Search.Raw {
 		c, err := CombinedCondition(e, modelValue)
@@ -464,22 +472,23 @@ func PrepareQuerySQL(e *engine.Engine, modelValue interface{}) (string, error) {
 		"$$", "?", -1), nil
 }
 
+//CombinedCondition combines all conditions to build a single SQL query.
 func CombinedCondition(e *engine.Engine, modelValue interface{}) (string, error) {
-	joinSql, err := JoinSQL(e, modelValue)
+	joinSQL, err := JoinSQL(e, modelValue)
 	if err != nil {
 		return "", err
 	}
-	whereSql, err := WhereSQL(e, modelValue)
+	whereSQL, err := WhereSQL(e, modelValue)
 	if err != nil {
 		return "", err
 	}
 	if e.Search.Raw {
-		whereSql = strings.TrimSuffix(strings.TrimPrefix(whereSql, "WHERE ("), ")")
+		whereSQL = strings.TrimSuffix(strings.TrimPrefix(whereSQL, "WHERE ("), ")")
 	}
 	having, err := HavingSQL(e, modelValue)
 	if err != nil {
 		return "", err
 	}
-	return joinSql + whereSql + GroupSQL(e) + having +
+	return joinSQL + whereSQL + GroupSQL(e) + having +
 		OrderSQL(e, modelValue) + LimitAndOffsetSQL(e), nil
 }
