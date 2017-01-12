@@ -1087,6 +1087,8 @@ func Automigrate(e *engine.Engine, value interface{}) error {
 	return AutoIndex(e, value)
 }
 
+//ShouldSaveAssociation return true if indeed we want the association to me
+//model to be saved.
 func ShouldSaveAssociation(e *engine.Engine) bool {
 	s, ok := e.Scope.Get("ngorm:save_association")
 	if ok {
