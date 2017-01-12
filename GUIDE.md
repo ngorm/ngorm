@@ -293,7 +293,7 @@ Given you have models
 		}
 ```
 
-You can Observe the Generates SQL which is generated when creating the new Bar
+You can observe the Generates SQL which is generated when creating the new Bar
 record like this.
 
 ```go
@@ -318,5 +318,5 @@ The above snippet will print
 
 And, creating a new record is as simple as
 
-	db.Create(&Ba{Say:"hello"})
+	db.Create(&Bar{Say:"hello"})
 
