@@ -279,3 +279,44 @@ To run the Actual migration just do this
 ```go
 	dB.Automigrate{&User{},&Email{},&Language{},&Company{},&CreditCard{},&Address{}}
 ```
+
+
+
+## Create
+
+Given you have models
+
+```go
+		type Bar struct {
+			ID  int64
+			Say string
+		}
+```
+
+You can Observe the Generates SQL which is generated when creating the new Bar
+record like this.
+
+```go
+sql,err:=db.CreateSQL(&Bar{Say:"hello"})
+if err!=nil{
+  log.Fatal(err)
+}
+fmt.Println(sql.Q)
+fmt.Printf("$1=%v", sql.Args[0])
+```
+
+The above snippet will print
+
+```sql
+
+	BEGIN TRANSACTION;
+		INSERT INTO bars (say) VALUES ($1);
+	COMMIT;
+	$1=hello
+
+```
+
+And, creating a new record is as simple as
+
+	db.Create(&Ba{Say:"hello"})
+
