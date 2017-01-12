@@ -3,6 +3,7 @@ package ngorm
 import (
 	"fmt"
 	"log"
+	"sort"
 )
 
 func ExampleOpen() {
@@ -117,6 +118,7 @@ func ExampleDB_Automigrate() {
 					log.Fatal(err)
 				}
 			}
+			sort.Strings(names)
 			for _, v := range names {
 				fmt.Println(v)
 			}
