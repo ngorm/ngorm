@@ -1,4 +1,4 @@
-//Package ngorm is a Go Object relation mapper that focus on performance,
+//Package ngorm i a Go Object relation mapper that focus on performance,
 //maintainability, modularity,	battle testing, extensibility , safety and
 //developer frindliness.
 //
@@ -436,6 +436,12 @@ func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
 	return &model.Expr{Q: buf.String(), Args: e.Scope.SQLVars}, nil
 }
 
+//Dialect return the dialect that is used by DB
 func (db *DB) Dialect() dialects.Dialect {
 	return db.dialect
+}
+
+//SQLCommon return SQLCommon used by the DB
+func (db *DB) SQLCommon() model.SQLCommon {
+	return db.db
 }
