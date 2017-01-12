@@ -1101,3 +1101,20 @@ func ShouldSaveAssociation(e *engine.Engine) bool {
 	}
 	return true
 }
+
+//HasConditions return true if engine e has any relevant condition for narrowing
+//down queries.
+//
+// This goes down like this
+//
+// 	* the primary field is not zero or
+// 	* there is WHERE condition or
+// 	* there is OR condition or
+// 	* there is NOT condition
+func HasConditions(e *engine.Engine, modelValue interface{}) bool {
+	f, err := PrimaryField(e, modelValue)
+	return err == nil && !f.IsBlank ||
+		len(e.Search.WhereConditions) > 0 ||
+		len(e.Search.OrConditions) > 0 ||
+		len(e.Search.NotConditions) > 0
+}

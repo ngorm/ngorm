@@ -277,3 +277,32 @@ func AfterCreate(b *Book, e *engine.Engine) error {
 	}
 	return nil
 }
+
+//BeforeUpdate handles preparations for updating records. This just calls two
+//hooks.
+//
+//	model.HookBeforeSave
+//
+// If this hook succeds then It calls
+//
+//	model.HookBeforeUpdate
+func BeforeUpdate(b *Book, e *engine.Engine) error {
+	if !scope.HasConditions(e, e.Scope.Value) {
+		return errors.New("missing WHERE condition for update")
+	}
+	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
+		if bs, ok := b.Save.Get(model.HookBeforeSave); ok {
+			err := bs.Exec(b, e)
+			if err != nil {
+				return err
+			}
+		}
+		if bu, ok := b.Save.Get(model.HookBeforeUpdate); ok {
+			err := bu.Exec(b, e)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}

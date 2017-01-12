@@ -30,6 +30,8 @@ const (
 	HookUpdateTimestamp = "ngorm:update_time_stamp"
 	BlankColWithValue   = "ngorm:blank_columns_with_default_value"
 	InsertOptions       = "ngorm:insert_option"
+	UpdateColumn        = "ngorm:update_column"
+	HookBeforeUpdate    = "ngorm:before_update_hook"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a
