@@ -1,3 +1,5 @@
+// Package util contains utility functions that are used in dirrent places of
+// the codebase.
 package util
 
 import (
