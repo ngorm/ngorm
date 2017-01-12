@@ -181,6 +181,8 @@ type Scope struct {
 	data            map[string]interface{}
 }
 
+//NewScope return an empty scope. The scope is initialized to allow Set, and Get
+//methods to work.
 func NewScope() *Scope {
 	return &Scope{
 		data: make(map[string]interface{}),
