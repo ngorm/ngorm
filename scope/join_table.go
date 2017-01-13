@@ -30,7 +30,7 @@ func SetupJoinTable(s *model.JoinTableHandler, relationship *model.Relationship,
 	}
 }
 
-//GetSearchMap return a map of  fiels that are related  as in foreign keys
+//GetSearchMap return a map of  fields that are related  as in foreign keys
 //between the source model and destination model.
 func GetSearchMap(e *engine.Engine, s *model.JoinTableHandler, sources ...interface{}) map[string]interface{} {
 	values := map[string]interface{}{}
