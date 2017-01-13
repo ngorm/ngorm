@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"sort"
+
+	"github.com/gernest/ngorm/model"
 )
 
 func ExampleOpen() {
@@ -128,5 +130,49 @@ func ExampleDB_Automigrate() {
 	//Output:
 	//bars
 	//buns
+
+}
+
+func Example_belongsTo() {
+	//One to many relationship
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		defer func() { _ = db.Close() }()
+
+		// Here one user can only have one profile. But one profile can belong
+		// to multiple users.
+		type Profile struct {
+			model.Model
+			Name string
+		}
+		type User struct {
+			model.Model
+			Profile   Profile
+			ProfileID int
+		}
+		_, err = db.Automigrate(&User{}, &Profile{})
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			u := User{
+				Profile: Profile{Name: "gernest"},
+			}
+
+			// Creating the user with the Profile. The relation will
+			// automatically be created and the user.ProfileID will be set to
+			// the ID of hte created profile.
+			err = db.Create(&u)
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(u.ProfileID == int(u.Profile.ID) && u.ProfileID != 0)
+			}
+		}
+	}
+
+	//Output:
+	//true
 
 }
