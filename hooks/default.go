@@ -285,7 +285,7 @@ func AfterCreate(b *Book, e *engine.Engine) error {
 //
 //	model.HookBeforeSave
 //
-// If this hook succeds then It calls
+// If this hook succeeds then It calls
 //
 //	model.HookBeforeUpdate
 func BeforeUpdate(b *Book, e *engine.Engine) error {
@@ -314,7 +314,7 @@ func BeforeUpdate(b *Book, e *engine.Engine) error {
 //
 //	model.HookAfterUpdate
 //
-// If this hook succeds then It calls
+// If this hook succeeds then It calls
 //
 //	model.HookAfterSave
 func AfterUpdate(b *Book, e *engine.Engine) error {
