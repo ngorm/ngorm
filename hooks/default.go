@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"reflect"
@@ -337,21 +338,131 @@ func AfterUpdate(b *Book, e *engine.Engine) error {
 	return nil
 }
 
-//UpdtaeTimestamp sets the value of UpdatedAt field.
-func UpdtaeTimestamp(b *Book, e *engine.Engine) error {
+//UpdateTimestamp sets the value of UpdatedAt field.
+func UpdateTimestamp(b *Book, e *engine.Engine) error {
 	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
 		return scope.SetColumn(e, "UpdatedAt", time.Now())
 	}
 	return nil
 }
 
-//AsssignUpdatingAttrs assigns value for the attributes that are supposed to be
+//AssignUpdatingAttrs assigns value for the attributes that are supposed to be
 //updated.
-func AsssignUpdatingAttrs(b *Book, e *engine.Engine) error {
+func AssignUpdatingAttrs(b *Book, e *engine.Engine) error {
 	if attrs, ok := e.Scope.Get(model.UpdateInterface); ok {
 		if u, uok := scope.UpdatedAttrsWithValues(e, attrs); uok {
 			e.Scope.Set(model.UpdateAttrs, u)
 		}
 	}
 	return nil
+}
+
+func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
+	if !scope.ShouldSaveAssociation(e) {
+		return nil
+	}
+	fds, err := scope.Fields(e, e.Scope.Value)
+	if err != nil {
+		return err
+	}
+	for _, field := range fds {
+		if ok, relationship := scope.SaveFieldAsAssociation(e, field); ok && relationship.Kind == "belongs_to" {
+			fieldValue := field.Field.Addr().Interface()
+
+			// For the fieldValue, we need to make sure the value is saved into
+			// the database.
+			//
+			// We have two hooks to use here, one model.HookCreateSQL which will
+			// build sql for creating the new record and model.HookCreateExec
+			// which will execute the generates SQL.
+			c, ok := b.Create.Get(model.HookCreateSQL)
+			if !ok {
+				return errors.New("missing create sql hook")
+			}
+			ne := cloneEngine(e)
+			ne.Scope.Value = fieldValue
+			err = c.Exec(b, ne)
+			if err != nil {
+				return err
+			}
+			ce, ok := b.Create.Get(model.HookCreateExec)
+			if !ok {
+				return errors.New("missing create exec hook")
+			}
+			err = ce.Exec(b, ne)
+			if err != nil {
+				return err
+			}
+			if len(relationship.ForeignFieldNames) != 0 {
+				// set value's foreign key
+				for idx, fieldName := range relationship.ForeignFieldNames {
+					associationForeignName := relationship.AssociationForeignDBNames[idx]
+					foreignField, err := scope.FieldByName(e, fieldValue, associationForeignName)
+					if err != nil {
+						//TODO log this?
+					} else {
+						err = scope.SetColumn(e, fieldName, foreignField.Field.Interface())
+						if err != nil {
+							return err
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func CreateSQL(b *Book, e *engine.Engine) error {
+	if bc, ok := b.Create.Get(model.BeforeCreate); ok {
+		err := bc.Exec(b, e)
+		if err != nil {
+			return err
+		}
+	}
+
+	if scope.ShouldSaveAssociation(e) {
+		if ba, ok := b.Create.Get(model.HookSaveBeforeAss); ok {
+			err := ba.Exec(b, e)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if ts, ok := b.Create.Get(model.HookUpdateTimestamp); ok {
+		err := ts.Exec(b, e)
+		if err != nil {
+			return err
+		}
+	}
+	if c, ok := b.Create.Get(model.Create); ok {
+		err := c.Exec(b, e)
+		if err != nil {
+			return err
+		}
+	}
+	var buf bytes.Buffer
+	_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+	if e.Scope.MultiExpr {
+		for _, expr := range e.Scope.Exprs {
+			_, _ = buf.WriteString("\t" + expr.Q + ";\n")
+		}
+	}
+	_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
+	_, _ = buf.WriteString("COMMIT;")
+	e.Scope.SQL = buf.String()
+	return nil
+}
+
+func cloneEngine(e *engine.Engine) *engine.Engine {
+	return &engine.Engine{
+		Scope:         model.NewScope(),
+		Search:        &model.Search{},
+		SingularTable: e.SingularTable,
+		Ctx:           e.Ctx,
+		Dialect:       e.Dialect,
+		StructMap:     e.StructMap,
+		SQLDB:         e.SQLDB,
+		Log:           e.Log,
+	}
 }

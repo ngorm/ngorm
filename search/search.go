@@ -87,13 +87,14 @@ func Offset(e *engine.Engine, offset interface{}) {
 }
 
 //Group  add GROUP BY search condition.
-func Group(e *engine.Engine, query interface{}) {
+func Group(e *engine.Engine, query interface{}) error {
 	s, err := util.GetInterfaceAsSQL(query)
 	if err != nil {
-		e.Error = err
-	} else {
-		e.Search.Group = s
+		return err
+
 	}
+	e.Search.Group = s
+	return nil
 }
 
 //Having add HAVING condition

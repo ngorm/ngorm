@@ -1200,3 +1200,14 @@ func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredFiel
 	}
 	return attrs
 }
+
+func SaveFieldAsAssociation(e *engine.Engine, field *model.Field) (bool, *model.Relationship) {
+	if ChangeableField(e, field) && !field.IsBlank && !field.IsIgnored {
+		if value, ok := field.TagSettings["SAVE_ASSOCIATIONS"]; !ok || (value != "false" && value != "skip") {
+			if relationship := field.Relationship; relationship != nil {
+				return true, relationship
+			}
+		}
+	}
+	return false, nil
+}

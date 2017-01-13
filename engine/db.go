@@ -12,10 +12,7 @@ import (
 //Engine is the driving force for ngorm. It contains, Scope, Search and other
 //utility properties for easily building complex SQL queries.
 type Engine struct {
-	Value        interface{}
-	Error        error
 	RowsAffected int64
-	logMode      int
 
 	//When this field is set to true. The table names will not be pluarized.
 	//The default behaviour is to plurarize table names e.g Order struct will
@@ -26,8 +23,6 @@ type Engine struct {
 
 	Search    *model.Search
 	Scope     *model.Scope
-	MultiExpr bool
-	Expr      []*model.Expr
 	StructMap *model.SafeStructsMap
 	SQLDB     model.SQLCommon
 	Log       *logger.Zapper

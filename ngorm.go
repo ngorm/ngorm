@@ -397,43 +397,15 @@ func (db *DB) Create(value interface{}) error {
 func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
 	e := db.NewEngine()
 	e.Scope.Value = value
-	if bc, ok := db.hooks.Create.Get(model.BeforeCreate); ok {
-		err := bc.Exec(db.hooks, e)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if scope.ShouldSaveAssociation(e) {
-		if ba, ok := db.hooks.Create.Get(model.HookSaveBeforeAss); ok {
-			err := ba.Exec(db.hooks, e)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	if ts, ok := db.hooks.Create.Get(model.HookUpdateTimestamp); ok {
-		err := ts.Exec(db.hooks, e)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if c, ok := db.hooks.Create.Get(model.Create); ok {
+	if c, ok := db.hooks.Create.Get(model.HookCreateSQL); ok {
 		err := c.Exec(db.hooks, e)
 		if err != nil {
 			return nil, err
 		}
+		return &model.Expr{Q: e.Scope.SQL, Args: e.Scope.SQLVars}, nil
 	}
-	var buf bytes.Buffer
-	_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
-	if e.Scope.MultiExpr {
-		for _, expr := range e.Scope.Exprs {
-			_, _ = buf.WriteString("\t" + expr.Q + ";\n")
-		}
-	}
-	_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
-	_, _ = buf.WriteString("COMMIT;")
-	return &model.Expr{Q: buf.String(), Args: e.Scope.SQLVars}, nil
+	return nil, errors.New("missing create sql hook")
+
 }
 
 //Dialect return the dialect that is used by DB
