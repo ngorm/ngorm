@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/errmsg"
 	"github.com/gernest/ngorm/model"
 	"github.com/gernest/ngorm/regexes"
 	"github.com/gernest/ngorm/util"
@@ -1117,4 +1118,85 @@ func HasConditions(e *engine.Engine, modelValue interface{}) bool {
 		len(e.Search.WhereConditions) > 0 ||
 		len(e.Search.OrConditions) > 0 ||
 		len(e.Search.NotConditions) > 0
+}
+
+//UpdatedAttrsWithValues returns a map of field names with value. This takes
+//value, and updates any field that needts to be updated by adding the field
+//name mapped to the new field value to the returned map results.
+//
+// That applies if the value is a struct. Any other type of values are handeled
+// by ConvertInterfaceToMap function.
+func UpdatedAttrsWithValues(e *engine.Engine, value interface{}) (results map[string]interface{}, hasUpdate bool) {
+	v := reflect.ValueOf(e.Scope.Value)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return ConvertInterfaceToMap(e, value, false), true
+	}
+
+	results = map[string]interface{}{}
+
+	for key, value := range ConvertInterfaceToMap(e, value, true) {
+		field, err := FieldByName(e, e.Scope.Value, key)
+		if err != nil {
+			//TODO return error?
+		} else {
+			if ChangeableField(e, field) {
+				if _, ok := value.(*model.Expr); ok {
+					hasUpdate = true
+					results[field.DBName] = value
+				} else {
+					err := field.Set(value)
+					if field.IsNormal {
+						hasUpdate = true
+						if err == errmsg.ErrUnaddressable {
+							results[field.DBName] = value
+						} else {
+							results[field.DBName] = field.Field.Interface()
+						}
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
+//ConvertInterfaceToMap tries to convert value into a map[string]interface{}
+func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredField bool) map[string]interface{} {
+	var attrs = map[string]interface{}{}
+
+	switch value := values.(type) {
+	case map[string]interface{}:
+		return value
+	case []interface{}:
+		for _, v := range value {
+			for key, value := range ConvertInterfaceToMap(e, v, withIgnoredField) {
+				attrs[key] = value
+			}
+		}
+	case interface{}:
+		reflectValue := reflect.ValueOf(values)
+
+		switch reflectValue.Kind() {
+		case reflect.Map:
+			for _, key := range reflectValue.MapKeys() {
+				attrs[util.ToDBName(key.Interface().(string))] = reflectValue.MapIndex(key).Interface()
+			}
+		default:
+			f, err := Fields(e, values)
+			if err != nil {
+				//TODO return error?
+			} else {
+				for _, field := range f {
+					if !field.IsBlank && (withIgnoredField || !field.IsIgnored) {
+						attrs[field.DBName] = field.Field.Interface()
+					}
+				}
+			}
+
+		}
+	}
+	return attrs
 }

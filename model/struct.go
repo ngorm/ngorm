@@ -33,6 +33,7 @@ const (
 	UpdateColumn        = "ngorm:update_column"
 	HookBeforeUpdate    = "ngorm:before_update_hook"
 	HookAfterUpdate     = "ngorm:after_update_hook"
+	UpdateInterface     = "ngorm:update_interface"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a

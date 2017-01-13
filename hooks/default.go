@@ -344,3 +344,14 @@ func UpdtaeTimestamp(b *Book, e *engine.Engine) error {
 	}
 	return nil
 }
+
+//AsssignUpdatingAttrs assigns value for the attributes that are supposed to be
+//updated.
+func AsssignUpdatingAttrs(b *Book, e *engine.Engine) error {
+	if attrs, ok := e.Scope.Get(model.UpdateInterface); ok {
+		if u, uok := scope.UpdatedAttrsWithValues(e, attrs); uok {
+			e.Scope.Set(model.UpdateAttrs, u)
+		}
+	}
+	return nil
+}
