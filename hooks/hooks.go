@@ -96,6 +96,9 @@ func DefaultBook() *Book {
 	b.Update.Set(HookFunc(model.AfterUpdate, AfterUpdate))
 	b.Update.Set(HookFunc(model.HookUpdateTimestamp, UpdateTimestamp))
 	b.Update.Set(HookFunc(model.HookAssignUpdatingAttrs, AssignUpdatingAttrs))
-
+	b.Update.Set(HookFunc(model.HookSaveBeforeAss, SaveBeforeAssociation))
+	b.Update.Set(HookFunc(model.HookUpdateSQL, UpdateSQL))
+	b.Update.Set(HookFunc(model.HookUpdateExec, UpdateExec))
+	b.Update.Set(HookFunc(model.Update, Update))
 	return b
 }

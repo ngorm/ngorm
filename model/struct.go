@@ -38,6 +38,10 @@ const (
 	AfterUpdate             = "ngorm:after_update"
 	HookAssignUpdatingAttrs = "ngorm:assign_updating_attrs_hook"
 	HookCreateSQL           = "ngorm:create_sql"
+	UpdateOptions           = "ngorm:update_option"
+	Update                  = "ngorm:update"
+	HookUpdateSQL           = "ngorm:update_sql_hook"
+	HookUpdateExec          = "ngorm:update_exec_hook"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a

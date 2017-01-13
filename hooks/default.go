@@ -466,3 +466,112 @@ func cloneEngine(e *engine.Engine) *engine.Engine {
 		Log:           e.Log,
 	}
 }
+
+//UpdetSQL builds query for updating records.
+func UpdateSQL(b *Book, e *engine.Engine) error {
+	var sqls []string
+
+	if updateAttrs, ok := e.Scope.Get(model.UpdateAttrs); ok {
+		for column, value := range updateAttrs.(map[string]interface{}) {
+			sqls = append(sqls, fmt.Sprintf("%v = %v",
+				scope.Quote(e, column),
+				scope.AddToVars(e, value)))
+		}
+	} else {
+		fds, err := scope.Fields(e, e.Scope.Value)
+		if err != nil {
+			return err
+		}
+		for _, field := range fds {
+			if scope.ChangeableField(e, field) {
+				if !field.IsPrimaryKey && field.IsNormal {
+					sqls = append(sqls, fmt.Sprintf("%v = %v",
+						scope.Quote(e, field.DBName),
+						scope.AddToVars(e, field.Field.Interface())))
+				} else if rel := field.Relationship; rel != nil && rel.Kind == "belongs_to" {
+					for _, foreignKey := range rel.ForeignDBNames {
+						foreignField, err := scope.FieldByName(e, e.Scope.Value, foreignKey)
+						if err != nil {
+							//TODO log this?
+						} else {
+							if !scope.ChangeableField(e, foreignField) {
+								sqls = append(sqls,
+									fmt.Sprintf("%v = %v",
+										scope.Quote(e, foreignField.DBName),
+										scope.AddToVars(e, foreignField.Field.Interface())))
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	var extraOption string
+	if str, ok := e.Scope.Get(model.UpdateOptions); ok {
+		extraOption = fmt.Sprint(str)
+	}
+
+	if len(sqls) > 0 {
+		c, err := builder.CombinedCondition(e, e.Scope.Value)
+		if err != nil {
+			return err
+		}
+		e.Scope.SQL = fmt.Sprintf(
+			"UPDATE %v SET %v%v%v",
+			scope.QuotedTableName(e, e.Scope.Value),
+			strings.Join(sqls, ", "),
+			util.AddExtraSpaceIfExist(c),
+			util.AddExtraSpaceIfExist(extraOption),
+		)
+
+	}
+	var buf bytes.Buffer
+	_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+	_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
+	_, _ = buf.WriteString("COMMIT;")
+	e.Scope.SQL = buf.String()
+	return nil
+}
+
+//UpdateExec executes UPDATE sql. This assumes the query is already in
+//e.Scope.SQL.
+func UpdateExec(b *Book, e *engine.Engine) error {
+	if e.Scope.SQL == "" {
+		return errors.New("missing update sql ")
+	}
+	tx, err := e.SQLDB.Begin()
+	if err != nil {
+		return err
+	}
+	result, err := tx.Exec(e.Scope.SQL, e.Scope.SQLVars...)
+	if err != nil {
+		rerr := tx.Rollback()
+		if rerr != nil {
+			return rerr
+		}
+		return err
+	}
+	r, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	e.RowsAffected = r
+	return tx.Commit()
+}
+
+func Update(b *Book, e *engine.Engine) error {
+	sql, ok := b.Update.Get(model.HookUpdateSQL)
+	if !ok {
+		return errors.New("missing update sql hook")
+	}
+	err := sql.Exec(b, e)
+	if err != nil {
+		return err
+	}
+	exec, ok := b.Update.Get(model.HookUpdateExec)
+	if !ok {
+		return errors.New("missing update exec hook")
+	}
+	return exec.Exec(b, e)
+}

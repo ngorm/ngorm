@@ -9,7 +9,6 @@ package builder
 import (
 	"database/sql"
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -425,7 +424,8 @@ func GroupSQL(e *engine.Engine) string {
 //HavingSQL builds HAVING SQL clause
 func HavingSQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	if len(e.Search.HavingConditions) == 0 {
-		return "", errors.New("no having search conditions found")
+		//return "", errors.New("no having search conditions found")
+		return "", nil
 	}
 	var andConditions []string
 	for _, clause := range e.Search.HavingConditions {

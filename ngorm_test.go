@@ -177,3 +177,23 @@ func TestDb_Create(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestDB_SaveSQL(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	sql, err := db.SaveSQL(&Foo{ID: 10, Stuff: "twenty"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := `
+BEGIN TRANSACTION;
+	UPDATE foos SET stuff = $1  WHERE foos.id = $2;
+COMMIT;`
+	expect = strings.TrimSpace(expect)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+}

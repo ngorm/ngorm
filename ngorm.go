@@ -417,3 +417,17 @@ func (db *DB) Dialect() dialects.Dialect {
 func (db *DB) SQLCommon() model.SQLCommon {
 	return db.db
 }
+
+//SaveSQL generates SQL query for saving/updating database record for value.
+func (db *DB) SaveSQL(value interface{}) (*model.Expr, error) {
+	e := db.NewEngine()
+	e.Scope.Value = value
+	if u, ok := db.hooks.Update.Get(model.HookUpdateSQL); ok {
+		err := u.Exec(db.hooks, e)
+		if err != nil {
+			return nil, err
+		}
+		return &model.Expr{Q: e.Scope.SQL, Args: e.Scope.SQLVars}, nil
+	}
+	return nil, errors.New("missing update sql hook")
+}

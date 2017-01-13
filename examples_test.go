@@ -165,3 +165,31 @@ func Example_belongsTo() {
 	//true
 
 }
+
+func ExampleDB_SaveSQL() {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	type Foo struct {
+		ID    int64
+		Stuff string
+	}
+
+	f := Foo{ID: 10, Stuff: "twenty"}
+	sql, err := db.SaveSQL(&f)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(sql.Q)
+	fmt.Printf("$1=%v\n", sql.Args[0])
+	fmt.Printf("$2=%v", sql.Args[1])
+
+	//Output:
+	//BEGIN TRANSACTION;
+	//	UPDATE foos SET stuff = $1  WHERE foos.id = $2;
+	//COMMIT;
+	//$1=twenty
+	//$2=10
+}
