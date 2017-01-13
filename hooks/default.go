@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gernest/ngorm/builder"
 	"github.com/gernest/ngorm/engine"
@@ -332,6 +333,14 @@ func AfterUpdate(b *Book, e *engine.Engine) error {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+//UpdtaeTimestamp sets the value of UpdatedAt field.
+func UpdtaeTimestamp(b *Book, e *engine.Engine) error {
+	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
+		return scope.SetColumn(e, "UpdatedAt", time.Now())
 	}
 	return nil
 }
