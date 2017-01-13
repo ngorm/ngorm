@@ -17,7 +17,10 @@ func TestGroup(t *testing.T) {
 		t.Errorf("expected an empty string got %s", s)
 	}
 	by := "location"
-	search.Group(e, by)
+	err := search.Group(e, by)
+	if err != nil {
+		t.Error(err)
+	}
 	s = GroupSQL(e)
 	expect := " GROUP BY " + by
 	if s != expect {

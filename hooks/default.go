@@ -357,6 +357,7 @@ func AssignUpdatingAttrs(b *Book, e *engine.Engine) error {
 	return nil
 }
 
+//SaveBeforeAssociation saves associations on the model
 func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 	if !scope.ShouldSaveAssociation(e) {
 		return nil
@@ -413,6 +414,7 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 	return nil
 }
 
+//CreateSQL generates SQL for creating new record
 func CreateSQL(b *Book, e *engine.Engine) error {
 	if bc, ok := b.Create.Get(model.BeforeCreate); ok {
 		err := bc.Exec(b, e)
@@ -467,9 +469,15 @@ func cloneEngine(e *engine.Engine) *engine.Engine {
 	}
 }
 
-//UpdetSQL builds query for updating records.
+//UpdateSQL builds query for updating records.
 func UpdateSQL(b *Book, e *engine.Engine) error {
 	var sqls []string
+	if up, ok := b.Update.Get(model.HookAssignUpdatingAttrs); ok {
+		err := up.Exec(b, e)
+		if err != nil {
+			return err
+		}
+	}
 
 	if updateAttrs, ok := e.Scope.Get(model.UpdateAttrs); ok {
 		for column, value := range updateAttrs.(map[string]interface{}) {
@@ -560,6 +568,7 @@ func UpdateExec(b *Book, e *engine.Engine) error {
 	return tx.Commit()
 }
 
+//Update generates and executes sql query for updating records.
 func Update(b *Book, e *engine.Engine) error {
 	sql, ok := b.Update.Get(model.HookUpdateSQL)
 	if !ok {

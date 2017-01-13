@@ -42,6 +42,7 @@ const (
 	Update                  = "ngorm:update"
 	HookUpdateSQL           = "ngorm:update_sql_hook"
 	HookUpdateExec          = "ngorm:update_exec_hook"
+	IgnoreProtectedAttrs    = "ngorm:ignore_protected_attrs"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a

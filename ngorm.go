@@ -99,6 +99,24 @@ type DB struct {
 	structMap     *model.SafeStructsMap
 	hooks         *hooks.Book
 	log           *logger.Zapper
+	e             *engine.Engine
+	err           error
+}
+
+func (db *DB) clone() *DB {
+	n := &DB{
+		db:            db.db,
+		dialect:       db.dialect,
+		ctx:           db.ctx,
+		cancel:        db.cancel,
+		singularTable: db.singularTable,
+		structMap:     db.structMap,
+		hooks:         db.hooks,
+		log:           db.log,
+	}
+	ne := n.NewEngine()
+	n.e = ne
+	return n
 }
 
 //Open opens a database connection and returns *DB instance., dialect is the
@@ -430,4 +448,81 @@ func (db *DB) SaveSQL(value interface{}) (*model.Expr, error) {
 		return &model.Expr{Q: e.Scope.SQL, Args: e.Scope.SQLVars}, nil
 	}
 	return nil, errors.New("missing update sql hook")
+}
+
+//Model sets value as the database model. This model will be used for future
+//calls on the erturned DB e.g
+//
+//	db.Model(&user).Update("name","hero")
+func (db *DB) Model(value interface{}) *DB {
+	c := db.clone()
+	c.e.Scope.Value = value
+	return c
+}
+
+//Update runs UPDATE queries.
+func (db *DB) Update(attrs ...interface{}) error {
+	return db.Updates(toSearchableMap(attrs), true)
+}
+
+func toSearchableMap(attrs ...interface{}) (result interface{}) {
+	if len(attrs) > 1 {
+		if str, ok := attrs[0].(string); ok {
+			result = map[string]interface{}{str: attrs[1]}
+		}
+	} else if len(attrs) == 1 {
+		if attr, ok := attrs[0].(map[string]interface{}); ok {
+			result = attr
+		}
+
+		if attr, ok := attrs[0].(interface{}); ok {
+			result = attr
+		}
+	}
+	return
+}
+
+//Updates runs UPDATE query
+func (db *DB) Updates(values interface{}, ignoreProtectedAttrs ...bool) error {
+	if db.e == nil || db.e.Scope.Value == nil {
+		return errors.New("missing model, before calling this startwith db.Model")
+	}
+	var ignore bool
+	if len(ignoreProtectedAttrs) > 0 {
+		ignore = ignoreProtectedAttrs[0]
+	}
+	db.e.Scope.Set(model.IgnoreProtectedAttrs, ignore)
+	db.e.Scope.Set(model.UpdateInterface, values)
+	u, ok := db.hooks.Update.Get(model.Update)
+	if !ok {
+		return errors.New("missing update hook")
+	}
+	return u.Exec(db.hooks, db.e)
+}
+
+//UpdateSQL generates SQL that will be executed when you use db.Update
+func (db *DB) UpdateSQL(attrs ...interface{}) (*model.Expr, error) {
+	return db.UpdatesSQL(toSearchableMap(attrs), true)
+}
+
+//UpdatesSQL generates sql that will be used when you run db.UpdatesSQL
+func (db *DB) UpdatesSQL(values interface{}, ignoreProtectedAttrs ...bool) (*model.Expr, error) {
+	if db.e == nil || db.e.Scope.Value == nil {
+		return nil, errors.New("missing model, before calling this startwith db.Model")
+	}
+	var ignore bool
+	if len(ignoreProtectedAttrs) > 0 {
+		ignore = ignoreProtectedAttrs[0]
+	}
+	db.e.Scope.Set(model.IgnoreProtectedAttrs, ignore)
+	db.e.Scope.Set(model.UpdateInterface, values)
+	u, ok := db.hooks.Update.Get(model.HookUpdateSQL)
+	if !ok {
+		return nil, errors.New("missing update sql  hook")
+	}
+	err := u.Exec(db.hooks, db.e)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Expr{Q: db.e.Scope.SQL, Args: db.e.Scope.SQLVars}, nil
 }

@@ -1166,24 +1166,29 @@ func UpdatedAttrsWithValues(e *engine.Engine, value interface{}) (results map[st
 //ConvertInterfaceToMap tries to convert value into a map[string]interface{}
 func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredField bool) map[string]interface{} {
 	var attrs = map[string]interface{}{}
-
 	switch value := values.(type) {
 	case map[string]interface{}:
 		return value
 	case []interface{}:
-		for _, v := range value {
-			for key, value := range ConvertInterfaceToMap(e, v, withIgnoredField) {
-				attrs[key] = value
+		size := len(value)
+		pos := 0
+		for pos < size {
+			if pos+1 < size {
+				attrs[fmt.Sprint(value[pos])] = value[pos+1]
 			}
+			pos += 2
 		}
 	case interface{}:
-		reflectValue := reflect.ValueOf(values)
 
+		reflectValue := reflect.ValueOf(values)
 		switch reflectValue.Kind() {
 		case reflect.Map:
+
 			for _, key := range reflectValue.MapKeys() {
 				attrs[util.ToDBName(key.Interface().(string))] = reflectValue.MapIndex(key).Interface()
 			}
+		case reflect.Slice:
+
 		default:
 			f, err := Fields(e, values)
 			if err != nil {
@@ -1201,6 +1206,7 @@ func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredFiel
 	return attrs
 }
 
+//SaveFieldAsAssociation saves associations
 func SaveFieldAsAssociation(e *engine.Engine, field *model.Field) (bool, *model.Relationship) {
 	if ChangeableField(e, field) && !field.IsBlank && !field.IsIgnored {
 		if value, ok := field.TagSettings["SAVE_ASSOCIATIONS"]; !ok || (value != "false" && value != "skip") {

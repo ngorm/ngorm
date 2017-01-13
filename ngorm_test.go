@@ -197,3 +197,24 @@ COMMIT;`
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
+
+func TestDB_UpdateSQL(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	foo := Foo{ID: 10, Stuff: "twenty"}
+	sql, err := db.Model(&foo).UpdateSQL("stuff", "hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := `
+BEGIN TRANSACTION;
+	UPDATE foos SET stuff = $1  WHERE foos.id = $2;
+COMMIT;`
+	expect = strings.TrimSpace(expect)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+}
