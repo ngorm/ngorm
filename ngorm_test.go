@@ -218,3 +218,24 @@ COMMIT;`
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
+
+func TestDB_SingularTable(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	db.SingularTable(true)
+	sql, err := db.CreateSQL(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := `
+BEGIN TRANSACTION;
+	INSERT INTO foo (stuff) VALUES ($1);
+COMMIT;`
+	expect = strings.TrimSpace(expect)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+}
