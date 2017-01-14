@@ -568,7 +568,13 @@ func UpdateExec(b *Book, e *engine.Engine) error {
 	return tx.Commit()
 }
 
-//Update generates and executes sql query for updating records.
+//Update generates and executes sql query for updating records.This reliesn on
+//two hooks.
+//	model.HookUpdateSQL
+// Which generates the sql for UPDATE
+//
+//	model.HookUpdateExec
+//which executes the UPDATE sql.
 func Update(b *Book, e *engine.Engine) error {
 	sql, ok := b.Update.Get(model.HookUpdateSQL)
 	if !ok {
