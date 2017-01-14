@@ -1,3 +1,4 @@
+//Package hooks contains callbacks/hooks used by ngorm.
 package hooks
 
 import (
