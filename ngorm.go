@@ -546,3 +546,22 @@ func (db *DB) Set(key string, value interface{}) *DB {
 	db.e.Scope.Set(key, value)
 	return db
 }
+
+//SingularTable enables or diables singular tables name. By default this is
+//diables, meaning table names are in plurar.
+//
+//	Model	| Plural table name
+//	----------------------------
+//	Session	| sessions
+// 	User	| users
+//
+//	Model	| Singular table name
+//	----------------------------
+//	Session	| session
+// 	User	| user
+func (db *DB) SingularTable(enable bool) {
+	db.singularTable = enable
+	if db.e != nil {
+		db.e.SingularTable = enable
+	}
+}
