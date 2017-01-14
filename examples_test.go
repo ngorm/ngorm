@@ -44,6 +44,33 @@ func ExampleDB_CreateSQL() {
 	//$1=hello
 }
 
+func ExampleDB_CreateSQL_extraOptions() {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	type Bar struct {
+		ID  int64
+		Say string
+	}
+
+	b := Bar{Say: "hello"}
+	sql, err := db.Set(model.InsertOptions, "ON CONFLICT").
+		CreateSQL(&b)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(sql.Q)
+	fmt.Printf("$1=%v", sql.Args[0])
+
+	//Output:
+	//BEGIN TRANSACTION;
+	//	INSERT INTO bars (say) VALUES ($1) ON CONFLICT;
+	//COMMIT;
+	//$1=hello
+}
+
 func ExampleDB_AutomigrateSQL() {
 	db, err := Open("ql-mem", "test.db")
 	if err != nil {

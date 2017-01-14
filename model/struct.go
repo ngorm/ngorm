@@ -219,6 +219,17 @@ func (s *Scope) Get(key string) (interface{}, bool) {
 	return v, ok
 }
 
+//GetAll erturns all values stored in this context.
+func (s *Scope) GetAll() map[string]interface{} {
+	s.mu.RLock()
+	a := make(map[string]interface{})
+	for k, v := range s.data {
+		a[k] = v
+	}
+	s.mu.RUnlock()
+	return a
+}
+
 //Search is the search level of SQL building
 type Search struct {
 	WhereConditions  []map[string]interface{}

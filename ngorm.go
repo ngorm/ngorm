@@ -213,11 +213,17 @@ func (db *DB) ExecTx(query string, args ...interface{}) (sql.Result, error) {
 //CreateTableSQL return the sql query for creating tables for all the given
 //models. The queries are wrapped in a TRANSACTION block.
 func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
+	var scopeVars map[string]interface{}
+	if db.e != nil {
+		scopeVars = db.e.Scope.GetAll()
+	}
 	var buf bytes.Buffer
 	_, _ = buf.WriteString("BEGIN TRANSACTION; \n")
 	for _, m := range models {
 		e := db.NewEngine()
-
+		for k, v := range scopeVars {
+			e.Scope.Set(k, v)
+		}
 		// Firste we generate the SQL
 		err := scope.CreateTable(e, m)
 		if err != nil {
@@ -413,7 +419,12 @@ func (db *DB) Create(value interface{}) error {
 //
 // The end query is wrapped under TRANSACTION block.
 func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
-	e := db.NewEngine()
+	var e *engine.Engine
+	if db.e != nil {
+		e = db.e
+	} else {
+		e = db.NewEngine()
+	}
 	e.Scope.Value = value
 	if c, ok := db.hooks.Create.Get(model.HookCreateSQL); ok {
 		err := c.Exec(db.hooks, e)
@@ -525,4 +536,13 @@ func (db *DB) UpdatesSQL(values interface{}, ignoreProtectedAttrs ...bool) (*mod
 		return nil, err
 	}
 	return &model.Expr{Q: db.e.Scope.SQL, Args: db.e.Scope.SQLVars}, nil
+}
+
+//Set sets scope key to value.
+func (db *DB) Set(key string, value interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	db.e.Scope.Set(key, value)
+	return db
 }
