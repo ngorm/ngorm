@@ -1,3 +1,5 @@
+//Packcage model defines structures that are shared through out ngorm. They
+//provide the base building blocks for ngorm abstractions.
 package model
 
 import (
