@@ -565,3 +565,16 @@ func (db *DB) SingularTable(enable bool) {
 		db.e.SingularTable = enable
 	}
 }
+
+//HasTable returns true if there is a table for the given value, the value can
+//either be a string representing a table name or a ngorm model.
+func (db *DB) HasTable(value interface{}) bool {
+	var name string
+	if n, ok := value.(string); ok {
+		name = n
+	} else {
+		e := db.NewEngine()
+		name = scope.TableName(e, value)
+	}
+	return db.Dialect().HasTable(name)
+}
