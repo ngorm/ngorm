@@ -239,3 +239,28 @@ COMMIT;`
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
+
+func TestDB_HasTable(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	if db.HasTable("foos") {
+		t.Error("expected false")
+	}
+	if db.HasTable(&Foo{}) {
+		t.Error("expected false")
+	}
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !db.HasTable("foos") {
+		t.Error("expected true")
+	}
+	if !db.HasTable(&Foo{}) {
+		t.Error("expected true")
+	}
+
+}
