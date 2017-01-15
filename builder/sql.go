@@ -151,7 +151,8 @@ func PrimaryCondition(e *engine.Engine, modelValue, value interface{}) (string, 
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("(%v.%v = %v)", scope.QuotedTableName(e, modelValue),
+	return fmt.Sprintf("(%v%v = %v)",
+		e.Dialect.QueryFieldName(scope.QuotedTableName(e, modelValue)),
 		scope.Quote(e, pk), value), nil
 }
 
@@ -164,7 +165,8 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) 
 	)
 
 	if !e.Search.Unscoped && scope.HasColumn(e, modelValue, "deleted_at") {
-		sql := fmt.Sprintf("%v.deleted_at IS NULL", quotedTableName)
+		sql := fmt.Sprintf("%vdeleted_at IS NULL",
+			e.Dialect.QueryFieldName(quotedTableName))
 		primaryConditions = append(primaryConditions, sql)
 	}
 
@@ -178,7 +180,8 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) 
 			return "", err
 		}
 		for _, field := range pfs {
-			sql := fmt.Sprintf("%v.%v = %v", quotedTableName,
+			sql := fmt.Sprintf("%v%v = %v",
+				e.Dialect.QueryFieldName(quotedTableName),
 				scope.Quote(e, field.DBName), scope.AddToVars(e, field.Field.Interface()))
 			primaryConditions = append(primaryConditions, sql)
 		}

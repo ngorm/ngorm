@@ -80,6 +80,8 @@ import (
 	"github.com/gernest/ngorm/logger"
 	"github.com/gernest/ngorm/model"
 	"github.com/gernest/ngorm/scope"
+	"github.com/gernest/ngorm/search"
+	"github.com/gernest/ngorm/util"
 	"github.com/uber-go/zap"
 )
 
@@ -157,12 +159,19 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 		zap.NewTextEncoder(zap.TextNoTime()), // drop timestamps in tests
 	)
 	ctx, cancel := context.WithCancel(context.Background())
+	h := hooks.DefaultBook()
+	switch dia.GetName() {
+	case "ql", "ql-mem":
+		h.Create.Set(
+			hooks.HookFunc(model.AfterCreate, hooks.QLAfterCreate),
+		)
+	}
 	return &DB{
 		db:        db,
 		dialect:   dia,
 		structMap: model.NewStructsMap(),
 		ctx:       ctx,
-		hooks:     hooks.DefaultBook(),
+		hooks:     h,
 		cancel:    cancel,
 		log:       logger.New(o),
 	}, nil
@@ -382,7 +391,14 @@ func (db *DB) Create(value interface{}) error {
 	e.Scope.Value = value
 	e.Scope.SQL = sql.Q
 	e.Scope.SQLVars = sql.Args
-	return c.Exec(db.hooks, e)
+	err = c.Exec(db.hooks, e)
+	if err != nil {
+		return err
+	}
+	if ac, ok := db.hooks.Create.Get(model.AfterCreate); ok {
+		return ac.Exec(db.hooks, e)
+	}
+	return nil
 }
 
 //CreateSQL generates SQl query for creating a new record/records for value. This
@@ -473,24 +489,7 @@ func (db *DB) Model(value interface{}) *DB {
 
 //Update runs UPDATE queries.
 func (db *DB) Update(attrs ...interface{}) error {
-	return db.Updates(toSearchableMap(attrs), true)
-}
-
-func toSearchableMap(attrs ...interface{}) (result interface{}) {
-	if len(attrs) > 1 {
-		if str, ok := attrs[0].(string); ok {
-			result = map[string]interface{}{str: attrs[1]}
-		}
-	} else if len(attrs) == 1 {
-		if attr, ok := attrs[0].(map[string]interface{}); ok {
-			result = attr
-		}
-
-		if attr, ok := attrs[0].(interface{}); ok {
-			result = attr
-		}
-	}
-	return
+	return db.Updates(util.ToSearchableMap(attrs), true)
 }
 
 //Updates runs UPDATE query
@@ -513,7 +512,7 @@ func (db *DB) Updates(values interface{}, ignoreProtectedAttrs ...bool) error {
 
 //UpdateSQL generates SQL that will be executed when you use db.Update
 func (db *DB) UpdateSQL(attrs ...interface{}) (*model.Expr, error) {
-	return db.UpdatesSQL(toSearchableMap(attrs), true)
+	return db.UpdatesSQL(util.ToSearchableMap(attrs), true)
 }
 
 //UpdatesSQL generates sql that will be used when you run db.UpdatesSQL
@@ -577,4 +576,54 @@ func (db *DB) HasTable(value interface{}) bool {
 		name = scope.TableName(e, value)
 	}
 	return db.Dialect().HasTable(name)
+}
+
+//First  fets the first record and order by primary key.
+//
+// BUG: For some reason the ql database doesnt order the keys in ascending
+// order. So this uses DESC to get the real record instead of ASC , I will need
+// to dig more and see.
+func (db *DB) First(out interface{}, where ...interface{}) error {
+	db.Set(model.OrderByPK, "DESC")
+	if len(where) > 0 {
+		if len(where) == 1 {
+			search.Where(db.e, where[0])
+		} else {
+			search.Where(db.e, where[0], where[1:]...)
+		}
+	}
+	db.e.Scope.Value = out
+	q, ok := db.hooks.Query.Get(model.Query)
+	if !ok {
+		return errors.New("missing query hook")
+	}
+	return q.Exec(db.hooks, db.e)
+}
+
+//FirstSQL returns SQL query for retrieving the first record orgering by primary
+//key.
+func (db *DB) FirstSQL(out interface{}, where ...interface{}) (*model.Expr, error) {
+	db.Set(model.OrderByPK, "ASC")
+	if len(where) > 0 {
+		if len(where) == 1 {
+			search.Where(db.e, where[0])
+		} else {
+			search.Where(db.e, where[0], where[1:]...)
+		}
+	}
+	db.e.Scope.Value = out
+	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
+	if !ok {
+		return nil, errors.New("missing  query sql hook")
+	}
+	err := sql.Exec(db.hooks, db.e)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Expr{Q: db.e.Scope.SQL, Args: db.e.Scope.SQLVars}, nil
+}
+
+//Hooks returns the hook book for this db instance.
+func (db *DB) Hooks() *hooks.Book {
+	return db.hooks
 }

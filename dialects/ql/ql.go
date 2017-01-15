@@ -205,3 +205,7 @@ func (q *QL) BuildForeignKeyName(tableName, field, dest string) string {
 func (q *QL) CurrentDatabase() string {
 	return ""
 }
+
+func (q QL) QueryFieldName(name string) string {
+	return ""
+}

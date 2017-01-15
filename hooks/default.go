@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,22 +19,30 @@ import (
 	"github.com/gernest/ngorm/util"
 )
 
-//Query executes SQL querries.
+//Query executes sql QUery without transaction.
 func Query(b *Book, e *engine.Engine) error {
+	sql, ok := b.Query.Get(model.HookQuerySQL)
+	if !ok {
+		return errors.New("missing query sql hook")
+	}
+	err := sql.Exec(b, e)
+	if err != nil {
+		return err
+	}
+	exec, ok := b.Query.Get(model.HookQueryExec)
+	if !ok {
+		return errors.New("missing query exec hook")
+	}
+	return exec.Exec(b, e)
+}
+
+//QueryExec  executes SQL querries.
+func QueryExec(b *Book, e *engine.Engine) error {
 	var isSlice, isPtr bool
 	var resultType reflect.Type
 	results := reflect.ValueOf(e.Scope.Value)
 	if results.Kind() == reflect.Ptr {
 		results = results.Elem()
-	}
-	if orderBy, ok := e.Scope.Get(model.OrderByPK); ok {
-		pf, err := scope.PrimaryField(e, e.Scope.Value)
-		if err != nil {
-		} else {
-			search.Order(e, fmt.Sprintf("%v.%v %v",
-				scope.QuotedTableName(e, e.Scope.Value), scope.Quote(e, pf.DBName), orderBy))
-		}
-
 	}
 	if value, ok := e.Scope.Get(model.QueryDestination); ok {
 		results = reflect.Indirect(reflect.ValueOf(value))
@@ -49,10 +58,6 @@ func Query(b *Book, e *engine.Engine) error {
 		}
 	} else if kind != reflect.Struct {
 		return errors.New("unsupported destination, should be slice or struct")
-	}
-	err := builder.PrepareQuery(e, e.Scope.Value)
-	if err != nil {
-		return err
 	}
 	e.RowsAffected = 0
 	if str, ok := e.Scope.Get(model.QueryOption); ok {
@@ -88,6 +93,21 @@ func Query(b *Book, e *engine.Engine) error {
 		}
 	}
 	return nil
+}
+
+//QuerySQL generates SQL for queries
+func QuerySQL(b *Book, e *engine.Engine) error {
+	if orderBy, ok := e.Scope.Get(model.OrderByPK); ok {
+		pf, err := scope.PrimaryField(e, e.Scope.Value)
+		if err != nil {
+		} else {
+			search.Order(e, fmt.Sprintf("%v%v %v",
+				e.Dialect.QueryFieldName(
+					scope.QuotedTableName(e, e.Scope.Value)), scope.Quote(e, pf.DBName), orderBy))
+		}
+
+	}
+	return builder.PrepareQuery(e, e.Scope.Value)
 }
 
 //AfterQuery executes any call back after the  Qeery hook has been executed. Any
@@ -262,21 +282,59 @@ func CreateExec(b *Book, e *engine.Engine) error {
 	return nil
 }
 
-//AfterCreate hook executed after a new record has been created.
-func AfterCreate(b *Book, e *engine.Engine) error {
-	ac, ok := b.Create.Get(model.HookAfterCreate)
-	if ok {
-		err := ac.Exec(b, e)
-		if err != nil {
-			return err
-		}
+//QLAfterCreate hook executed after a new record has been created. This is for
+//ql dialect use only.
+func QLAfterCreate(b *Book, e *engine.Engine) error {
+	ne := cloneEngine(e)
+	ne.Scope.Set(model.IgnoreProtectedAttrs, true)
+	ne.Scope.Set(model.UpdateInterface, util.ToSearchableMap(e.Scope.Value))
+	ne.Scope.Value = e.Scope.Value
+	u, ok := b.Update.Get(model.HookUpdateSQL)
+	err := u.Exec(b, ne)
+	if err != nil {
+		return err
 	}
-	as, ok := b.Create.Get(model.HookAfterSave)
-	if ok {
-		err := as.Exec(b, e)
-		if err != nil {
-			return err
-		}
+	if !ok {
+		return errors.New("missing update sql hook")
+	}
+	err = fixWhere(ne.Scope)
+	if err != nil {
+		return err
+	}
+	exec, ok := b.Update.Get(model.HookUpdateExec)
+	if !ok {
+		return errors.New("missing update exec hook")
+	}
+	return exec.Exec(b, ne)
+}
+
+func fixWhere(s *model.Scope) error {
+	src := s.SQL
+	i := " id = "
+	rep := " id()= "
+	w := "WHERE"
+	lastWhere := strings.LastIndex(src, w)
+	if lastWhere == -1 {
+		return nil
+	}
+	lastID := strings.LastIndex(src, i)
+	if lastID == -1 {
+		return nil
+	}
+	if lastID < lastWhere {
+		return nil
+	}
+	s.SQL = src[:lastID] + rep + src[lastID+len(i):]
+	n := lastID + len(i) + 1
+	ni, err := strconv.Atoi(string(src[n]))
+	if err != nil {
+		return err
+	}
+	ni--
+	nv := s.SQLVars[ni]
+	switch v := nv.(type) {
+	case uint64:
+		s.SQLVars[ni] = int64(v)
 	}
 	return nil
 }
