@@ -1,4 +1,4 @@
-//Packcage model defines structures that are shared through out ngorm. They
+//Package model defines structures that are shared through out ngorm. They
 //provide the base building blocks for ngorm abstractions.
 package model
 
@@ -17,6 +17,8 @@ const (
 	QueryOption             = "ngorm:query_option"
 	Query                   = "ngorm:query"
 	HookAfterQuery          = "ngorm:query_after"
+	HookQuerySQL            = "ngorm:query_sql_hook"
+	HookQueryExec           = "ngorm:query_sql_exec"
 	HookAfterFindQuery      = "ngorm:query_after_find"
 	HookBeforeCreate        = "ngorm:before_create_hook"
 	HookBeforeSave          = "ngorm:before_save_hook"
@@ -66,7 +68,7 @@ const (
 //    Name      string
 //  }
 type Model struct {
-	ID        uint `gorm:"primary_key"`
+	ID        int64 `gorm:"primary_key"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt *time.Time `sql:"index"`

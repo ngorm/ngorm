@@ -81,7 +81,6 @@ func DefaultBook() *Book {
 
 	// Create hooks
 	b.Create.Set(HookFunc(model.Create, Create))
-	b.Create.Set(HookFunc(model.HookAfterCreate, AfterCreate))
 	b.Create.Set(HookFunc(model.HookBeforeCreate, BeforeCreate))
 	b.Create.Set(HookFunc(model.HookCreateExec, CreateExec))
 	b.Create.Set(HookFunc(model.HookCreateSQL, CreateSQL))
@@ -89,6 +88,8 @@ func DefaultBook() *Book {
 
 	// Query hooks
 	b.Query.Set(HookFunc(model.Query, Query))
+	b.Query.Set(HookFunc(model.HookQueryExec, QueryExec))
+	b.Query.Set(HookFunc(model.HookQuerySQL, QuerySQL))
 	b.Query.Set(HookFunc(model.HookAfterQuery, AfterQuery))
 
 	// Update hooks

@@ -52,6 +52,8 @@ type Dialect interface {
 	CurrentDatabase() string
 
 	PrimaryKey([]string) string
+
+	QueryFieldName(string) string
 }
 
 //ParseFieldStructForDialect pases metadatab enough to be used by dialects. The values

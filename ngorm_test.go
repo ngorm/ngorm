@@ -49,7 +49,7 @@ COMMIT;`
 	expect = `
 BEGIN TRANSACTION; 
 	CREATE TABLE users (id int64,age int64,user_num int64,name string,email string,birthday time,created_at time,updated_at time,billing_address_id int64,shipping_address_id int64,latitude float64,company_id int,role string,password_hash blob,sequence uint ) ;
-	CREATE TABLE user_languages (user_id uint,language_id uint ) ;
+	CREATE TABLE user_languages (user_id int64,language_id int64 ) ;
 COMMIT;`
 	expect = strings.TrimSpace(expect)
 	if sql.Q != expect {
@@ -123,9 +123,9 @@ func TestDB_Automirate(t *testing.T) {
 	expect := `
 BEGIN TRANSACTION;
 	CREATE TABLE users (id int64,age int64,user_num int64,name string,email string,birthday time,created_at time,updated_at time,billing_address_id int64,shipping_address_id int64,latitude float64,company_id int,role string,password_hash blob,sequence uint ) ;
-	CREATE TABLE user_languages (user_id uint,language_id uint ) ;
+	CREATE TABLE user_languages (user_id int64,language_id int64 ) ;
 	CREATE TABLE emails (id int16,user_id int,email string,created_at time,updated_at time ) ;
-	CREATE TABLE languages (id uint,created_at time,updated_at time,deleted_at time,name string ) ;
+	CREATE TABLE languages (id int64,created_at time,updated_at time,deleted_at time,name string ) ;
 	CREATE INDEX idx_languages_deleted_at ON languages(deleted_at);
 	CREATE TABLE companies (id int64,name string ) ;
 	CREATE TABLE credit_cards (id int8,number string,user_id int64,created_at time NOT NULL,updated_at time,deleted_at time ) ;
@@ -190,7 +190,7 @@ func TestDB_SaveSQL(t *testing.T) {
 	}
 	expect := `
 BEGIN TRANSACTION;
-	UPDATE foos SET stuff = $1  WHERE foos.id = $2;
+	UPDATE foos SET stuff = $1  WHERE id = $2;
 COMMIT;`
 	expect = strings.TrimSpace(expect)
 	if sql.Q != expect {
@@ -211,7 +211,7 @@ func TestDB_UpdateSQL(t *testing.T) {
 	}
 	expect := `
 BEGIN TRANSACTION;
-	UPDATE foos SET stuff = $1  WHERE foos.id = $2;
+	UPDATE foos SET stuff = $1  WHERE id = $2;
 COMMIT;`
 	expect = strings.TrimSpace(expect)
 	if sql.Q != expect {
@@ -263,4 +263,62 @@ func TestDB_HasTable(t *testing.T) {
 		t.Error("expected true")
 	}
 
+}
+
+func TestDB_FirstSQL(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+
+	// First record order by primary key
+	sql, err := db.FirstSQL(&fixture.User{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := `SELECT * FROM users   ORDER BY id ASC`
+	expect = strings.TrimSpace(expect)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+
+	// First record with primary key
+	sql, err = db.clone().FirstSQL(&fixture.User{}, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect = `SELECT * FROM users  WHERE (id = $1) ORDER BY id ASC`
+	expect = strings.TrimSpace(expect)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+}
+
+func TestDB_First(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sample := []string{"a", "b", "c", "d"}
+	for _, v := range sample {
+		err := db.Create(&Foo{Stuff: v})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	fu := Foo{}
+	err = db.First(&fu)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fu.Stuff != "a" {
+		t.Errorf("expected a got  %s", fu.Stuff)
+	}
 }

@@ -205,3 +205,12 @@ func (q *QL) BuildForeignKeyName(tableName, field, dest string) string {
 func (q *QL) CurrentDatabase() string {
 	return ""
 }
+
+//QueryFieldName returns prefix for field names if name. For instance users.id
+//to point to users id field.
+//
+// ql doesnt support this, so it returns an empty string for tablename prefix on
+// fields. insead of users.id to becomes id
+func (q QL) QueryFieldName(name string) string {
+	return ""
+}

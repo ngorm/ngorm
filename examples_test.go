@@ -215,7 +215,7 @@ func ExampleDB_SaveSQL() {
 
 	//Output:
 	//BEGIN TRANSACTION;
-	//	UPDATE foos SET stuff = $1  WHERE foos.id = $2;
+	//	UPDATE foos SET stuff = $1  WHERE id = $2;
 	//COMMIT;
 	//$1=twenty
 	//$2=10
@@ -243,7 +243,7 @@ func ExampleDB_UpdateSQL() {
 
 	//Output:
 	//BEGIN TRANSACTION;
-	//	UPDATE foos SET stuff = $1  WHERE foos.id = $2;
+	//	UPDATE foos SET stuff = $1  WHERE id = $2;
 	//COMMIT;
 	//$1=hello
 	//$2=10

@@ -747,6 +747,51 @@ func GetForeignField(column string, fields []*model.StructField) *model.StructFi
 
 //Scan scans restult from the rows into fields.
 func Scan(rows *sql.Rows, columns []string, fields []*model.Field) {
+	var (
+		ignored            interface{}
+		values             = make([]interface{}, len(columns))
+		selectFields       []*model.Field
+		selectedColumnsMap = map[string]int{}
+		resetFields        = map[int]*model.Field{}
+	)
+
+	for index, column := range columns {
+		values[index] = &ignored
+
+		selectFields = fields
+		if idx, ok := selectedColumnsMap[column]; ok {
+			selectFields = selectFields[idx+1:]
+		}
+
+		for fieldIndex, field := range selectFields {
+			if field.DBName == column {
+				if field.Field.Kind() == reflect.Ptr {
+					values[index] = field.Field.Addr().Interface()
+				} else {
+					reflectValue := reflect.New(reflect.PtrTo(field.Struct.Type))
+					reflectValue.Elem().Set(field.Field.Addr())
+					values[index] = reflectValue.Interface()
+					resetFields[index] = field
+				}
+
+				selectedColumnsMap[column] = fieldIndex
+
+				if field.IsNormal {
+					break
+				}
+			}
+		}
+	}
+	err := rows.Scan(values...)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for index, field := range resetFields {
+		if v := reflect.ValueOf(values[index]).Elem().Elem(); v.IsValid() {
+			field.Field.Set(v)
+		}
+	}
 }
 
 //SetColumn sets the column value.

@@ -140,7 +140,7 @@ func TestWhere(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect = `(users.id = $1)`
+	expect = `(id = $1)`
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
 	}
