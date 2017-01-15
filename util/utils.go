@@ -245,6 +245,7 @@ func GetInterfaceAsSQL(value interface{}) (string, error) {
 	return "", errmsg.ErrInvalidSQL
 }
 
+//ToSearchableMap transform attrs to a map.
 func ToSearchableMap(attrs ...interface{}) (result interface{}) {
 	if len(attrs) > 1 {
 		if str, ok := attrs[0].(string); ok {
