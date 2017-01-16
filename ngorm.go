@@ -771,3 +771,12 @@ func (db *DB) Joins(query string, args ...interface{}) *DB {
 	search.Join(db.e, query, args...)
 	return db
 }
+
+// Offset specify the number of records to skip before starting to return the records
+func (db *DB) Offset(offset interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Offset(db.e, offset)
+	return db
+}
