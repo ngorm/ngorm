@@ -811,3 +811,12 @@ func (db *DB) Omit(columns ...string) *DB {
 	search.Omit(db.e, columns...)
 	return db
 }
+
+// Not filter records that don't match current conditions, similar to `Where`
+func (db *DB) Not(query interface{}, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Not(db.e, query, args...)
+	return db
+}
