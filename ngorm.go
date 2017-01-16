@@ -829,3 +829,13 @@ func (db *DB) Or(query interface{}, args ...interface{}) *DB {
 	search.Or(db.e, query, args...)
 	return db
 }
+
+// Where return a new relation, filter records with given conditions, accepts
+//`map`, `struct` or `string` as conditions
+func (db *DB) Where(query interface{}, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Where(db.e, query, args...)
+	return db
+}
