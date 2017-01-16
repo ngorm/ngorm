@@ -744,3 +744,12 @@ func (db *DB) Assign(attrs ...interface{}) *DB {
 	search.Assign(db.e, attrs...)
 	return db
 }
+
+// Group specify the group method on the find
+func (db *DB) Group(query string) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Group(db.e, query)
+	return db
+}
