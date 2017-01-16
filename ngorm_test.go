@@ -379,3 +379,62 @@ func TestDB_Last(t *testing.T) {
 		t.Errorf("expected d got  %s", fu.Stuff)
 	}
 }
+
+func TestDB_FindSQL(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+
+	// First record order by primary key
+	users := []*fixture.User{}
+	sql, err := db.FindSQL(&users)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := `SELECT * FROM users`
+	expect = strings.TrimSpace(expect)
+	sql.Q = strings.TrimSpace(sql.Q)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+
+	sql, err = db.clone().Limit(2).FindSQL(&users)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect = `SELECT * FROM users   LIMIT 2`
+	expect = strings.TrimSpace(expect)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+}
+
+func TestDB_Find(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sample := []string{"a", "b", "c", "d"}
+	for _, v := range sample {
+		err := db.Create(&Foo{Stuff: v})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	fu := []Foo{}
+	err = db.Find(&fu)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(fu) != 4 {
+		t.Errorf("expected 4 got  %d", len(fu))
+	}
+}
