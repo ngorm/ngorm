@@ -802,3 +802,12 @@ func (db *DB) Select(query interface{}, args ...interface{}) *DB {
 	search.Select(db.e, query, args...)
 	return db
 }
+
+// Omit specify fields that you want to ignore when saving to database for creating, updating
+func (db *DB) Omit(columns ...string) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Omit(db.e, columns...)
+	return db
+}
