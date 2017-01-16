@@ -792,3 +792,13 @@ func (db *DB) Order(value interface{}, reorder ...bool) *DB {
 	search.Order(db.e, value, reorder...)
 	return db
 }
+
+// Select specify fields that you want to retrieve from database when querying, by default, will select all fields;
+// When creating/updating, specify fields that you want to save to database
+func (db *DB) Select(query interface{}, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Select(db.e, query, args...)
+	return db
+}
