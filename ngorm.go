@@ -682,3 +682,47 @@ func (db *DB) Limit(limit interface{}) *DB {
 	search.Limit(db.e, limit)
 	return db
 }
+
+// FindSQL generates SQL query for  finding records that match given conditions
+func (db *DB) FindSQL(out interface{}, where ...interface{}) (*model.Expr, error) {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	if len(where) > 0 {
+		if len(where) == 1 {
+			search.Where(db.e, where[0])
+		} else {
+			search.Where(db.e, where[0], where[1:]...)
+		}
+	}
+	db.e.Scope.Value = out
+	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
+	if !ok {
+		return nil, errors.New("missing  query sql hook")
+	}
+	err := sql.Exec(db.hooks, db.e)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Expr{Q: db.e.Scope.SQL, Args: db.e.Scope.SQLVars}, nil
+}
+
+// Find find records that match given conditions
+func (db *DB) Find(out interface{}, where ...interface{}) error {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	if len(where) > 0 {
+		if len(where) == 1 {
+			search.Where(db.e, where[0])
+		} else {
+			search.Where(db.e, where[0], where[1:]...)
+		}
+	}
+	db.e.Scope.Value = out
+	q, ok := db.hooks.Query.Get(model.Query)
+	if !ok {
+		return errors.New("missing query hook")
+	}
+	return q.Exec(db.hooks, db.e)
+}
