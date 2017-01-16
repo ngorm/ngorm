@@ -732,6 +732,15 @@ func (db *DB) Attrs(attrs ...interface{}) *DB {
 	if db.e == nil {
 		db.e = db.NewEngine()
 	}
-	search.Attr(db.e, attrs)
+	search.Attr(db.e, attrs...)
+	return db
+}
+
+// Assign assign result with argument regardless it is found or not
+func (db *DB) Assign(attrs ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Assign(db.e, attrs...)
 	return db
 }
