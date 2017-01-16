@@ -673,3 +673,12 @@ func (db *DB) LastSQL(out interface{}, where ...interface{}) (*model.Expr, error
 func (db *DB) Hooks() *hooks.Book {
 	return db.hooks
 }
+
+// Limit specify the number of records to be retrieved
+func (db *DB) Limit(limit interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Limit(db.e, limit)
+	return db
+}
