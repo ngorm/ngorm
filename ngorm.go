@@ -726,3 +726,12 @@ func (db *DB) Find(out interface{}, where ...interface{}) error {
 	}
 	return q.Exec(db.hooks, db.e)
 }
+
+// Attrs initialize struct with argument if record not found
+func (db *DB) Attrs(attrs ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Attr(db.e, attrs)
+	return db
+}
