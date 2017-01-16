@@ -726,3 +726,116 @@ func (db *DB) Find(out interface{}, where ...interface{}) error {
 	}
 	return q.Exec(db.hooks, db.e)
 }
+
+// Attrs initialize struct with argument if record not found
+func (db *DB) Attrs(attrs ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Attr(db.e, attrs...)
+	return db
+}
+
+// Assign assign result with argument regardless it is found or not
+func (db *DB) Assign(attrs ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Assign(db.e, attrs...)
+	return db
+}
+
+// Group specify the group method on the find
+func (db *DB) Group(query string) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	_ = search.Group(db.e, query)
+	return db
+}
+
+// Having specify HAVING conditions for GROUP BY
+func (db *DB) Having(query string, values ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Having(db.e, query, values...)
+	return db
+}
+
+// Joins specify Joins conditions
+func (db *DB) Joins(query string, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Join(db.e, query, args...)
+	return db
+}
+
+// Offset specify the number of records to skip before starting to return the records
+func (db *DB) Offset(offset interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Offset(db.e, offset)
+	return db
+}
+
+// Order specify order when retrieve records from database, set reorder to `true` to overwrite defined conditions
+//     db.Order("name DESC")
+//     db.Order("name DESC", true) // reorder
+//     db.Order(gorm.Expr("name = ? DESC", "first")) // sql expression
+func (db *DB) Order(value interface{}, reorder ...bool) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Order(db.e, value, reorder...)
+	return db
+}
+
+// Select specify fields that you want to retrieve from database when querying, by default, will select all fields;
+// When creating/updating, specify fields that you want to save to database
+func (db *DB) Select(query interface{}, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Select(db.e, query, args...)
+	return db
+}
+
+// Omit specify fields that you want to ignore when saving to database for creating, updating
+func (db *DB) Omit(columns ...string) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Omit(db.e, columns...)
+	return db
+}
+
+// Not filter records that don't match current conditions, similar to `Where`
+func (db *DB) Not(query interface{}, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Not(db.e, query, args...)
+	return db
+}
+
+// Or filter records that match before conditions or this one, similar to `Where`
+func (db *DB) Or(query interface{}, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Or(db.e, query, args...)
+	return db
+}
+
+// Where return a new relation, filter records with given conditions, accepts
+//`map`, `struct` or `string` as conditions
+func (db *DB) Where(query interface{}, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Where(db.e, query, args...)
+	return db
+}
