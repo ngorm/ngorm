@@ -600,10 +600,56 @@ func (db *DB) First(out interface{}, where ...interface{}) error {
 	return q.Exec(db.hooks, db.e)
 }
 
-//FirstSQL returns SQL query for retrieving the first record orgering by primary
+//FirstSQL returns SQL query for retrieving the first record ordering by primary
 //key.
 func (db *DB) FirstSQL(out interface{}, where ...interface{}) (*model.Expr, error) {
 	db.Set(model.OrderByPK, "ASC")
+	if len(where) > 0 {
+		if len(where) == 1 {
+			search.Where(db.e, where[0])
+		} else {
+			search.Where(db.e, where[0], where[1:]...)
+		}
+	}
+	db.e.Scope.Value = out
+	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
+	if !ok {
+		return nil, errors.New("missing  query sql hook")
+	}
+	err := sql.Exec(db.hooks, db.e)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Expr{Q: db.e.Scope.SQL, Args: db.e.Scope.SQLVars}, nil
+}
+
+//Last finds the last record and order by primary key.
+//
+// BUG: For some reason the ql database doesnt order the keys in descending
+// order despite the use of DESC, so this uses ASC but the keys are in
+// descending order.
+// order. So this uses DESC to get the real record instead of ASC , I will need
+func (db *DB) Last(out interface{}, where ...interface{}) error {
+	db.Set(model.OrderByPK, "ASC")
+	if len(where) > 0 {
+		if len(where) == 1 {
+			search.Where(db.e, where[0])
+		} else {
+			search.Where(db.e, where[0], where[1:]...)
+		}
+	}
+	db.e.Scope.Value = out
+	q, ok := db.hooks.Query.Get(model.Query)
+	if !ok {
+		return errors.New("missing query hook")
+	}
+	return q.Exec(db.hooks, db.e)
+}
+
+//LastSQL returns SQL query for retrieving the last record ordering by primary
+//key.
+func (db *DB) LastSQL(out interface{}, where ...interface{}) (*model.Expr, error) {
+	db.Set(model.OrderByPK, "DESC")
 	if len(where) > 0 {
 		if len(where) == 1 {
 			search.Where(db.e, where[0])
