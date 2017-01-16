@@ -753,3 +753,12 @@ func (db *DB) Group(query string) *DB {
 	search.Group(db.e, query)
 	return db
 }
+
+// Having specify HAVING conditions for GROUP BY
+func (db *DB) Having(query string, values ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Having(db.e, query, values...)
+	return db
+}
