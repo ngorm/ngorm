@@ -750,7 +750,7 @@ func (db *DB) Group(query string) *DB {
 	if db.e == nil {
 		db.e = db.NewEngine()
 	}
-	search.Group(db.e, query)
+	_ = search.Group(db.e, query)
 	return db
 }
 
@@ -760,5 +760,14 @@ func (db *DB) Having(query string, values ...interface{}) *DB {
 		db.e = db.NewEngine()
 	}
 	search.Having(db.e, query, values...)
+	return db
+}
+
+// Joins specify Joins conditions
+func (db *DB) Joins(query string, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Join(db.e, query, args...)
 	return db
 }
