@@ -820,3 +820,12 @@ func (db *DB) Not(query interface{}, args ...interface{}) *DB {
 	search.Not(db.e, query, args...)
 	return db
 }
+
+// Or filter records that match before conditions or this one, similar to `Where`
+func (db *DB) Or(query interface{}, args ...interface{}) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Or(db.e, query, args...)
+	return db
+}
