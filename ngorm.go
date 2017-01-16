@@ -780,3 +780,15 @@ func (db *DB) Offset(offset interface{}) *DB {
 	search.Offset(db.e, offset)
 	return db
 }
+
+// Order specify order when retrieve records from database, set reorder to `true` to overwrite defined conditions
+//     db.Order("name DESC")
+//     db.Order("name DESC", true) // reorder
+//     db.Order(gorm.Expr("name = ? DESC", "first")) // sql expression
+func (db *DB) Order(value interface{}, reorder ...bool) *DB {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	search.Order(db.e, value, reorder...)
+	return db
+}
