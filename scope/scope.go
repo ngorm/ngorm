@@ -1211,6 +1211,13 @@ func UpdatedAttrsWithValues(e *engine.Engine, value interface{}) (results map[st
 }
 
 //ConvertInterfaceToMap tries to convert value into a map[string]interface{}
+//
+// The map keys are field names, and the values are the supposed field values.
+// This cunction only supports maps, []interface{} and structs.
+//
+// For [interface{}, if the first value is a string, then it must be a
+// succession of key pair values like
+//	["name","gernest","age",1000]
 func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredField bool) map[string]interface{} {
 	var attrs = map[string]interface{}{}
 	switch value := values.(type) {
@@ -1220,6 +1227,9 @@ func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredFiel
 		if len(value) > 0 {
 			switch value[0].(type) {
 			case string:
+
+				// If the first key is a string. The whole slice is treated as a
+				// succesive ke,value pairs.
 				size := len(value)
 				pos := 0
 				for pos < size {
@@ -1245,8 +1255,6 @@ func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredFiel
 			for _, key := range reflectValue.MapKeys() {
 				attrs[util.ToDBName(key.Interface().(string))] = reflectValue.MapIndex(key).Interface()
 			}
-		case reflect.Slice:
-
 		default:
 			f, err := Fields(e, values)
 			if err != nil {
