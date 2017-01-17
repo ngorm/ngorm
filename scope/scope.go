@@ -1275,7 +1275,13 @@ func SaveFieldAsAssociation(e *engine.Engine, field *model.Field) (bool, *model.
 	return false, nil
 }
 
-//Initialize initializes value for e.Scope.Value
+//Initialize initializes value for e.Scope.Value There are three areas where we
+//look for values to initialize the model with.
+//
+// 	e.Seach.WhereConditions
+// 	e.Search.InitAttrs
+//	e.Search.AssignAttr
+//
 func Initialize(e *engine.Engine) {
 	for _, clause := range e.Search.WhereConditions {
 		UpdatedAttrsWithValues(e, clause["query"])
