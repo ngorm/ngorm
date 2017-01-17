@@ -459,7 +459,7 @@ func TestDB_FirstOrInit(t *testing.T) {
 	}
 }
 
-func TestDB_Update(t *testing.T) {
+func TestDB_Save(t *testing.T) {
 	db, err := Open("ql-mem", "test.db")
 	if err != nil {
 		t.Fatal(err)
@@ -491,5 +491,40 @@ func TestDB_Update(t *testing.T) {
 	db.Begin().First(&first)
 	if first.Stuff != fu.Stuff {
 		t.Errorf("expected %s got %s", fu.Stuff, first.Stuff)
+	}
+}
+
+func TestDB_Update(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sample := []string{"a", "b", "c", "d"}
+	for _, v := range sample {
+		err := db.Create(&Foo{Stuff: v})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	fu := Foo{}
+	err = db.Begin().First(&fu)
+	if err != nil {
+		t.Fatal(err)
+	}
+	up := "stuff"
+	err = db.Begin().Model(&fu).Update("stuff", up)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := Foo{}
+	db.Begin().First(&first)
+	if first.Stuff != up {
+		t.Errorf("expected %s got %s", up, first.Stuff)
 	}
 }
