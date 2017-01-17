@@ -72,19 +72,21 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 		if err != nil {
 			return "", err
 		}
-		str = fmt.Sprintf("(%v.%v IN (?))", scope.QuotedTableName(e, modelValue),
+		str = fmt.Sprintf("(%v%v IN (?))",
+			e.Dialect.QueryFieldName(scope.QuotedTableName(e, modelValue)),
 			scope.Quote(e, pk))
 		clause["args"] = []interface{}{value}
 	case map[string]interface{}:
 		var sqls []string
 		for key, value := range value {
 			if value != nil {
-				sqls = append(sqls, fmt.Sprintf("(%v.%v = %v)",
-					scope.QuotedTableName(e, modelValue),
+				sqls = append(sqls, fmt.Sprintf("(%v%v = %v)",
+					e.Dialect.QueryFieldName(scope.QuotedTableName(e, modelValue)),
 					scope.Quote(e, key), scope.AddToVars(e, value)))
 			} else {
-				sqls = append(sqls, fmt.Sprintf("(%v.%v IS NULL)",
-					scope.QuotedTableName(e, modelValue), scope.Quote(e, key)))
+				sqls = append(sqls, fmt.Sprintf("(%v%v IS NULL)",
+					e.Dialect.QueryFieldName(scope.QuotedTableName(e, modelValue)),
+					scope.Quote(e, key)))
 			}
 		}
 		return strings.Join(sqls, " AND "), nil
@@ -101,8 +103,8 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 			}
 			for _, field := range fds {
 				if !field.IsIgnored && !field.IsBlank {
-					sqls = append(sqls, fmt.Sprintf("(%v.%v = %v)",
-						scope.QuotedTableName(e, value),
+					sqls = append(sqls, fmt.Sprintf("(%v%v = %v)",
+						e.Dialect.QueryFieldName(scope.QuotedTableName(e, value)),
 						scope.Quote(e, field.DBName),
 						scope.AddToVars(e, field.Field.Interface())))
 				}

@@ -116,3 +116,10 @@ func Unscoped(e *engine.Engine, b bool) {
 func Table(e *engine.Engine, name string) {
 	e.Search.TableName = name
 }
+
+//Inline add Where clause if any.
+func Inline(e *engine.Engine, values ...interface{}) {
+	if len(values) > 0 {
+		Where(e, values[0], values[1:]...)
+	}
+}

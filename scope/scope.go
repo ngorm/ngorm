@@ -1176,22 +1176,24 @@ func UpdatedAttrsWithValues(e *engine.Engine, value interface{}) (results map[st
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
+
 	if v.Kind() != reflect.Struct {
 		return ConvertInterfaceToMap(e, value, false), true
 	}
 
 	results = map[string]interface{}{}
-
 	for key, value := range ConvertInterfaceToMap(e, value, true) {
 		field, err := FieldByName(e, e.Scope.Value, key)
 		if err != nil {
 			//TODO return error?
 		} else {
 			if ChangeableField(e, field) {
+
 				if _, ok := value.(*model.Expr); ok {
 					hasUpdate = true
 					results[field.DBName] = value
 				} else {
+
 					err := field.Set(value)
 					if field.IsNormal {
 						hasUpdate = true
@@ -1215,20 +1217,31 @@ func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredFiel
 	case map[string]interface{}:
 		return value
 	case []interface{}:
-		size := len(value)
-		pos := 0
-		for pos < size {
-			if pos+1 < size {
-				attrs[fmt.Sprint(value[pos])] = value[pos+1]
+		if len(value) > 0 {
+			switch value[0].(type) {
+			case string:
+				size := len(value)
+				pos := 0
+				for pos < size {
+					if pos+1 < size {
+						attrs[fmt.Sprint(value[pos])] = value[pos+1]
+					}
+					pos += 2
+				}
+			default:
+				for _, v := range value {
+					for key, value := range ConvertInterfaceToMap(e, v, withIgnoredField) {
+						attrs[key] = value
+					}
+				}
 			}
-			pos += 2
 		}
-	case interface{}:
 
+	case interface{}:
 		reflectValue := reflect.ValueOf(values)
+
 		switch reflectValue.Kind() {
 		case reflect.Map:
-
 			for _, key := range reflectValue.MapKeys() {
 				attrs[util.ToDBName(key.Interface().(string))] = reflectValue.MapIndex(key).Interface()
 			}
@@ -1237,7 +1250,6 @@ func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredFiel
 		default:
 			f, err := Fields(e, values)
 			if err != nil {
-				//TODO return error?
 			} else {
 				for _, field := range f {
 					if !field.IsBlank && (withIgnoredField || !field.IsIgnored) {
@@ -1261,4 +1273,13 @@ func SaveFieldAsAssociation(e *engine.Engine, field *model.Field) (bool, *model.
 		}
 	}
 	return false, nil
+}
+
+//Initialize initializes value for e.Scope.Value
+func Initialize(e *engine.Engine) {
+	for _, clause := range e.Search.WhereConditions {
+		UpdatedAttrsWithValues(e, clause["query"])
+	}
+	UpdatedAttrsWithValues(e, e.Search.InitAttrs)
+	UpdatedAttrsWithValues(e, e.Search.AssignAttrs)
 }

@@ -76,6 +76,7 @@ import (
 	"github.com/gernest/ngorm/dialects"
 	"github.com/gernest/ngorm/dialects/ql"
 	"github.com/gernest/ngorm/engine"
+	"github.com/gernest/ngorm/errmsg"
 	"github.com/gernest/ngorm/hooks"
 	"github.com/gernest/ngorm/logger"
 	"github.com/gernest/ngorm/model"
@@ -838,4 +839,25 @@ func (db *DB) Where(query interface{}, args ...interface{}) *DB {
 	}
 	search.Where(db.e, query, args...)
 	return db
+}
+
+// FirstOrInit find first matched record or initialize a new one with given
+//conditions (only works with struct, map conditions)
+// https://jinzhu.github.io/gorm/curd.html#firstorinit
+func (db *DB) FirstOrInit(out interface{}, where ...interface{}) error {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	db.e.Scope.Value = out
+	err := db.First(out, where...)
+	if err != nil {
+		if err != errmsg.ErrRecordNotFound {
+			return err
+		}
+		search.Inline(db.e, where...)
+		scope.Initialize(db.e)
+		return nil
+	}
+	_, _ = scope.UpdatedAttrsWithValues(db.e, db.e.Search.AssignAttrs)
+	return nil
 }
