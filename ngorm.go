@@ -478,6 +478,21 @@ func (db *DB) SaveSQL(value interface{}) (*model.Expr, error) {
 	return nil, errors.New("missing update sql hook")
 }
 
+// Save update value in database, if the value doesn't have primary key, will insert it
+func (db *DB) Save(value interface{}) error {
+	e := db.NewEngine()
+	e.Scope.Value = value
+	field, _ := scope.PrimaryField(e, value)
+	if field == nil || field.IsBlank {
+		return db.Create(value)
+	}
+	u, ok := db.hooks.Update.Get(model.Update)
+	if !ok {
+		return errors.New("missing update hook")
+	}
+	return u.Exec(db.hooks, e)
+}
+
 //Model sets value as the database model. This model will be used for future
 //calls on the erturned DB e.g
 //
@@ -860,4 +875,10 @@ func (db *DB) FirstOrInit(out interface{}, where ...interface{}) error {
 	}
 	_, _ = scope.UpdatedAttrsWithValues(db.e, db.e.Search.AssignAttrs)
 	return nil
+}
+
+// Begin gives back a fresh copy of DB ready for chaining methods that operates
+// on the same model..
+func (db *DB) Begin() *DB {
+	return db.clone()
 }

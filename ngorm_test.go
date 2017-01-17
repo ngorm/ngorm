@@ -284,7 +284,7 @@ func TestDB_FirstSQL(t *testing.T) {
 	}
 
 	// First record with primary key
-	sql, err = db.clone().FirstSQL(&fixture.User{}, 10)
+	sql, err = db.Begin().FirstSQL(&fixture.User{}, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -456,5 +456,40 @@ func TestDB_FirstOrInit(t *testing.T) {
 	}
 	if fu.ID != 20 {
 		t.Errorf("expected 20 got %d", fu.ID)
+	}
+}
+
+func TestDB_Update(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sample := []string{"a", "b", "c", "d"}
+	for _, v := range sample {
+		err := db.Create(&Foo{Stuff: v})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	fu := Foo{}
+	err = db.Begin().First(&fu)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fu.Stuff = "updates"
+	err = db.Save(&fu)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := Foo{}
+	db.Begin().First(&first)
+	if first.Stuff != fu.Stuff {
+		t.Errorf("expected %s got %s", fu.Stuff, first.Stuff)
 	}
 }
