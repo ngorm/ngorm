@@ -92,6 +92,9 @@ func QueryExec(b *Book, e *engine.Engine) error {
 			}
 		}
 	}
+	if e.RowsAffected == 0 && !isSlice {
+		return errmsg.ErrRecordNotFound
+	}
 	return nil
 }
 

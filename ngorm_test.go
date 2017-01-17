@@ -438,3 +438,23 @@ func TestDB_Find(t *testing.T) {
 		t.Errorf("expected 4 got  %d", len(fu))
 	}
 }
+
+func TestDB_FirstOrInit(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fu := Foo{}
+	err = db.Where(Foo{Stuff: "nah"}).Attrs(Foo{ID: 20}).FirstOrInit(&fu)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fu.ID != 20 {
+		t.Errorf("expected 20 got %d", fu.ID)
+	}
+}

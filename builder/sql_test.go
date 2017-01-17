@@ -114,7 +114,7 @@ func TestWhere(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect = `(users.name = $`
+	expect = `(name = $`
 	if !strings.Contains(s, expect) {
 		t.Errorf("expected %s to containe %s", s, expect)
 	}
@@ -127,7 +127,7 @@ func TestWhere(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := `(users.age IS NULL)`
+	expected := `(age IS NULL)`
 	if !strings.Contains(s, expected) {
 		t.Errorf("expected %s to contain %s", s, expected)
 	}
@@ -153,7 +153,7 @@ func TestWhere(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect = `(users.id IN ($1,$2,$3))`
+	expect = `(id IN ($1,$2,$3))`
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
 	}
@@ -166,7 +166,7 @@ func TestWhere(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect = `(users.age = $1) AND (users.name = $2)`
+	expect = `(age = $1) AND (name = $2)`
 	if s != expect {
 		t.Errorf("expected %s got %s", expect, s)
 	}
