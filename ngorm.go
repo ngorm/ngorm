@@ -71,8 +71,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 
+	"github.com/gernest/ngorm/builder"
 	"github.com/gernest/ngorm/dialects"
 	"github.com/gernest/ngorm/dialects/ql"
 	"github.com/gernest/ngorm/engine"
@@ -852,4 +854,36 @@ func (db *DB) Table(name string) *DB {
 	ndb := db.Begin()
 	search.Table(ndb.e, name)
 	return ndb
+}
+
+// Pluck used to query single column from a model as a map
+//     var ages []int64
+//     db.Find(&users).Pluck("age", &ages)
+func (db *DB) Pluck(column string, value interface{}) error {
+	dest := reflect.ValueOf(value)
+	if dest.Kind() == reflect.Ptr {
+		dest = dest.Elem()
+	}
+	search.Select(db.e, column)
+	if dest.Kind() != reflect.Slice {
+		return fmt.Errorf("results should be a slice, not %s", dest.Kind())
+	}
+	err := builder.PrepareQuery(db.e, db.e.Scope.Value)
+	if err != nil {
+		return err
+	}
+	rows, err := db.SQLCommon().Query(db.e.Scope.SQL, db.e.Scope.SQLVars...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		elem := reflect.New(dest.Type().Elem()).Interface()
+		err := rows.Scan(elem)
+		if err != nil {
+			return err
+		}
+		dest.Set(reflect.Append(dest, reflect.ValueOf(elem).Elem()))
+	}
+	return nil
 }
