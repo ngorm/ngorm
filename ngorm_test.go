@@ -557,3 +557,31 @@ func TestDB_Assign(t *testing.T) {
 	}
 
 }
+
+func TestDB_Pluck(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sample := []string{"a", "b", "c", "d"}
+	for _, v := range sample {
+		err := db.Create(&Foo{Stuff: v})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	var stuffs []string
+	err = db.Begin().Model(&Foo{}).Pluck("stuff", &stuffs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stuffs) != 4 {
+		t.Errorf("expected %d got %d", 4, len(stuffs))
+	}
+}
