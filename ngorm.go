@@ -82,6 +82,7 @@ import (
 	"github.com/gernest/ngorm/hooks"
 	"github.com/gernest/ngorm/logger"
 	"github.com/gernest/ngorm/model"
+	"github.com/gernest/ngorm/regexes"
 	"github.com/gernest/ngorm/scope"
 	"github.com/gernest/ngorm/search"
 	"github.com/gernest/ngorm/util"
@@ -876,7 +877,7 @@ func (db *DB) Pluck(column string, value interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		elem := reflect.New(dest.Type().Elem()).Interface()
 		err := rows.Scan(elem)
@@ -886,4 +887,18 @@ func (db *DB) Pluck(column string, value interface{}) error {
 		dest.Set(reflect.Append(dest, reflect.ValueOf(elem).Elem()))
 	}
 	return nil
+}
+
+// Count get how many records for a model
+func (db *DB) Count(value interface{}) error {
+	query, ok := db.e.Search.Selects["query"]
+	if !ok || regexes.CountingQuery.MatchString(fmt.Sprint(query)) {
+		search.Select(db.e, "count(*)")
+	}
+	db.e.Search.IgnoreOrderQuery = true
+	err := builder.PrepareQuery(db.e, db.e.Scope.Value)
+	if err != nil {
+		return err
+	}
+	return db.SQLCommon().QueryRow(db.e.Scope.SQL, db.e.Scope.SQLVars...).Scan(value)
 }
