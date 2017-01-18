@@ -601,13 +601,7 @@ func (db *DB) HasTable(value interface{}) bool {
 // to dig more and see.
 func (db *DB) First(out interface{}, where ...interface{}) error {
 	db.Set(model.OrderByPK, "DESC")
-	if len(where) > 0 {
-		if len(where) == 1 {
-			search.Where(db.e, where[0])
-		} else {
-			search.Where(db.e, where[0], where[1:]...)
-		}
-	}
+	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
 	q, ok := db.hooks.Query.Get(model.Query)
 	if !ok {
@@ -620,13 +614,7 @@ func (db *DB) First(out interface{}, where ...interface{}) error {
 //key.
 func (db *DB) FirstSQL(out interface{}, where ...interface{}) (*model.Expr, error) {
 	db.Set(model.OrderByPK, "ASC")
-	if len(where) > 0 {
-		if len(where) == 1 {
-			search.Where(db.e, where[0])
-		} else {
-			search.Where(db.e, where[0], where[1:]...)
-		}
-	}
+	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
 	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
 	if !ok {
@@ -647,13 +635,7 @@ func (db *DB) FirstSQL(out interface{}, where ...interface{}) (*model.Expr, erro
 // order. So this uses DESC to get the real record instead of ASC , I will need
 func (db *DB) Last(out interface{}, where ...interface{}) error {
 	db.Set(model.OrderByPK, "ASC")
-	if len(where) > 0 {
-		if len(where) == 1 {
-			search.Where(db.e, where[0])
-		} else {
-			search.Where(db.e, where[0], where[1:]...)
-		}
-	}
+	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
 	q, ok := db.hooks.Query.Get(model.Query)
 	if !ok {
@@ -666,13 +648,7 @@ func (db *DB) Last(out interface{}, where ...interface{}) error {
 //key.
 func (db *DB) LastSQL(out interface{}, where ...interface{}) (*model.Expr, error) {
 	db.Set(model.OrderByPK, "DESC")
-	if len(where) > 0 {
-		if len(where) == 1 {
-			search.Where(db.e, where[0])
-		} else {
-			search.Where(db.e, where[0], where[1:]...)
-		}
-	}
+	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
 	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
 	if !ok {
@@ -704,13 +680,7 @@ func (db *DB) FindSQL(out interface{}, where ...interface{}) (*model.Expr, error
 	if db.e == nil {
 		db.e = db.NewEngine()
 	}
-	if len(where) > 0 {
-		if len(where) == 1 {
-			search.Where(db.e, where[0])
-		} else {
-			search.Where(db.e, where[0], where[1:]...)
-		}
-	}
+	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
 	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
 	if !ok {
@@ -728,13 +698,7 @@ func (db *DB) Find(out interface{}, where ...interface{}) error {
 	if db.e == nil {
 		db.e = db.NewEngine()
 	}
-	if len(where) > 0 {
-		if len(where) == 1 {
-			search.Where(db.e, where[0])
-		} else {
-			search.Where(db.e, where[0], where[1:]...)
-		}
-	}
+	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
 	q, ok := db.hooks.Query.Get(model.Query)
 	if !ok {
