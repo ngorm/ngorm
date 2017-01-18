@@ -534,3 +534,26 @@ func TestDB_Update(t *testing.T) {
 		t.Errorf("expected %s got %s", up, first.Stuff)
 	}
 }
+
+func TestDB_Assign(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&fixture.User{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := fixture.User{}
+	err = db.Where(
+		fixture.User{Name: "non_existing"}).Assign(
+		fixture.User{Age: 20}).FirstOrInit(&user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if user.Age != 20 {
+		t.Errorf("expected 40 got %d", user.Age)
+	}
+
+}
