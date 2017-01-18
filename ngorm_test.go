@@ -488,7 +488,10 @@ func TestDB_Save(t *testing.T) {
 		t.Fatal(err)
 	}
 	first := Foo{}
-	db.Begin().First(&first)
+	err = db.Begin().First(&first)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if first.Stuff != fu.Stuff {
 		t.Errorf("expected %s got %s", fu.Stuff, first.Stuff)
 	}
@@ -523,7 +526,10 @@ func TestDB_Update(t *testing.T) {
 		t.Fatal(err)
 	}
 	first := Foo{}
-	db.Begin().First(&first)
+	err = db.Begin().First(&first)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if first.Stuff != up {
 		t.Errorf("expected %s got %s", up, first.Stuff)
 	}

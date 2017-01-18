@@ -846,3 +846,10 @@ func (db *DB) FirstOrInit(out interface{}, where ...interface{}) error {
 func (db *DB) Begin() *DB {
 	return db.clone()
 }
+
+// Table specify the table you would like to run db operations
+func (db *DB) Table(name string) *DB {
+	ndb := db.Begin()
+	search.Table(ndb.e, name)
+	return ndb
+}
