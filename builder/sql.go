@@ -497,3 +497,34 @@ func CombinedCondition(e *engine.Engine, modelValue interface{}) (string, error)
 	return joinSQL + whereSQL + GroupSQL(e) + having +
 		OrderSQL(e, modelValue) + LimitAndOffsetSQL(e), nil
 }
+
+// AddIndex builds SQL to add index for columns with given name
+func AddIndex(e *engine.Engine, unique bool, indexName string, column ...string) error {
+	if e.Dialect.HasIndex(scope.TableName(e, e.Scope.Value), indexName) {
+		return fmt.Errorf("index %s exists", indexName)
+	}
+
+	var columns []string
+	for _, name := range column {
+		if regexes.Column.MatchString(name) {
+			name = scope.Quote(e, name)
+		}
+		columns = append(columns, name)
+	}
+
+	sqlCreate := "CREATE INDEX"
+	if unique {
+		sqlCreate = "CREATE UNIQUE INDEX"
+	}
+	w, err := WhereSQL(e, e.Scope.Value)
+	if err != nil {
+		return err
+	}
+
+	e.Scope.SQL = fmt.Sprintf("%s %v ON %v(%v) %v",
+		sqlCreate, indexName,
+		scope.QuotedTableName(e, e.Scope.Value),
+		strings.Join(columns, ", "), w,
+	)
+	return nil
+}

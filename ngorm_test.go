@@ -613,3 +613,48 @@ func TestDB_Count(t *testing.T) {
 		t.Errorf("expected %d got %d", 4, stuffs)
 	}
 }
+
+func TestDB_AddIndexSQL(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = db.AddIndexSQL("_idx_foo_stuff", "stuff")
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+
+	sql, err := db.Model(&Foo{}).AddIndexSQL("_idx_foo_stuff", "stuff")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := `CREATE INDEX _idx_foo_stuff ON foos(stuff) `
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+}
+
+func TestDB_AddIndex(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	i := "idx_foo_stuff"
+	err = db.Model(&Foo{}).AddIndex(i, "stuff")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !db.Dialect().HasIndex("foos", i) {
+		t.Error("expected index to be created")
+	}
+}

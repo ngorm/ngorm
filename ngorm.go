@@ -902,3 +902,34 @@ func (db *DB) Count(value interface{}) error {
 	}
 	return db.SQLCommon().QueryRow(db.e.Scope.SQL, db.e.Scope.SQLVars...).Scan(value)
 }
+
+// AddIndexSQL generates SQL to add index for columns with given name
+func (db *DB) AddIndexSQL(indexName string, columns ...string) (*model.Expr, error) {
+	if db.e == nil || db.e.Scope.Value == nil {
+		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).AddIndex")
+	}
+	err := builder.AddIndex(db.e, false, indexName, columns...)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Expr{Q: db.e.Scope.SQL, Args: db.e.Scope.SQLVars}, nil
+}
+
+// AddIndex add index for columns with given name
+func (db *DB) AddIndex(indexName string, columns ...string) error {
+	sql, err := db.AddIndexSQL(indexName, columns...)
+	if err != nil {
+		return err
+	}
+	q := "BEGIN TRANSACTION;" + sql.Q + ";COMMIT;"
+	tx, err := db.SQLCommon().Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(q, sql.Args...)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
