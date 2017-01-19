@@ -933,3 +933,16 @@ func (db *DB) AddIndex(indexName string, columns ...string) error {
 	}
 	return tx.Commit()
 }
+
+// DropTableIfExists drop table if it is exist
+func (db *DB) DropTableIfExists(values ...interface{}) error {
+	for _, value := range values {
+		if db.HasTable(value) {
+			_, err := db.Begin().DropTable(value)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
