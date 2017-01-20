@@ -602,7 +602,7 @@ func FieldByName(e *engine.Engine, value interface{}, name string) (*model.Field
 	return nil, errors.New("field not found")
 }
 
-//PrimaryFields returns fields that have PRIMARY_KEY Tab from the struct value.
+//PrimaryFields returns fields that have PRIMARY_KEY tag from the struct value.
 func PrimaryFields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
 	var fields []*model.Field
 	fds, err := Fields(e, value)
@@ -1091,6 +1091,13 @@ func AddIndex(e *engine.Engine, unique bool, value interface{}, indexName string
 }
 
 //DropTable generates SQL query for DROP TABLE.
+//
+// The Generated SQL is not wrapped in a transaction. All state altering queries
+// must be wrapped in a transaction block.
+//
+// We don't need to rap the transaction block at this level so as to enable
+// flexibility of combining multiple querries that will be wrapped under the
+// same transaction.
 func DropTable(e *engine.Engine, value interface{}) error {
 	e.Scope.SQL = fmt.Sprintf("DROP TABLE %v", QuotedTableName(e, value))
 	return nil
@@ -1098,6 +1105,11 @@ func DropTable(e *engine.Engine, value interface{}) error {
 
 //Automigrate generates  sql for creting database table for model value if the
 //table doesnt exist yet. It also alters fields if the model has been updated.
+//
+// NOTE For the case of an updated model which will need to alter the table to
+// reflect the new changes, the SQL is stored under e.Scope.Exprs. The caller
+// must be aware of this, and remember to chceck if e.Scope.MultiExpr is true so
+// as to get the additional SQL.
 func Automigrate(e *engine.Engine, value interface{}) error {
 	tableName := TableName(e, value)
 	quotedTableName := QuotedTableName(e, value)
@@ -1135,8 +1147,15 @@ func Automigrate(e *engine.Engine, value interface{}) error {
 
 //ShouldSaveAssociation return true if indeed we want the association to me
 //model to be saved.
+//
+// This relies on a context value that is set at scope level with key
+// model.SaveAssociation.This key must store a boolean value. It is possible to
+// store the value as string "skip" if you want to skip the saving.
+//
+//TODO: There is really no need for the skip string, a boolean false is enough
+//since it will make the return value false and skip saving associations.
 func ShouldSaveAssociation(e *engine.Engine) bool {
-	s, ok := e.Scope.Get("ngorm:save_association")
+	s, ok := e.Scope.Get(model.SaveAssociations)
 	if ok {
 		if v, k := s.(bool); k {
 			return v
