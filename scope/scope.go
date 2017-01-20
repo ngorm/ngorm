@@ -1271,7 +1271,13 @@ func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredFiel
 	return attrs
 }
 
-//SaveFieldAsAssociation saves associations
+//SaveFieldAsAssociation saves associations.
+//
+// This returns relationship that can be saved, the relationship is taken from
+// field provided that the field is not blank,is changeable and is not an
+// ignored field.
+//
+// Only works if the field has tag SAVE_ASSOCIATION
 func SaveFieldAsAssociation(e *engine.Engine, field *model.Field) (bool, *model.Relationship) {
 	if ChangeableField(e, field) && !field.IsBlank && !field.IsIgnored {
 		if value, ok := field.TagSettings["SAVE_ASSOCIATIONS"]; !ok || (value != "false" && value != "skip") {
