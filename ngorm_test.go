@@ -767,3 +767,22 @@ func TestDB_RemoveIndex(t *testing.T) {
 		t.Error("expected index to be gone")
 	}
 }
+func TestDB_DropColumn(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	col := "stuff"
+	err = db.Model(&Foo{}).DropColumn(col)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if db.Dialect().HasColumn("foos", col) {
+		t.Error("expected column to be gone")
+	}
+}
