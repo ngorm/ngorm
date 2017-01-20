@@ -262,3 +262,12 @@ func ToSearchableMap(attrs ...interface{}) (result interface{}) {
 	}
 	return
 }
+
+func WrapTX(tx string) string {
+	t := `
+BEGIN TRANSACTION;
+	%s ;
+COMMIT;
+`
+	return fmt.Sprintf(t, tx)
+}

@@ -664,7 +664,7 @@ func DeleteSQL(b *Book, e *engine.Engine) error {
 		if err != nil {
 			return err
 		}
-		e.Scope.SQL = WrapTX(fmt.Sprintf(
+		e.Scope.SQL = util.WrapTX(fmt.Sprintf(
 			"UPDATE %v SET deleted_at=%v%v%v",
 			scope.QuotedTableName(e, e.Scope.Value),
 			scope.AddToVars(e, e.Now()),
@@ -676,7 +676,7 @@ func DeleteSQL(b *Book, e *engine.Engine) error {
 		if err != nil {
 			return err
 		}
-		e.Scope.SQL = WrapTX(fmt.Sprintf(
+		e.Scope.SQL = util.WrapTX(fmt.Sprintf(
 			"DELETE FROM %v%v%v",
 			scope.QuotedTableName(e, e.Scope.Value),
 			util.AddExtraSpaceIfExist(c),
@@ -684,15 +684,6 @@ func DeleteSQL(b *Book, e *engine.Engine) error {
 		))
 	}
 	return nil
-}
-
-func WrapTX(tx string) string {
-	t := `
-BEGIN TRANSACTION;
-	%s ;
-COMMIT;
-`
-	return fmt.Sprintf(t, tx)
 }
 
 func BeforeDelete(b *Book, e *engine.Engine) error {

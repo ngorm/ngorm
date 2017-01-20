@@ -925,12 +925,11 @@ func (db *DB) AddIndex(indexName string, columns ...string) error {
 	if err != nil {
 		return err
 	}
-	q := "BEGIN TRANSACTION;" + sql.Q + ";COMMIT;"
 	tx, err := db.SQLCommon().Begin()
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(q, sql.Args...)
+	_, err = tx.Exec(util.WrapTX(sql.Q), sql.Args...)
 	if err != nil {
 		_ = tx.Rollback()
 		return err
