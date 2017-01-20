@@ -980,3 +980,23 @@ func (db *DB) DeleteSQL(value interface{}, where ...interface{}) (*model.Expr, e
 	}
 	return &model.Expr{Q: e.Scope.SQL, Args: e.Scope.SQLVars}, nil
 }
+
+// UpdateColumn update attributes without callbacks
+func (db *DB) UpdateColumn(attrs ...interface{}) error {
+	return db.UpdateColumns(util.ToSearchableMap(attrs...))
+}
+
+// UpdateColumns update attributes without
+func (db *DB) UpdateColumns(values interface{}) error {
+	if db.e == nil || db.e.Scope.Value == nil {
+		return fmt.Errorf("missing model call db.Model(&Foo{}).UpdateColumns")
+	}
+	db.e.Scope.Set(model.UpdateColumn, true)
+	db.e.Scope.Set(model.SaveAssociations, false)
+	db.e.Scope.Set(model.UpdateInterface, values)
+	u, ok := db.hooks.Update.Get(model.Update)
+	if !ok {
+		return errors.New("missing update hook")
+	}
+	return u.Exec(db.Hooks(), db.e)
+}

@@ -54,6 +54,7 @@ const (
 	HookAfterDelete         = "ngorm:after_delete_hook"
 	Delete                  = "ngorm:delete"
 	DeleteSQL               = "ngorm:delete_sql"
+	SaveAssociations        = "ngorm:save_associations"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a
