@@ -1218,6 +1218,15 @@ func UpdatedAttrsWithValues(e *engine.Engine, value interface{}) (results map[st
 // For [interface{}, if the first value is a string, then it must be a
 // succession of key pair values like
 //	["name","gernest","age",1000]
+//
+// That user case arises when the optional argument slice like args... is used
+// where the type is string.
+//
+// 	// Provided you have a function
+//	func some(args...string){}
+//	//and you use to pass the following argumens.
+//	some("name?","gernest")
+//	//passsing args to this function will yield map["name?"]="gernest"
 func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredField bool) map[string]interface{} {
 	var attrs = map[string]interface{}{}
 	switch value := values.(type) {
