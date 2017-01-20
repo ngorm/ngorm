@@ -786,3 +786,31 @@ func TestDB_DropColumn(t *testing.T) {
 		t.Error("expected column to be gone")
 	}
 }
+
+func TestDB_FirstOrCreate(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := Foo{Stuff: "first"}
+	err = db.FirstOrCreate(&first)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.ID == 0 {
+		t.Error("expected a new record")
+	}
+	second := Foo{}
+	err = db.Begin().Where(Foo{Stuff: first.Stuff}).FirstOrCreate(&second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.ID != first.ID {
+		t.Errorf("expected %d got %d", first.ID, second.ID)
+	}
+}

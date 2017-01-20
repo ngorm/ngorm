@@ -1079,3 +1079,25 @@ func (db *DB) Preload(column string, conditions ...interface{}) *DB {
 	search.Preload(db.e, column, conditions...)
 	return db
 }
+
+// FirstOrCreate find first matched record or create a new one with given
+//conditions (only works with struct, map conditions)
+func (db *DB) FirstOrCreate(out interface{}, where ...interface{}) error {
+	if db.e == nil {
+		db.e = db.NewEngine()
+	}
+	db.e.Scope.Value = out
+	err := db.First(out, where...)
+	if err != nil {
+		if err != errmsg.ErrRecordNotFound {
+			return err
+		}
+		search.Inline(db.e, where...)
+		scope.Initialize(db.e)
+		return db.Create(out)
+	}
+	if len(db.e.Search.AssignAttrs) > 0 {
+		return db.Update(db.e.Search.AssignAttrs...)
+	}
+	return nil
+}
