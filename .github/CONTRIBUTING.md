@@ -46,8 +46,9 @@ exceptions though but not the norm.
 
 ### Commit messages
 
-The commit message title must follow the following pattern. Not that the
-sections of the patterns are separated by one space.
+The commit message title must follow the following pattern. Note that the
+sections of the patterns are separated by one space. The body of the commit
+message should contain in depth description of the change.
 
 	[TPACKAGE|PACKAGE/SUBPACKAGE}KEY_WORD] [ACTIONS] : [SHORT DESCRIPTON]
 
