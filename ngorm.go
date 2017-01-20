@@ -999,3 +999,24 @@ func (db *DB) UpdateColumns(values interface{}) error {
 	}
 	return u.Exec(db.Hooks(), db.e)
 }
+
+// AddUniqueIndex add unique index for columns with given name
+func (db *DB) AddUniqueIndex(indexName string, columns ...string) error {
+	if db.e == nil || db.e.Scope.Value == nil {
+		return fmt.Errorf("missing model call db.Model(&Foo{}).AddIndex")
+	}
+	err := builder.AddIndex(db.e, true, indexName, columns...)
+	if err != nil {
+		return err
+	}
+	tx, err := db.SQLCommon().Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(util.WrapTX(db.e.Scope.SQL), db.e.Scope.SQLVars...)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}

@@ -714,3 +714,29 @@ func TestDB_Delete(t *testing.T) {
 		t.Fatal("expected an error")
 	}
 }
+
+func TestDB_AddUniqueIndex(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	i := "idx_foo_stuff"
+	ndb := db.Model(&Foo{})
+	err = ndb.AddUniqueIndex(i, "stuff")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !db.Dialect().HasIndex("foos", i) {
+		t.Error("expected index to be created")
+	}
+	q := ndb.e.Scope.SQL
+	expect := `CREATE UNIQUE INDEX idx_foo_stuff ON foos(stuff) `
+	if q != expect {
+		t.Errorf("expected %s got %s", expect, q)
+	}
+}
