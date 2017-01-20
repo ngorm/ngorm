@@ -1020,3 +1020,12 @@ func (db *DB) AddUniqueIndex(indexName string, columns ...string) error {
 	}
 	return tx.Commit()
 }
+
+// RemoveIndex remove index with name
+func (db *DB) RemoveIndex(indexName string) error {
+	if db.e == nil || db.e.Scope.Value == nil {
+		return fmt.Errorf("missing model call db.Model(&Foo{}).AddIndex")
+	}
+	return db.Dialect().RemoveIndex(
+		scope.TableName(db.e, db.e.Scope.Value), indexName)
+}
