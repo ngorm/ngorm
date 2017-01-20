@@ -101,5 +101,11 @@ func DefaultBook() *Book {
 	b.Update.Set(HookFunc(model.HookUpdateSQL, UpdateSQL))
 	b.Update.Set(HookFunc(model.HookUpdateExec, UpdateExec))
 	b.Update.Set(HookFunc(model.Update, Update))
+
+	// Delete
+	b.Delete.Set(HookFunc(model.Delete, Delete))
+	b.Delete.Set(HookFunc(model.DeleteSQL, DeleteSQL))
+	b.Delete.Set(HookFunc(model.BeforeDelete, BeforeDelete))
+	b.Delete.Set(HookFunc(model.AfterDelete, AfterDelete))
 	return b
 }

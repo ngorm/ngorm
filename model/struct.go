@@ -47,6 +47,13 @@ const (
 	HookUpdateSQL           = "ngorm:update_sql_hook"
 	HookUpdateExec          = "ngorm:update_exec_hook"
 	IgnoreProtectedAttrs    = "ngorm:ignore_protected_attrs"
+	DeleteOption            = "ngorm:delete_options"
+	BeforeDelete            = "ngorm:before_delete"
+	HookBeforeDelete        = "ngorm:before_delete_hook"
+	AfterDelete             = "ngorm:after_delete"
+	HookAfterDelete         = "ngorm:after_delete_hook"
+	Delete                  = "ngorm:delete"
+	DeleteSQL               = "ngorm:delete_sql"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a

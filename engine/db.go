@@ -3,6 +3,7 @@ package engine
 
 import (
 	"context"
+	"time"
 
 	"github.com/gernest/ngorm/dialects"
 	"github.com/gernest/ngorm/logger"
@@ -26,6 +27,8 @@ type Engine struct {
 	StructMap *model.SafeStructsMap
 	SQLDB     model.SQLCommon
 	Log       *logger.Zapper
+
+	Now func() time.Time
 }
 
 //AddError adds err to Engine.Error.

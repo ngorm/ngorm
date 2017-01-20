@@ -652,3 +652,104 @@ func Update(b *Book, e *engine.Engine) error {
 	}
 	return exec.Exec(b, e)
 }
+
+func DeleteSQL(b *Book, e *engine.Engine) error {
+	var extraOption string
+	if str, ok := e.Scope.Get(model.DeleteOption); ok {
+		extraOption = fmt.Sprint(str)
+	}
+
+	if e.Dialect.HasColumn(scope.TableName(e, e.Scope.Value), "DeletedAt") {
+		c, err := builder.CombinedCondition(e, e.Scope.Value)
+		if err != nil {
+			return err
+		}
+		e.Scope.SQL = WrapTX(fmt.Sprintf(
+			"UPDATE %v SET deleted_at=%v%v%v",
+			scope.QuotedTableName(e, e.Scope.Value),
+			scope.AddToVars(e, e.Now()),
+			util.AddExtraSpaceIfExist(c),
+			util.AddExtraSpaceIfExist(extraOption),
+		))
+	} else {
+		c, err := builder.CombinedCondition(e, e.Scope.Value)
+		if err != nil {
+			return err
+		}
+		e.Scope.SQL = WrapTX(fmt.Sprintf(
+			"DELETE FROM %v%v%v",
+			scope.QuotedTableName(e, e.Scope.Value),
+			util.AddExtraSpaceIfExist(c),
+			util.AddExtraSpaceIfExist(extraOption),
+		))
+	}
+	return nil
+}
+
+func WrapTX(tx string) string {
+	t := `
+BEGIN TRANSACTION;
+	%s ;
+COMMIT;
+`
+	return fmt.Sprintf(t, tx)
+}
+
+func BeforeDelete(b *Book, e *engine.Engine) error {
+	if !scope.HasConditions(e, e.Scope.Value) {
+		return errors.New("Missing WHERE clause while deleting")
+	}
+	if bd, ok := b.Delete.Get(model.HookBeforeDelete); ok {
+		return bd.Exec(b, e)
+	}
+	return nil
+}
+
+func AfterDelete(b *Book, e *engine.Engine) error {
+	if ad, ok := b.Delete.Get(model.HookAfterDelete); ok {
+		return ad.Exec(b, e)
+	}
+	return nil
+}
+
+func Delete(b *Book, e *engine.Engine) error {
+	bd, ok := b.Delete.Get(model.BeforeDelete)
+	if !ok {
+		return errors.New("missing before delete hook")
+	}
+	err := bd.Exec(b, e)
+	if err != nil {
+		return err
+	}
+	sql, ok := b.Delete.Get(model.DeleteSQL)
+	if !ok {
+		return errors.New("missing before delete hook")
+	}
+	err = sql.Exec(b, e)
+	if err != nil {
+		return err
+	}
+	tx, err := e.SQLDB.Begin()
+	if err != nil {
+		return err
+	}
+	result, err := tx.Exec(e.Scope.SQL, e.Scope.SQLVars...)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	a, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	e.RowsAffected = a
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	ad, ok := b.Delete.Get(model.AfterDelete)
+	if !ok {
+		return errors.New("missing after delete hook")
+	}
+	return ad.Exec(b, e)
+}

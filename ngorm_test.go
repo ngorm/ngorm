@@ -658,3 +658,59 @@ func TestDB_AddIndex(t *testing.T) {
 		t.Error("expected index to be created")
 	}
 }
+
+func TestDB_DeleteSQL(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql, err := db.DeleteSQL(&Foo{ID: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := `
+BEGIN TRANSACTION;
+	DELETE FROM foos  WHERE id = $1 ;
+COMMIT;
+`
+	expect = strings.TrimSpace(expect)
+	sql.Q = strings.TrimSpace(sql.Q)
+	if sql.Q != expect {
+		t.Errorf("expected %s got %s", expect, sql.Q)
+	}
+}
+
+func TestDB_Delete(t *testing.T) {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := Foo{Stuff: "halloween"}
+	err = db.Create(&f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.ID == 0 {
+		t.Fatalf("expected a new record to be created")
+	}
+
+	err = db.Delete(&f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fu := Foo{}
+	err = db.Model(&Foo{ID: f.ID}).First(&fu)
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+}

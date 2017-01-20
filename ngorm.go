@@ -73,6 +73,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gernest/ngorm/builder"
 	"github.com/gernest/ngorm/dialects"
@@ -107,6 +108,7 @@ type DB struct {
 	log           *logger.Zapper
 	e             *engine.Engine
 	err           error
+	now           func() time.Time
 }
 
 func (db *DB) clone() *DB {
@@ -119,6 +121,7 @@ func (db *DB) clone() *DB {
 		structMap:     db.structMap,
 		hooks:         db.hooks,
 		log:           db.log,
+		now:           time.Now,
 	}
 	ne := n.NewEngine()
 	n.e = ne
@@ -192,6 +195,7 @@ func (db *DB) NewEngine() *engine.Engine {
 		Dialect:       db.dialect,
 		SQLDB:         db.db,
 		Log:           db.log,
+		Now:           db.now,
 	}
 }
 
@@ -945,4 +949,34 @@ func (db *DB) DropTableIfExists(values ...interface{}) error {
 		}
 	}
 	return nil
+}
+
+// Delete delete value match given conditions, if the value has primary key,
+//then will including the primary key as condition
+func (db *DB) Delete(value interface{}, where ...interface{}) error {
+	e := db.NewEngine()
+	e.Scope.Value = value
+	search.Inline(e, where...)
+	d, ok := db.hooks.Delete.Get(model.Delete)
+	if !ok {
+		return errors.New("missing delete hook")
+	}
+	return d.Exec(db.hooks, e)
+}
+
+// DeleteSQL  generates SQL to delete value match given conditions, if the value has primary key,
+//then will including the primary key as condition
+func (db *DB) DeleteSQL(value interface{}, where ...interface{}) (*model.Expr, error) {
+	e := db.NewEngine()
+	e.Scope.Value = value
+	search.Inline(e, where...)
+	d, ok := db.hooks.Delete.Get(model.DeleteSQL)
+	if !ok {
+		return nil, errors.New("missing delete sql hook")
+	}
+	err := d.Exec(db.hooks, e)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Expr{Q: e.Scope.SQL, Args: e.Scope.SQLVars}, nil
 }
