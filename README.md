@@ -53,7 +53,7 @@ enlightened.
 
 See [GUIDE](GUIDE.md) for getting started, examples and so much more.
 
-# FAQ
+##  FAQ
 
 ### Why ngorm?
 
@@ -65,8 +65,8 @@ Yep
 
 ### Why there is no support for database x?
 
-There are checkboxes on this README. If you find the database is unchecked then
-it might be in a queue you can come back in the future and hopefuly it should be
+There are check boxes on this README. If you find the database is unchecked then
+it might be in a queue you can come back in the future and hopefully it should be
 there!
 
 Theres is a [board tracking database support](https://github.com/gernest/ngorm/projects/2)
@@ -74,7 +74,7 @@ I am a sole maintainer, I'm good in ql so that is why I'm maintaining support
 for it. If you are good in any of the databases, I can help you getting started
 so you can add support and help maintaining.
 
-### WHat is the difference between gorm and ngorm?
+### What is the difference between gorm and ngorm?
 
 As the name implies, ngorm is based on gorm. An attempt to modernise gorm.These
 are some of the things that differentiate the two.
