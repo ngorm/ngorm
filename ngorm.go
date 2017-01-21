@@ -992,24 +992,15 @@ func (db *DB) UpdateColumns(values interface{}) error {
 }
 
 // AddUniqueIndex add unique index for columns with given name
-func (db *DB) AddUniqueIndex(indexName string, columns ...string) error {
+func (db *DB) AddUniqueIndex(indexName string, columns ...string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return fmt.Errorf("missing model call db.Model(&Foo{}).AddIndex")
+		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).AddIndex")
 	}
 	err := builder.AddIndex(db.e, true, indexName, columns...)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	tx, err := db.SQLCommon().Begin()
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(util.WrapTX(db.e.Scope.SQL), db.e.Scope.SQLVars...)
-	if err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	return tx.Commit()
+	return db.ExecTx(util.WrapTX(db.e.Scope.SQL), db.e.Scope.SQLVars...)
 }
 
 // RemoveIndex remove index with name

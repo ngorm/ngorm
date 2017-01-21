@@ -727,7 +727,7 @@ func TestDB_AddUniqueIndex(t *testing.T) {
 	}
 	i := "idx_foo_stuff"
 	ndb := db.Model(&Foo{})
-	err = ndb.AddUniqueIndex(i, "stuff")
+	_, err = ndb.AddUniqueIndex(i, "stuff")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -752,7 +752,7 @@ func TestDB_RemoveIndex(t *testing.T) {
 	}
 	i := "idx_foo_stuff"
 	ndb := db.Model(&Foo{})
-	err = ndb.AddUniqueIndex(i, "stuff")
+	_, err = ndb.AddUniqueIndex(i, "stuff")
 	if err != nil {
 		t.Fatal(err)
 	}
