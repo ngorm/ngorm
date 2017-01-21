@@ -910,7 +910,7 @@ func (db *DB) Count(value interface{}) error {
 // AddIndexSQL generates SQL to add index for columns with given name
 func (db *DB) AddIndexSQL(indexName string, columns ...string) (*model.Expr, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).AddIndex")
+		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).AddIndexSQL")
 	}
 	err := builder.AddIndex(db.e, false, indexName, columns...)
 	if err != nil {
@@ -994,7 +994,7 @@ func (db *DB) UpdateColumns(values interface{}) error {
 // AddUniqueIndex add unique index for columns with given name
 func (db *DB) AddUniqueIndex(indexName string, columns ...string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).AddIndex")
+		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).AddUniqueIndex")
 	}
 	err := builder.AddIndex(db.e, true, indexName, columns...)
 	if err != nil {
@@ -1006,7 +1006,7 @@ func (db *DB) AddUniqueIndex(indexName string, columns ...string) (sql.Result, e
 // RemoveIndex remove index with name
 func (db *DB) RemoveIndex(indexName string) error {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return fmt.Errorf("missing model call db.Model(&Foo{}).AddIndex")
+		return fmt.Errorf("missing model call db.Model(&Foo{}).RemoveIndex")
 	}
 	return db.Dialect().RemoveIndex(
 		scope.TableName(db.e, db.e.Scope.Value), indexName)
@@ -1027,7 +1027,7 @@ func (db *DB) DropColumn(column string) (sql.Result, error) {
 // ModifyColumn modify column to type
 func (db *DB) ModifyColumn(column string, typ string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).DropColumn")
+		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).ModifyColumn")
 	}
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v MODIFY %v %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column), typ)
