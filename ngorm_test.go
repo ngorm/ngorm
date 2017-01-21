@@ -650,7 +650,7 @@ func TestDB_AddIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 	i := "idx_foo_stuff"
-	err = db.Model(&Foo{}).AddIndex(i, "stuff")
+	_, err = db.Model(&Foo{}).AddIndex(i, "stuff")
 	if err != nil {
 		t.Fatal(err)
 	}

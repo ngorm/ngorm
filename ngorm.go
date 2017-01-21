@@ -920,21 +920,12 @@ func (db *DB) AddIndexSQL(indexName string, columns ...string) (*model.Expr, err
 }
 
 // AddIndex add index for columns with given name
-func (db *DB) AddIndex(indexName string, columns ...string) error {
+func (db *DB) AddIndex(indexName string, columns ...string) (sql.Result, error) {
 	sql, err := db.AddIndexSQL(indexName, columns...)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	tx, err := db.SQLCommon().Begin()
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(util.WrapTX(sql.Q), sql.Args...)
-	if err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	return tx.Commit()
+	return db.ExecTx(util.WrapTX(sql.Q), sql.Args...)
 }
 
 // DropTableIfExists drop table if it is exist
