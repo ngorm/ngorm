@@ -52,3 +52,39 @@ enlightened.
 ## Usage
 
 See [GUIDE](GUIDE.md) for getting started, examples and so much more.
+
+##  FAQ
+
+### Why ngorm?
+
+Seriously? Why not?
+
+###  Can I use my gorm models?
+
+Yep
+
+### Why there is no support for database x?
+
+There are check boxes on this README. If you find the database is unchecked then
+it might be in a queue you can come back in the future and hopefully it should be
+there!
+
+Theres is a [board tracking database support](https://github.com/gernest/ngorm/projects/2)
+I am a sole maintainer, I'm good in ql so that is why I'm maintaining support
+for it. If you are good in any of the databases, I can help you getting started
+so you can add support and help maintaining.
+
+### What is the difference between gorm and ngorm?
+
+As the name implies, ngorm is based on gorm. An attempt to modernise gorm.These
+are some of the things that differentiate the two.
+
+Oh! Wait, there is no much difference from the user point of view. I
+restructured the gorm  source files. Removed the global state, reworked
+callbacks/hooks to be more straight forward and added support for ql database.
+The API is almost the same.
+
+The bonus here is, it is easy to measure performance, and hence improve. The
+code base can easily be groked hence easy to contribute  , also this comes with
+an extensive test suite to make sure that regressions can not be introduced
+without being detected.
