@@ -778,7 +778,7 @@ func TestDB_DropColumn(t *testing.T) {
 		t.Fatal(err)
 	}
 	col := "stuff"
-	err = db.Model(&Foo{}).DropColumn(col)
+	_, err = db.Model(&Foo{}).DropColumn(col)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1013,23 +1013,15 @@ func (db *DB) RemoveIndex(indexName string) error {
 }
 
 // DropColumn drop a column
-func (db *DB) DropColumn(column string) error {
+func (db *DB) DropColumn(column string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return fmt.Errorf("missing model call db.Model(&Foo{}).DropColumn")
+		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).DropColumn")
 	}
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v DROP COLUMN %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column))
-	tx, err := db.SQLCommon().Begin()
-	if err != nil {
-		return err
-	}
-	db.e.Scope.SQL = util.WrapTX(db.e.Scope.SQL)
-	_, err = tx.Exec(db.e.Scope.SQL, db.e.Scope.SQLVars...)
-	if err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	return tx.Commit()
+	return db.ExecTx(
+		util.WrapTX(db.e.Scope.SQL), db.e.Scope.SQLVars...,
+	)
 }
 
 // ModifyColumn modify column to type
