@@ -63,6 +63,14 @@
 //   [dialects] https://godoc.org/github.com/gernest/ngorm/dialects
 // Adopts to different SQL databases supported by ngorm. For now ngorm support
 // ql .
+//
+// Chaining
+//
+// The API supports methof chaining for a specific set of method.Be warned if
+// you intend to chain anything don't forget to start with Begin method. This
+// will help clear any context left after previous calls.
+//
+//	db.Begin().Model(User{}).AddIndex()
 package ngorm
 
 import (
