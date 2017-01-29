@@ -10,7 +10,7 @@
 * Safety
 * Developer friendly for real
 
-[![Build Status](https://travis-ci.org/gernest/ngorm.svg?branch=master)](https://travis-ci.org/gernest/ngorm) [![Coverage Status](https://coveralls.io/repos/github/gernest/ngorm/badge.svg?branch=master)](https://coveralls.io/github/gernest/ngorm?branch=master) [![GoDoc](https://godoc.org/github.com/gernest/ngorm?status.svg)](https://godoc.org/github.com/gernest/ngorm) [![Go Report Card](https://goreportcard.com/badge/github.com/gernest/ngorm)](https://goreportcard.com/report/github.com/gernest/ngorm)
+[![GoDoc](https://godoc.org/github.com/ngorm/ngorm?status.svg)](https://godoc.org/github.com/ngorm/ngorm)
 
 ## Overview
 
@@ -27,7 +27,7 @@
 * Every feature comes with tests
 * Developer Friendly
 
-Documentation https://godoc.org/github.com/gernest/ngorm
+Documentation https://godoc.org/github.com/ngorm/ngorm
 
 Database support
 
@@ -51,7 +51,7 @@ enlightened.
 
 ## Usage
 
-See [GUIDE](GUIDE.md) for getting started, examples and so much more.
+See [GUIDE](https://ngorm.github.io/) for getting started, examples and so much more.
 
 ##  FAQ
 
@@ -65,14 +65,8 @@ Yep
 
 ### Why there is no support for database x?
 
-There are check boxes on this README. If you find the database is unchecked then
-it might be in a queue you can come back in the future and hopefully it should be
-there!
-
-Theres is a [board tracking database support](https://github.com/gernest/ngorm/projects/2)
-I am a sole maintainer, I'm good in ql so that is why I'm maintaining support
-for it. If you are good in any of the databases, I can help you getting started
-so you can add support and help maintaining.
+This is still under development, if the database is not on the checklist above,
+please open an issue for feature request.
 
 ### What is the difference between gorm and ngorm?
 
