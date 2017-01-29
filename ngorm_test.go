@@ -6,7 +6,7 @@ import (
 	"time"
 
 	_ "github.com/cznic/ql/driver"
-	"github.com/gernest/ngorm/fixture"
+	"github.com/ngorm/ngorm/fixture"
 )
 
 type Foo struct {
@@ -262,16 +262,16 @@ func testDB_FirstSQL(t *testing.T, db *DB) {
 }
 
 func TestDB_First(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_First)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
-	if err != nil {
-		t.Fatal(err)
-	}
+}
 
+func testDB_First(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	sample := []string{"a", "b", "c", "d"}
 	for _, v := range sample {
 		err := db.Create(&Foo{Stuff: v})
@@ -290,19 +290,17 @@ func TestDB_First(t *testing.T) {
 }
 
 func TestDB_LastSQL(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_LastSQL)
 	}
-	defer func() { _ = db.Close() }()
-
+}
+func testDB_LastSQL(t *testing.T, db *DB) {
 	// First record order by primary key
 	sql, err := db.LastSQL(&fixture.User{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `SELECT * FROM users   ORDER BY id DESC`
-	expect = strings.TrimSpace(expect)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.LastSQL1)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
@@ -312,19 +310,20 @@ func TestDB_LastSQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect = `SELECT * FROM users  WHERE (id = $1) ORDER BY id DESC`
-	expect = strings.TrimSpace(expect)
+	expect = fixture.GetSQL(db.Dialect().GetName(), fixture.LastSQL2)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
+
 func TestDB_Last(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_Last)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+
+func testDB_Last(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -12,6 +12,8 @@ const (
 	SingularTable = "singular_table"
 	FirstSQL1     = "firsr_sql_1"
 	FirstSQL2     = "firsr_sql_2"
+	LastSQL1      = "last_sql_1"
+	LastSQL2      = "last_sql_2"
 )
 
 var samples map[string]map[string]string
@@ -71,6 +73,10 @@ COMMIT;`
 	o[FirstSQL1] = s
 	s = `SELECT * FROM users  WHERE (id = $1) ORDER BY id ASC`
 	o[FirstSQL2] = s
+	s = `SELECT * FROM users   ORDER BY id DESC`
+	o[LastSQL1] = s
+	s = `SELECT * FROM users  WHERE (id = $1) ORDER BY id DESC`
+	o[LastSQL2] = s
 	return o
 }
 
