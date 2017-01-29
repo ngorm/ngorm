@@ -320,3 +320,5 @@ And, creating a new record is as simple as
 
 	db.Create(&Bar{Say:"hello"})
 
+
+##  Query

@@ -15,21 +15,28 @@ type Foo struct {
 }
 
 func TestDB_CreateTable(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		db, err := d.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+			testDB_CreateTable(ts, db)
+		})
+		err = d.Clear()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	defer func() { _ = db.Close() }()
+}
 
+func testDB_CreateTable(t *testing.T, db *DB) {
 	// create table tests
 	sql, err := db.CreateTableSQL(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `
-BEGIN TRANSACTION; 
-	CREATE TABLE foos (id int,stuff string ) ;
-COMMIT;`
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.CreateTable1)
 	expect = strings.TrimSpace(expect)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
@@ -46,12 +53,7 @@ COMMIT;`
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect = `
-BEGIN TRANSACTION; 
-	CREATE TABLE users (id int64,age int64,user_num int64,name string,email string,birthday time,created_at time,updated_at time,billing_address_id int64,shipping_address_id int64,latitude float64,company_id int,role string,password_hash blob,sequence uint ) ;
-	CREATE TABLE user_languages (user_id int64,language_id int64 ) ;
-COMMIT;`
-	expect = strings.TrimSpace(expect)
+	expect = fixture.GetSQL(db.Dialect().GetName(), fixture.CreateTable2)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
@@ -62,13 +64,23 @@ COMMIT;`
 }
 
 func TestDB_DropTable(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		db, err := d.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+			testDB_DropTable(ts, db)
+		})
+		err = d.Clear()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	defer func() { _ = db.Close() }()
+}
 
-	_, err = db.DropTable(&Foo{})
+func testDB_DropTable(t *testing.T, db *DB) {
+	_, err := db.DropTable(&Foo{})
 	if err == nil {
 		t.Error("expected error")
 	}
@@ -91,24 +103,29 @@ func TestDB_DropTable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `
-BEGIN TRANSACTION; 
-	DROP TABLE foos;
-	DROP TABLE users;
-COMMIT;`
-	expect = strings.TrimSpace(expect)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.DropTable)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
 
 func TestDB_Automirate(t *testing.T) {
-	db, err := Open("ql-mem", "est.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		db, err := d.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+			testDB_Automirate(ts, db)
+		})
+		err = d.Clear()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	defer func() { _ = db.Close() }()
+}
 
+func testDB_Automirate(t *testing.T, db *DB) {
 	sql, err := db.AutomigrateSQL(
 		&fixture.User{},
 		&fixture.Email{},
@@ -120,19 +137,8 @@ func TestDB_Automirate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `
-BEGIN TRANSACTION;
-	CREATE TABLE users (id int64,age int64,user_num int64,name string,email string,birthday time,created_at time,updated_at time,billing_address_id int64,shipping_address_id int64,latitude float64,company_id int,role string,password_hash blob,sequence uint ) ;
-	CREATE TABLE user_languages (user_id int64,language_id int64 ) ;
-	CREATE TABLE emails (id int16,user_id int,email string,created_at time,updated_at time ) ;
-	CREATE TABLE languages (id int64,created_at time,updated_at time,deleted_at time,name string ) ;
-	CREATE INDEX idx_languages_deleted_at ON languages(deleted_at);
-	CREATE TABLE companies (id int64,name string ) ;
-	CREATE TABLE credit_cards (id int8,number string,user_id int64,created_at time NOT NULL,updated_at time,deleted_at time ) ;
-	CREATE TABLE addresses (id int,address1 string,address2 string,post string,created_at time,updated_at time,deleted_at time ) ;
-COMMIT;`
 
-	expect = strings.TrimSpace(expect)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.AutoMigrate)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
@@ -149,13 +155,23 @@ COMMIT;`
 	}
 }
 
-func TestDb_Create(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+func TestDB_Create(t *testing.T) {
+	for _, d := range AllTestDB() {
+		db, err := d.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+			testDB_Create(ts, db)
+		})
+		err = d.Clear()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(
+}
+func testDB_Create(t *testing.T, db *DB) {
+	_, err := db.Automigrate(
 		&fixture.User{},
 		&fixture.Email{},
 		&fixture.Language{},
@@ -179,80 +195,111 @@ func TestDb_Create(t *testing.T) {
 }
 
 func TestDB_SaveSQL(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		db, err := d.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+			testDB_SaveSQL(ts, db)
+		})
+		err = d.Clear()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	defer func() { _ = db.Close() }()
+}
+
+func testDB_SaveSQL(t *testing.T, db *DB) {
 	sql, err := db.SaveSQL(&Foo{ID: 10, Stuff: "twenty"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `
-BEGIN TRANSACTION;
-	UPDATE foos SET stuff = $1  WHERE id = $2;
-COMMIT;`
-	expect = strings.TrimSpace(expect)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.SaveSQL)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
 
 func TestDB_UpdateSQL(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		db, err := d.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+			testDB_UpdateSQL(ts, db)
+		})
+		err = d.Clear()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	defer func() { _ = db.Close() }()
+}
+
+func testDB_UpdateSQL(t *testing.T, db *DB) {
 	foo := Foo{ID: 10, Stuff: "twenty"}
 	sql, err := db.Model(&foo).UpdateSQL("stuff", "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `
-BEGIN TRANSACTION;
-	UPDATE foos SET stuff = $1  WHERE id = $2;
-COMMIT;`
-	expect = strings.TrimSpace(expect)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.UpdateSQL)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
 
 func TestDB_SingularTable(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		db, err := d.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+			testDB_SingularTable(ts, db)
+		})
+		err = d.Clear()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	defer func() { _ = db.Close() }()
+}
+
+func testDB_SingularTable(t *testing.T, db *DB) {
 	db.SingularTable(true)
 	sql, err := db.CreateSQL(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `
-BEGIN TRANSACTION;
-	INSERT INTO foo (stuff) VALUES ($1);
-COMMIT;`
-	expect = strings.TrimSpace(expect)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.SingularTable)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
 
 func TestDB_HasTable(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		db, err := d.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+			testDB_HasTable(ts, db)
+		})
+		err = d.Clear()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	defer func() { _ = db.Close() }()
+}
+func testDB_HasTable(t *testing.T, db *DB) {
 	if db.HasTable("foos") {
 		t.Error("expected false")
 	}
 	if db.HasTable(&Foo{}) {
 		t.Error("expected false")
 	}
-	_, err = db.Automigrate(&Foo{})
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,23 +309,32 @@ func TestDB_HasTable(t *testing.T) {
 	if !db.HasTable(&Foo{}) {
 		t.Error("expected true")
 	}
-
 }
 
 func TestDB_FirstSQL(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		db, err := d.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+			testDB_FirstSQL(ts, db)
+		})
+		err = d.Clear()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	defer func() { _ = db.Close() }()
+}
+
+func testDB_FirstSQL(t *testing.T, db *DB) {
 
 	// First record order by primary key
 	sql, err := db.FirstSQL(&fixture.User{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `SELECT * FROM users   ORDER BY id ASC`
-	expect = strings.TrimSpace(expect)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.FirstSQL1)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
@@ -288,8 +344,7 @@ func TestDB_FirstSQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect = `SELECT * FROM users  WHERE (id = $1) ORDER BY id ASC`
-	expect = strings.TrimSpace(expect)
+	expect = fixture.GetSQL(db.Dialect().GetName(), fixture.FirstSQL2)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
