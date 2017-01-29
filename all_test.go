@@ -53,6 +53,20 @@ func AllTestDB() []testDB {
 	return tsdb
 }
 
+func runWrapDB(t *testing.T, d testDB, f func(*testing.T, *DB)) {
+	db, err := d.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run(db.Dialect().GetName(), func(ts *testing.T) {
+		f(ts, db)
+	})
+	err = d.Clear()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestMain(m *testing.M) {
 	err := initialize()
 	if err != nil {

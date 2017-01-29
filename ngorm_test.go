@@ -16,17 +16,7 @@ type Foo struct {
 
 func TestDB_CreateTable(t *testing.T) {
 	for _, d := range AllTestDB() {
-		db, err := d.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
-			testDB_CreateTable(ts, db)
-		})
-		err = d.Clear()
-		if err != nil {
-			t.Fatal(err)
-		}
+		runWrapDB(t, d, testDB_CreateTable)
 	}
 }
 
@@ -65,17 +55,7 @@ func testDB_CreateTable(t *testing.T, db *DB) {
 
 func TestDB_DropTable(t *testing.T) {
 	for _, d := range AllTestDB() {
-		db, err := d.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
-			testDB_DropTable(ts, db)
-		})
-		err = d.Clear()
-		if err != nil {
-			t.Fatal(err)
-		}
+		runWrapDB(t, d, testDB_DropTable)
 	}
 }
 
@@ -111,17 +91,7 @@ func testDB_DropTable(t *testing.T, db *DB) {
 
 func TestDB_Automirate(t *testing.T) {
 	for _, d := range AllTestDB() {
-		db, err := d.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
-			testDB_Automirate(ts, db)
-		})
-		err = d.Clear()
-		if err != nil {
-			t.Fatal(err)
-		}
+		runWrapDB(t, d, testDB_Automirate)
 	}
 }
 
@@ -157,17 +127,7 @@ func testDB_Automirate(t *testing.T, db *DB) {
 
 func TestDB_Create(t *testing.T) {
 	for _, d := range AllTestDB() {
-		db, err := d.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
-			testDB_Create(ts, db)
-		})
-		err = d.Clear()
-		if err != nil {
-			t.Fatal(err)
-		}
+		runWrapDB(t, d, testDB_Create)
 	}
 }
 func testDB_Create(t *testing.T, db *DB) {
@@ -196,17 +156,7 @@ func testDB_Create(t *testing.T, db *DB) {
 
 func TestDB_SaveSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		db, err := d.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
-			testDB_SaveSQL(ts, db)
-		})
-		err = d.Clear()
-		if err != nil {
-			t.Fatal(err)
-		}
+		runWrapDB(t, d, testDB_SaveSQL)
 	}
 }
 
@@ -223,17 +173,7 @@ func testDB_SaveSQL(t *testing.T, db *DB) {
 
 func TestDB_UpdateSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		db, err := d.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
-			testDB_UpdateSQL(ts, db)
-		})
-		err = d.Clear()
-		if err != nil {
-			t.Fatal(err)
-		}
+		runWrapDB(t, d, testDB_UpdateSQL)
 	}
 }
 
@@ -251,17 +191,7 @@ func testDB_UpdateSQL(t *testing.T, db *DB) {
 
 func TestDB_SingularTable(t *testing.T) {
 	for _, d := range AllTestDB() {
-		db, err := d.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
-			testDB_SingularTable(ts, db)
-		})
-		err = d.Clear()
-		if err != nil {
-			t.Fatal(err)
-		}
+		runWrapDB(t, d, testDB_SingularTable)
 	}
 }
 
@@ -279,19 +209,10 @@ func testDB_SingularTable(t *testing.T, db *DB) {
 
 func TestDB_HasTable(t *testing.T) {
 	for _, d := range AllTestDB() {
-		db, err := d.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
-			testDB_HasTable(ts, db)
-		})
-		err = d.Clear()
-		if err != nil {
-			t.Fatal(err)
-		}
+		runWrapDB(t, d, testDB_HasTable)
 	}
 }
+
 func testDB_HasTable(t *testing.T, db *DB) {
 	if db.HasTable("foos") {
 		t.Error("expected false")
@@ -313,17 +234,7 @@ func testDB_HasTable(t *testing.T, db *DB) {
 
 func TestDB_FirstSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		db, err := d.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Run(db.Dialect().GetName(), func(ts *testing.T) {
-			testDB_FirstSQL(ts, db)
-		})
-		err = d.Clear()
-		if err != nil {
-			t.Fatal(err)
-		}
+		runWrapDB(t, d, testDB_FirstSQL)
 	}
 }
 
