@@ -3,10 +3,10 @@ package scope
 import (
 	"testing"
 
-	"github.com/gernest/ngorm/dialects/ql"
-	"github.com/gernest/ngorm/engine"
-	"github.com/gernest/ngorm/fixture"
-	"github.com/gernest/ngorm/model"
+	"github.com/ngorm/ngorm/engine"
+	"github.com/ngorm/ngorm/fixture"
+	"github.com/ngorm/ngorm/model"
+	"github.com/ngorm/ql"
 )
 
 func TestFieldByName(t *testing.T) {

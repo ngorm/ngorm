@@ -5,9 +5,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/gernest/ngorm/dialects"
-	"github.com/gernest/ngorm/logger"
-	"github.com/gernest/ngorm/model"
+	"github.com/ngorm/ngorm/dialects"
+	"github.com/ngorm/ngorm/logger"
+	"github.com/ngorm/ngorm/model"
 )
 
 //Engine is the driving force for ngorm. It contains, Scope, Search and other

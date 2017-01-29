@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gernest/ngorm/errmsg"
+	"github.com/ngorm/ngorm/errmsg"
 )
 
 // Copied from golint

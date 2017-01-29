@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/gernest/ngorm/errmsg"
-	"github.com/gernest/ngorm/util"
+	"github.com/ngorm/ngorm/errmsg"
+	"github.com/ngorm/ngorm/util"
 )
 
 // Field model field definition

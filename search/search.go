@@ -4,10 +4,10 @@ package search
 import (
 	"fmt"
 
-	"github.com/gernest/ngorm/engine"
-	"github.com/gernest/ngorm/model"
-	"github.com/gernest/ngorm/regexes"
-	"github.com/gernest/ngorm/util"
+	"github.com/ngorm/ngorm/engine"
+	"github.com/ngorm/ngorm/model"
+	"github.com/ngorm/ngorm/regexes"
+	"github.com/ngorm/ngorm/util"
 )
 
 //Where adds WHERE search condition.

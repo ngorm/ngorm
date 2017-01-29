@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gernest/ngorm/model"
+	"github.com/ngorm/ngorm/model"
 )
 
 // Dialect interface contains behaviors that differ across SQL database

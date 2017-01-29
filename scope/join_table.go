@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gernest/ngorm/engine"
-	"github.com/gernest/ngorm/model"
+	"github.com/ngorm/ngorm/engine"
+	"github.com/ngorm/ngorm/model"
 )
 
 // SetupJoinTable  initialize a default join table handler

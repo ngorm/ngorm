@@ -14,10 +14,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gernest/ngorm/engine"
-	"github.com/gernest/ngorm/model"
-	"github.com/gernest/ngorm/regexes"
-	"github.com/gernest/ngorm/scope"
+	"github.com/ngorm/ngorm/engine"
+	"github.com/ngorm/ngorm/model"
+	"github.com/ngorm/ngorm/regexes"
+	"github.com/ngorm/ngorm/scope"
 )
 
 //Where buiilds the sql where condition. The clause is a map

@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gernest/ngorm/builder"
-	"github.com/gernest/ngorm/engine"
-	"github.com/gernest/ngorm/errmsg"
-	"github.com/gernest/ngorm/model"
-	"github.com/gernest/ngorm/scope"
-	"github.com/gernest/ngorm/search"
-	"github.com/gernest/ngorm/util"
+	"github.com/ngorm/ngorm/builder"
+	"github.com/ngorm/ngorm/engine"
+	"github.com/ngorm/ngorm/errmsg"
+	"github.com/ngorm/ngorm/model"
+	"github.com/ngorm/ngorm/scope"
+	"github.com/ngorm/ngorm/search"
+	"github.com/ngorm/ngorm/util"
 )
 
 //Query executes sql QUery without transaction.

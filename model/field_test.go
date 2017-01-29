@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gernest/ngorm/errmsg"
+	"github.com/ngorm/ngorm/errmsg"
 )
 
 type sample struct {

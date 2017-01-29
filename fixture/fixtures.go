@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/gernest/ngorm/engine"
-	"github.com/gernest/ngorm/model"
+	"github.com/ngorm/ngorm/engine"
+	"github.com/ngorm/ngorm/model"
 )
 
 //CalculateField fixture
