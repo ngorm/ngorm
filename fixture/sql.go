@@ -14,6 +14,8 @@ const (
 	FirstSQL2     = "firsr_sql_2"
 	LastSQL1      = "last_sql_1"
 	LastSQL2      = "last_sql_2"
+	FindSQL1      = "find_sql_1"
+	FindSQL2      = "find_sql_2"
 )
 
 var samples map[string]map[string]string
@@ -77,6 +79,10 @@ COMMIT;`
 	o[LastSQL1] = s
 	s = `SELECT * FROM users  WHERE (id = $1) ORDER BY id DESC`
 	o[LastSQL2] = s
+	s = `SELECT * FROM users`
+	o[FindSQL1] = s
+	s = `SELECT * FROM users   LIMIT 2`
+	o[FindSQL2] = s
 	return o
 }
 

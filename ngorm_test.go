@@ -346,20 +346,19 @@ func testDB_Last(t *testing.T, db *DB) {
 }
 
 func TestDB_FindSQL(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_FindSQL)
 	}
-	defer func() { _ = db.Close() }()
+}
 
+func testDB_FindSQL(t *testing.T, db *DB) {
 	// First record order by primary key
 	users := []*fixture.User{}
 	sql, err := db.FindSQL(&users)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `SELECT * FROM users`
-	expect = strings.TrimSpace(expect)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.FindSQL1)
 	sql.Q = strings.TrimSpace(sql.Q)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
@@ -369,20 +368,20 @@ func TestDB_FindSQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect = `SELECT * FROM users   LIMIT 2`
-	expect = strings.TrimSpace(expect)
+	expect = fixture.GetSQL(db.Dialect().GetName(), fixture.FindSQL2)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
 
 func TestDB_Find(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_Find)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+
+func testDB_Find(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -405,12 +404,13 @@ func TestDB_Find(t *testing.T) {
 }
 
 func TestDB_FirstOrInit(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_FirstOrInit)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+
+func testDB_FirstOrInit(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -425,12 +425,12 @@ func TestDB_FirstOrInit(t *testing.T) {
 }
 
 func TestDB_Save(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_Save)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+func testDB_Save(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -463,12 +463,12 @@ func TestDB_Save(t *testing.T) {
 }
 
 func TestDB_Update(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_Update)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+func testDB_Update(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -501,12 +501,12 @@ func TestDB_Update(t *testing.T) {
 }
 
 func TestDB_Assign(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_Update)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&fixture.User{})
+}
+func testDB_Assign(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&fixture.User{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -524,12 +524,12 @@ func TestDB_Assign(t *testing.T) {
 }
 
 func TestDB_Pluck(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_Pluck)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+func testDB_Pluck(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -552,12 +552,12 @@ func TestDB_Pluck(t *testing.T) {
 }
 
 func TestDB_Count(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_Count)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+func testDB_Count(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
