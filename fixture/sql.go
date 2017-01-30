@@ -3,19 +3,22 @@ package fixture
 import "strings"
 
 const (
-	CreateTable1  = "ceate_table_1"
-	CreateTable2  = "ceate_table_2"
-	DropTable     = "drop_table"
-	AutoMigrate   = "automigrate"
-	SaveSQL       = "sqve_sql"
-	UpdateSQL     = "update_sql"
-	SingularTable = "singular_table"
-	FirstSQL1     = "firsr_sql_1"
-	FirstSQL2     = "firsr_sql_2"
-	LastSQL1      = "last_sql_1"
-	LastSQL2      = "last_sql_2"
-	FindSQL1      = "find_sql_1"
-	FindSQL2      = "find_sql_2"
+	CreateTable1   = "ceate_table_1"
+	CreateTable2   = "ceate_table_2"
+	DropTable      = "drop_table"
+	AutoMigrate    = "automigrate"
+	SaveSQL        = "sqve_sql"
+	UpdateSQL      = "update_sql"
+	SingularTable  = "singular_table"
+	FirstSQL1      = "firsr_sql_1"
+	FirstSQL2      = "firsr_sql_2"
+	LastSQL1       = "last_sql_1"
+	LastSQL2       = "last_sql_2"
+	FindSQL1       = "find_sql_1"
+	FindSQL2       = "find_sql_2"
+	AddIndexSQL    = "add_index_sql"
+	DeleteSQL      = "delete_sql"
+	AddUniqueIndex = "add_unique_index"
 )
 
 var samples map[string]map[string]string
@@ -83,6 +86,16 @@ COMMIT;`
 	o[FindSQL1] = s
 	s = `SELECT * FROM users   LIMIT 2`
 	o[FindSQL2] = s
+	s = `CREATE INDEX _idx_foo_stuff ON foos(stuff) `
+	o[AddIndexSQL] = s
+	s = `
+BEGIN TRANSACTION;
+	DELETE FROM foos  WHERE id = $1 ;
+COMMIT;
+`
+	o[DeleteSQL] = s
+	s = `CREATE UNIQUE INDEX idx_foo_stuff ON foos(stuff) `
+	o[AddUniqueIndex] = s
 	return o
 }
 

@@ -580,6 +580,12 @@ func testDB_Count(t *testing.T, db *DB) {
 }
 
 func TestDB_AddIndexSQL(t *testing.T) {
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_AddIndexSQL)
+	}
+}
+
+func testDB_AddIndexSQL(t *testing.T, db *DB) {
 	db, err := Open("ql-mem", "test.db")
 	if err != nil {
 		t.Fatal(err)
@@ -598,19 +604,20 @@ func TestDB_AddIndexSQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `CREATE INDEX _idx_foo_stuff ON foos(stuff) `
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.AddIndexSQL)
+	sql.Q = strings.TrimSpace(sql.Q)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
 }
 
 func TestDB_AddIndex(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_AddIndexSQL)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+func testDB_AddIndex(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -625,12 +632,13 @@ func TestDB_AddIndex(t *testing.T) {
 }
 
 func TestDB_DeleteSQL(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_DeleteSQL)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+
+func testDB_DeleteSQL(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -638,12 +646,7 @@ func TestDB_DeleteSQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := `
-BEGIN TRANSACTION;
-	DELETE FROM foos  WHERE id = $1 ;
-COMMIT;
-`
-	expect = strings.TrimSpace(expect)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.DeleteSQL)
 	sql.Q = strings.TrimSpace(sql.Q)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
@@ -651,12 +654,13 @@ COMMIT;
 }
 
 func TestDB_Delete(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_Delete)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+
+func testDB_Delete(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -681,12 +685,13 @@ func TestDB_Delete(t *testing.T) {
 }
 
 func TestDB_AddUniqueIndex(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_AddUniqueIndex)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+
+func testDB_AddUniqueIndex(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -700,18 +705,21 @@ func TestDB_AddUniqueIndex(t *testing.T) {
 		t.Error("expected index to be created")
 	}
 	q := ndb.e.Scope.SQL
-	expect := `CREATE UNIQUE INDEX idx_foo_stuff ON foos(stuff) `
+	q = strings.TrimSpace(q)
+	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.AddUniqueIndex)
 	if q != expect {
 		t.Errorf("expected %s got %s", expect, q)
 	}
 }
+
 func TestDB_RemoveIndex(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_RemoveIndex)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+
+func testDB_RemoveIndex(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -732,13 +740,15 @@ func TestDB_RemoveIndex(t *testing.T) {
 		t.Error("expected index to be gone")
 	}
 }
+
 func TestDB_DropColumn(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_DropColumn)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+
+func testDB_DropColumn(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -753,12 +763,13 @@ func TestDB_DropColumn(t *testing.T) {
 }
 
 func TestDB_FirstOrCreate(t *testing.T) {
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_FirstOrCreate)
 	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+}
+
+func testDB_FirstOrCreate(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
