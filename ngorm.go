@@ -13,7 +13,7 @@
 // Installation
 //
 // You can install  with go get
-//   go get -u github.com/gernest/ngorm
+//   go get -u github.com/ngorm/ngorm
 //
 //
 // The package is divided into two phases, Query building and Query execution
@@ -36,37 +36,10 @@
 // possible in a way that you can easily implement adoptes for non SQL database
 // and still reap all the benefits of this package.
 //
-// Table of Ccntents
-//
-// The following are links to packages under this project.
-//
-// WARNING: You will never be touching most of these  packages. They are the
-// building block of the high level API.
-//   [engine] https://godoc.org/github.com/gernest/ngorm/engine
-// This is what drives the whole project, helps with query building and provides
-// conveinet structure to help with query execution.
-//
-//   [scope] https://godoc.org/github.com/gernest/ngorm/scope
-// Functions to help with model manipulations.
-//
-//   [search] https://godoc.org/github.com/gernest/ngorm/search
-// Functions to help with search  querries building.
-//
-//   [hooks] https://godoc.org/github.com/gernest/ngorm/hooks
-// Callbacks executed by ngorm. You can easily overide and provide custom ones
-// to suit your needs.
-//
-//   [logger] https://godoc.org/github.com/gernest/ngorm/logger
-// The logger used by ngorm for logging. It is an interface, and a reference
-// implementation is provided.
-//
-//   [dialects] https://godoc.org/github.com/gernest/ngorm/dialects
-// Adopts to different SQL databases supported by ngorm. For now ngorm support
-// ql .
 //
 // Chaining
 //
-// The API supports methof chaining for a specific set of method.Be warned if
+// The API supports method chaining for a specific set of method.Be warned if
 // you intend to chain anything don't forget to start with Begin method. This
 // will help clear any context left after previous calls.
 //
