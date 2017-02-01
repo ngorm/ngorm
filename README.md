@@ -82,3 +82,7 @@ The bonus here is, it is easy to measure performance, and hence improve. The
 code base can easily be groked hence easy to contribute  , also this comes with
 an extensive test suite to make sure that regressions can not be introduced
 without being detected.
+
+# Todo
+
+- [ ] Preload
