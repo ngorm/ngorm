@@ -205,7 +205,6 @@ func (db *DB) ExecTx(query string, args ...interface{}) (sql.Result, error) {
 	}
 	err = tx.Commit()
 	if err != nil {
-		fmt.Println("HERE")
 		return nil, err
 	}
 	return r, nil
