@@ -5,12 +5,14 @@ import (
 	"os"
 	"testing"
 
+	_ "github.com/lib/pq"
+	_ "github.com/ngorm/postgres"
 	_ "github.com/ngorm/ql"
 )
 
 type testDB interface {
 	Open() (*DB, error)
-	Clear(dbs ...string) error
+	Clear(dbs ...interface{}) error
 	Close() error
 }
 
@@ -19,7 +21,7 @@ type wrapQL struct {
 	isClosed bool
 }
 
-func (q *wrapQL) Clear(databases ...string) error {
+func (q *wrapQL) Clear(tables ...interface{}) error {
 	return q.Close()
 }
 func (q *wrapQL) Close() error {
@@ -64,20 +66,20 @@ func (q *pgWrap) Close() error {
 	return q.db.Close()
 }
 
-func (q *pgWrap) Clear(databases ...string) error {
+func (q *pgWrap) Clear(tables ...interface{}) error {
+	_, err := q.DB.DropTable(tables...)
+	if err != nil {
+		return err
+	}
 	return q.Close()
 }
 
 var tsdb []testDB
 
 func initialize() error {
-	qldb, err := Open("ql-mem", "test")
-	if err != nil {
-		return err
-	}
-	tsdb = append(tsdb, &wrapQL{DB: qldb})
+	tsdb = append(tsdb, &wrapQL{isClosed: true})
 	if ps := os.Getenv("NGORM_PG_CONN"); ps != "" {
-		tsdb = append(tsdb, &pgWrap{conn: ps})
+		tsdb = append(tsdb, &pgWrap{isClosed: true, conn: ps})
 	}
 	return nil
 }
@@ -86,7 +88,7 @@ func AllTestDB() []testDB {
 	return tsdb
 }
 
-func runWrapDB(t *testing.T, d testDB, f func(*testing.T, *DB)) {
+func runWrapDB(t *testing.T, d testDB, f func(*testing.T, *DB), tables ...interface{}) {
 	db, err := d.Open()
 	if err != nil {
 		t.Fatal(err)
@@ -94,7 +96,7 @@ func runWrapDB(t *testing.T, d testDB, f func(*testing.T, *DB)) {
 	t.Run(db.Dialect().GetName(), func(ts *testing.T) {
 		f(ts, db)
 	})
-	err = d.Clear()
+	err = d.Clear(tables...)
 	if err != nil {
 		t.Fatal(err)
 	}

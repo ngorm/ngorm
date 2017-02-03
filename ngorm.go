@@ -185,7 +185,10 @@ func (db *DB) CreateTable(models ...interface{}) (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db.ExecTx(query.Q, query.Args...)
+	if isQL(db) {
+		return db.ExecTx(query.Q, query.Args...)
+	}
+	return db.SQLCommon().Exec(query.Q, query.Args...)
 }
 
 //ExecTx wraps the query execution in a Transaction. This ensure all operations
@@ -202,6 +205,7 @@ func (db *DB) ExecTx(query string, args ...interface{}) (sql.Result, error) {
 	}
 	err = tx.Commit()
 	if err != nil {
+		fmt.Println("HERE")
 		return nil, err
 	}
 	return r, nil
@@ -215,7 +219,9 @@ func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
 		scopeVars = db.e.Scope.GetAll()
 	}
 	var buf bytes.Buffer
-	_, _ = buf.WriteString("BEGIN TRANSACTION; \n")
+	if isQL(db) {
+		_, _ = buf.WriteString("BEGIN TRANSACTION; \n")
+	}
 	for _, m := range models {
 		e := db.NewEngine()
 		for k, v := range scopeVars {
@@ -233,15 +239,23 @@ func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
 			}
 		}
 	}
-	_, _ = buf.WriteString("COMMIT;")
+	if isQL(db) {
+		_, _ = buf.WriteString("COMMIT;")
+	}
 	return &model.Expr{Q: buf.String()}, nil
+}
+
+func isQL(db *DB) bool {
+	return db.Dialect().GetName() == "ql" || db.Dialect().GetName() == "ql-mem"
 }
 
 //DropTableSQL generates sql query for DROP TABLE. The generated query is
 //wrapped under TRANSACTION block.
 func (db *DB) DropTableSQL(models ...interface{}) (*model.Expr, error) {
 	var buf bytes.Buffer
-	_, _ = buf.WriteString("BEGIN TRANSACTION; \n")
+	if isQL(db) {
+		_, _ = buf.WriteString("BEGIN TRANSACTION; \n")
+	}
 	for _, m := range models {
 		e := db.NewEngine()
 		if n, ok := m.(string); ok {
@@ -254,7 +268,9 @@ func (db *DB) DropTableSQL(models ...interface{}) (*model.Expr, error) {
 		}
 		_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
 	}
-	_, _ = buf.WriteString("COMMIT;")
+	if isQL(db) {
+		_, _ = buf.WriteString("COMMIT;")
+	}
 	return &model.Expr{Q: buf.String()}, nil
 }
 
@@ -265,7 +281,10 @@ func (db *DB) DropTable(models ...interface{}) (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db.ExecTx(query.Q, query.Args...)
+	if isQL(db) {
+		return db.ExecTx(query.Q, query.Args...)
+	}
+	return db.SQLCommon().Exec(query.Q, query.Args...)
 }
 
 //Automigrate creates tables that map to models if the tables don't exist yet in

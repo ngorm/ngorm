@@ -26,6 +26,7 @@ var samples map[string]map[string]string
 func init() {
 	samples = make(map[string]map[string]string)
 	samples["ql-mem"] = sampleQL()
+	samples["postgres"] = samplePG()
 }
 
 func sampleQL() map[string]string {
@@ -99,6 +100,75 @@ COMMIT;
 	return o
 }
 
+func samplePG() map[string]string {
+	o := make(map[string]string)
+	s := `
+	CREATE TABLE "foos" ("id" serial,"stuff" text ) ;
+`
+	o[CreateTable1] = s
+	s = `
+BEGIN TRANSACTION; 
+ 	CREATE TABLE "users" ("id" bigserial,"age" bigint,"user_num" bigint,"name" varchar(255),"email" text,"birthday" times
+tamp with time zone,"created_at" timestamp with time zone,"updated_at" timestamp with time zone,"billing_address_id" bigint,"shipping_address
+_id" bigint,"latitude" numeric,"company_id" integer,"role" varchar(256),"password_hash" bytea,"sequence" serial ) ;
+COMMIT;`
+	o[CreateTable2] = s
+	s = `
+	DROP TABLE "foos";
+	DROP TABLE "users";
+`
+	o[DropTable] = s
+	s = `
+BEGIN TRANSACTION;
+	CREATE TABLE users (id int64,age int64,user_num int64,name string,email string,birthday time,created_at time,updated_at time,billing_address_id int64,shipping_address_id int64,latitude float64,company_id int,role string,password_hash blob,sequence uint ) ;
+	CREATE TABLE user_languages (user_id int64,language_id int64 ) ;
+	CREATE TABLE emails (id int16,user_id int,email string,created_at time,updated_at time ) ;
+	CREATE TABLE languages (id int64,created_at time,updated_at time,deleted_at time,name string ) ;
+	CREATE INDEX idx_languages_deleted_at ON languages(deleted_at);
+	CREATE TABLE companies (id int64,name string ) ;
+	CREATE TABLE credit_cards (id int8,number string,user_id int64,created_at time NOT NULL,updated_at time,deleted_at time ) ;
+	CREATE TABLE addresses (id int,address1 string,address2 string,post string,created_at time,updated_at time,deleted_at time ) ;
+COMMIT;`
+	o[AutoMigrate] = s
+	s = `
+BEGIN TRANSACTION;
+	UPDATE foos SET stuff = $1  WHERE id = $2;
+COMMIT;`
+	o[SaveSQL] = s
+	s = `
+BEGIN TRANSACTION;
+	UPDATE foos SET stuff = $1  WHERE id = $2;
+COMMIT;`
+	o[UpdateSQL] = s
+	s = `
+BEGIN TRANSACTION;
+	INSERT INTO foo (stuff) VALUES ($1);
+COMMIT;`
+	o[SingularTable] = s
+	s = `SELECT * FROM users   ORDER BY id ASC`
+	o[FirstSQL1] = s
+	s = `SELECT * FROM users  WHERE (id = $1) ORDER BY id ASC`
+	o[FirstSQL2] = s
+	s = `SELECT * FROM users   ORDER BY id DESC`
+	o[LastSQL1] = s
+	s = `SELECT * FROM users  WHERE (id = $1) ORDER BY id DESC`
+	o[LastSQL2] = s
+	s = `SELECT * FROM users`
+	o[FindSQL1] = s
+	s = `SELECT * FROM users   LIMIT 2`
+	o[FindSQL2] = s
+	s = `CREATE INDEX _idx_foo_stuff ON foos(stuff) `
+	o[AddIndexSQL] = s
+	s = `
+BEGIN TRANSACTION;
+	DELETE FROM foos  WHERE id = $1 ;
+COMMIT;
+`
+	o[DeleteSQL] = s
+	s = `CREATE UNIQUE INDEX idx_foo_stuff ON foos(stuff) `
+	o[AddUniqueIndex] = s
+	return o
+}
 func GetSQL(dialect string, key string) string {
 	if d, ok := samples[dialect]; ok {
 		return strings.TrimSpace(d[key])
