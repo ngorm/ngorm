@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 	"testing"
+
+	_ "github.com/ngorm/ql"
 )
 
 type testDB interface {
@@ -38,6 +40,34 @@ func (q *wrapQL) Open() (*DB, error) {
 	return q.DB, nil
 }
 
+type pgWrap struct {
+	*DB
+	isClosed bool
+	conn     string
+}
+
+func (q *pgWrap) Open() (*DB, error) {
+	if q.isClosed {
+		d, err := Open("postgres", q.conn)
+		if err != nil {
+			return nil, err
+		}
+		q.DB = d
+		q.isClosed = false
+		return d, nil
+	}
+	return q.DB, nil
+}
+
+func (q *pgWrap) Close() error {
+	q.isClosed = true
+	return q.db.Close()
+}
+
+func (q *pgWrap) Clear(databases ...string) error {
+	return q.Close()
+}
+
 var tsdb []testDB
 
 func initialize() error {
@@ -46,6 +76,9 @@ func initialize() error {
 		return err
 	}
 	tsdb = append(tsdb, &wrapQL{DB: qldb})
+	if ps := os.Getenv("NGORM_PG_CONN"); ps != "" {
+		tsdb = append(tsdb, &pgWrap{conn: ps})
+	}
 	return nil
 }
 

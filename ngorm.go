@@ -67,7 +67,6 @@ import (
 	"github.com/ngorm/ngorm/scope"
 	"github.com/ngorm/ngorm/search"
 	"github.com/ngorm/ngorm/util"
-	"github.com/ngorm/ql"
 	"github.com/uber-go/zap"
 )
 
@@ -127,7 +126,7 @@ func (db *DB) clone() *DB {
 //
 //   import _ "github.com/cznic/ql/driver"  // imports ql driver
 func Open(dialect string, args ...interface{}) (*DB, error) {
-	return OpenWithOpener(&DefaultOpener{}, dialect, args...)
+	return OpenWithOpener(dialects.Opener(), dialect, args...)
 }
 
 // OpenWithOpener uses the opener to initialize the dialects and establish
@@ -236,46 +235,6 @@ func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
 	}
 	_, _ = buf.WriteString("COMMIT;")
 	return &model.Expr{Q: buf.String()}, nil
-}
-
-//DefaultOpener implements Opener interface.
-type DefaultOpener struct {
-}
-
-//Open opens up database connection using the database/sql package.
-func (d *DefaultOpener) Open(dialect string, args ...interface{}) (model.SQLCommon, dialects.Dialect, error) {
-	var source string
-	var dia dialects.Dialect
-	var common model.SQLCommon
-	var err error
-
-	switch value := args[0].(type) {
-	case string:
-		var driver = dialect
-		if len(args) == 1 {
-			source = value
-		} else if len(args) >= 2 {
-			driver = value
-			source = args[1].(string)
-		}
-		common, err = sql.Open(driver, source)
-		if err != nil {
-			return nil, nil, err
-		}
-	case model.SQLCommon:
-		common = value
-	default:
-		return nil, nil, fmt.Errorf("unknown argument %v", value)
-	}
-	switch dialect {
-	case "ql":
-		dia = ql.File()
-	case "ql-mem":
-		dia = ql.Memory()
-	default:
-		return nil, nil, fmt.Errorf("unsupported dialect %s", dialect)
-	}
-	return common, dia, nil
 }
 
 //DropTableSQL generates sql query for DROP TABLE. The generated query is
