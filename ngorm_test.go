@@ -83,14 +83,21 @@ func testDB_DropTable(t *testing.T, db *DB) {
 
 func TestDB_Automigrate(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Automigrate)
+		runWrapDB(t, d, testDB_Automigrate,
+			&fixture.User{},
+			&fixture.Email{},
+			&fixture.Language{},
+			&fixture.Company{},
+			&fixture.CreditCard{},
+			&fixture.Address{},
+		)
 	}
 }
 
 func testDB_Automigrate(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
+	//if isPostgres(db) {
+	//t.Skip()
+	//}
 	sql, err := db.AutomigrateSQL(
 		&fixture.User{},
 		&fixture.Email{},
@@ -104,6 +111,7 @@ func testDB_Automigrate(t *testing.T, db *DB) {
 	}
 
 	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.AutoMigrate)
+	sql.Q = strings.TrimSpace(sql.Q)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}

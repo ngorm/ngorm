@@ -294,13 +294,18 @@ func (db *DB) Automigrate(models ...interface{}) (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db.ExecTx(query.Q, query.Args...)
+	if isQL(db) {
+		return db.ExecTx(query.Q, query.Args...)
+	}
+	return db.SQLCommon().Exec(query.Q, query.Args...)
 }
 
 //AutomigrateSQL generates sql query for running migrations on models.
 func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 	var buf bytes.Buffer
-	_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+	if isQL(db) {
+		_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+	}
 	keys := make(map[string]bool)
 	for _, m := range models {
 		e := db.NewEngine()
@@ -329,7 +334,9 @@ func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 			}
 		}
 	}
-	_, _ = buf.WriteString("COMMIT;")
+	if isQL(db) {
+		_, _ = buf.WriteString("COMMIT;")
+	}
 	return &model.Expr{Q: buf.String()}, nil
 }
 
