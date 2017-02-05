@@ -3,6 +3,7 @@ package hooks
 
 import (
 	"bytes"
+	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
@@ -240,22 +241,31 @@ func CreateExec(b *Book, e *engine.Engine) error {
 	lastInsertIDReturningSuffix :=
 		e.Dialect.LastInsertIDReturningSuffix(tableName, returningColumn)
 	if lastInsertIDReturningSuffix == "" || primaryField == nil {
-		tx, err := e.SQLDB.Begin()
-		if err != nil {
-			return err
-		}
-		result, err := tx.Exec(e.Scope.SQL, e.Scope.SQLVars...)
-		if err != nil {
-			rerr := tx.Rollback()
-			if rerr != nil {
-				return rerr
+		var result sql.Result
+		if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
+			tx, err := e.SQLDB.Begin()
+			if err != nil {
+				return err
 			}
-			return err
+			result, err = tx.Exec(e.Scope.SQL, e.Scope.SQLVars...)
+			if err != nil {
+				rerr := tx.Rollback()
+				if rerr != nil {
+					return rerr
+				}
+				return err
+			}
+			err = tx.Commit()
+			if err != nil {
+				return err
+			}
+		} else {
+			result, err = e.SQLDB.Exec(e.Scope.SQL, e.Scope.SQLVars...)
+			if err != nil {
+				return err
+			}
 		}
-		err = tx.Commit()
-		if err != nil {
-			return err
-		}
+
 		// set rows affected count
 		e.RowsAffected, _ = result.RowsAffected()
 
@@ -506,14 +516,18 @@ func CreateSQL(b *Book, e *engine.Engine) error {
 		}
 	}
 	var buf bytes.Buffer
-	_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+	if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
+		_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+	}
 	if e.Scope.MultiExpr {
 		for _, expr := range e.Scope.Exprs {
 			_, _ = buf.WriteString("\t" + expr.Q + ";\n")
 		}
 	}
 	_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
-	_, _ = buf.WriteString("COMMIT;")
+	if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
+		_, _ = buf.WriteString("COMMIT;")
+	}
 	e.Scope.SQL = buf.String()
 	return nil
 }

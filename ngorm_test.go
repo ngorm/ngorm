@@ -257,10 +257,6 @@ func TestDB_FirstSQL(t *testing.T) {
 }
 
 func testDB_FirstSQL(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
-
 	// First record order by primary key
 	sql, err := db.FirstSQL(&fixture.User{})
 	if err != nil {
@@ -284,14 +280,11 @@ func testDB_FirstSQL(t *testing.T, db *DB) {
 
 func TestDB_First(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_First)
+		runWrapDB(t, d, testDB_First, &Foo{})
 	}
 }
 
 func testDB_First(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -319,9 +312,6 @@ func TestDB_LastSQL(t *testing.T) {
 	}
 }
 func testDB_LastSQL(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	// First record order by primary key
 	sql, err := db.LastSQL(&fixture.User{})
 	if err != nil {
@@ -350,9 +340,6 @@ func TestDB_Last(t *testing.T) {
 }
 
 func testDB_Last(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)

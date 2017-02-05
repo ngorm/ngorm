@@ -143,13 +143,21 @@ BEGIN TRANSACTION;
 	INSERT INTO foo (stuff) VALUES ($1);
 COMMIT;`
 	o[SingularTable] = s
-	s = `SELECT * FROM users   ORDER BY id ASC`
+	s = `
+SELECT * FROM "users"   ORDER BY "users"."id" ASC LIMIT 1
+`
 	o[FirstSQL1] = s
-	s = `SELECT * FROM users  WHERE (id = $1) ORDER BY id ASC`
+	s = `
+SELECT * FROM "users"  WHERE ("users"."id" = $1) ORDER BY "users"."id" ASC LIMIT 1
+`
 	o[FirstSQL2] = s
-	s = `SELECT * FROM users   ORDER BY id DESC`
+	s = `
+SELECT * FROM "users"   ORDER BY "users"."id" DESC LIMIT 1
+`
 	o[LastSQL1] = s
-	s = `SELECT * FROM users  WHERE (id = $1) ORDER BY id DESC`
+	s = `
+SELECT * FROM "users"  WHERE ("users"."id" = $1) ORDER BY "users"."id" DESC LIMIT 1
+`
 	o[LastSQL2] = s
 	s = `SELECT * FROM users`
 	o[FindSQL1] = s
