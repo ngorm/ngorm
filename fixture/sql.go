@@ -159,9 +159,9 @@ SELECT * FROM "users"   ORDER BY "users"."id" DESC LIMIT 1
 SELECT * FROM "users"  WHERE ("users"."id" = $1) ORDER BY "users"."id" DESC LIMIT 1
 `
 	o[LastSQL2] = s
-	s = `SELECT * FROM users`
+	s = `SELECT * FROM "users"`
 	o[FindSQL1] = s
-	s = `SELECT * FROM users   LIMIT 2`
+	s = `SELECT * FROM "users"   LIMIT 2`
 	o[FindSQL2] = s
 	s = `CREATE INDEX _idx_foo_stuff ON foos(stuff) `
 	o[AddIndexSQL] = s

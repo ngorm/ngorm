@@ -369,9 +369,6 @@ func TestDB_FindSQL(t *testing.T) {
 }
 
 func testDB_FindSQL(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	// First record order by primary key
 	users := []*fixture.User{}
 	sql, err := db.FindSQL(&users)
@@ -401,9 +398,6 @@ func TestDB_Find(t *testing.T) {
 }
 
 func testDB_Find(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
