@@ -567,13 +567,10 @@ func (db *DB) HasTable(value interface{}) bool {
 }
 
 //First  fets the first record and order by primary key.
-//
-// BUG: For some reason the ql database doesnt order the keys in ascending
-// order. So this uses DESC to get the real record instead of ASC , I will need
-// to dig more and see.
 func (db *DB) First(out interface{}, where ...interface{}) error {
-	db.Set(model.OrderByPK, "DESC")
+	db.Set(model.OrderByPK, "ASC")
 	search.Inline(db.e, where...)
+	search.Limit(db.e, 1)
 	db.e.Scope.Value = out
 	q, ok := db.hooks.Query.Get(model.Query)
 	if !ok {
@@ -587,6 +584,7 @@ func (db *DB) First(out interface{}, where ...interface{}) error {
 func (db *DB) FirstSQL(out interface{}, where ...interface{}) (*model.Expr, error) {
 	db.Set(model.OrderByPK, "ASC")
 	search.Inline(db.e, where...)
+	search.Limit(db.e, 1)
 	db.e.Scope.Value = out
 	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
 	if !ok {
@@ -600,14 +598,10 @@ func (db *DB) FirstSQL(out interface{}, where ...interface{}) (*model.Expr, erro
 }
 
 //Last finds the last record and order by primary key.
-//
-// BUG: For some reason the ql database doesnt order the keys in descending
-// order despite the use of DESC, so this uses ASC but the keys are in
-// descending order.
-// order. So this uses DESC to get the real record instead of ASC , I will need
 func (db *DB) Last(out interface{}, where ...interface{}) error {
-	db.Set(model.OrderByPK, "ASC")
+	db.Set(model.OrderByPK, "DESC")
 	search.Inline(db.e, where...)
+	search.Limit(db.e, 1)
 	db.e.Scope.Value = out
 	q, ok := db.hooks.Query.Get(model.Query)
 	if !ok {
@@ -621,6 +615,7 @@ func (db *DB) Last(out interface{}, where ...interface{}) error {
 func (db *DB) LastSQL(out interface{}, where ...interface{}) (*model.Expr, error) {
 	db.Set(model.OrderByPK, "DESC")
 	search.Inline(db.e, where...)
+	search.Limit(db.e, 1)
 	db.e.Scope.Value = out
 	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
 	if !ok {

@@ -345,7 +345,7 @@ func testDB_LastSQL(t *testing.T, db *DB) {
 
 func TestDB_Last(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Last)
+		runWrapDB(t, d, testDB_Last, &Foo{})
 	}
 }
 
