@@ -95,9 +95,6 @@ func TestDB_Automigrate(t *testing.T) {
 }
 
 func testDB_Automigrate(t *testing.T, db *DB) {
-	//if isPostgres(db) {
-	//t.Skip()
-	//}
 	sql, err := db.AutomigrateSQL(
 		&fixture.User{},
 		&fixture.Email{},
@@ -393,7 +390,7 @@ func testDB_FindSQL(t *testing.T, db *DB) {
 
 func TestDB_Find(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Find)
+		runWrapDB(t, d, testDB_Find, &Foo{})
 	}
 }
 
@@ -422,14 +419,11 @@ func testDB_Find(t *testing.T, db *DB) {
 
 func TestDB_FirstOrInit(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_FirstOrInit)
+		runWrapDB(t, d, testDB_FirstOrInit, &Foo{})
 	}
 }
 
 func testDB_FirstOrInit(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
