@@ -127,13 +127,17 @@ func testDB_Automigrate(t *testing.T, db *DB) {
 
 func TestDB_Create(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Create)
+		runWrapDB(t, d, testDB_Create,
+			&fixture.User{},
+			&fixture.Email{},
+			&fixture.Language{},
+			&fixture.Company{},
+			&fixture.CreditCard{},
+			&fixture.Address{},
+		)
 	}
 }
 func testDB_Create(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(
 		&fixture.User{},
 		&fixture.Email{},
@@ -184,9 +188,6 @@ func TestDB_UpdateSQL(t *testing.T) {
 }
 
 func testDB_UpdateSQL(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	foo := Foo{ID: 10, Stuff: "twenty"}
 	sql, err := db.Model(&foo).UpdateSQL("stuff", "hello")
 	if err != nil {
@@ -205,15 +206,13 @@ func TestDB_SingularTable(t *testing.T) {
 }
 
 func testDB_SingularTable(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	db.SingularTable(true)
 	sql, err := db.CreateSQL(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	expect := fixture.GetSQL(db.Dialect().GetName(), fixture.SingularTable)
+	sql.Q = strings.TrimSpace(sql.Q)
 	if sql.Q != expect {
 		t.Errorf("expected %s got %s", expect, sql.Q)
 	}
@@ -221,14 +220,11 @@ func testDB_SingularTable(t *testing.T, db *DB) {
 
 func TestDB_HasTable(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_HasTable)
+		runWrapDB(t, d, testDB_HasTable, &Foo{})
 	}
 }
 
 func testDB_HasTable(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	if db.HasTable("foos") {
 		t.Error("expected false")
 	}
@@ -440,13 +436,10 @@ func testDB_FirstOrInit(t *testing.T, db *DB) {
 
 func TestDB_Save(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Save)
+		runWrapDB(t, d, testDB_Save, &Foo{})
 	}
 }
 func testDB_Save(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -481,13 +474,10 @@ func testDB_Save(t *testing.T, db *DB) {
 
 func TestDB_Update(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Update)
+		runWrapDB(t, d, testDB_Update, &Foo{})
 	}
 }
 func testDB_Update(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -522,13 +512,10 @@ func testDB_Update(t *testing.T, db *DB) {
 
 func TestDB_Assign(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Update)
+		runWrapDB(t, d, testDB_Assign, &fixture.User{})
 	}
 }
 func testDB_Assign(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&fixture.User{})
 	if err != nil {
 		t.Fatal(err)
@@ -548,13 +535,10 @@ func testDB_Assign(t *testing.T, db *DB) {
 
 func TestDB_Pluck(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Pluck)
+		runWrapDB(t, d, testDB_Pluck, &Foo{})
 	}
 }
 func testDB_Pluck(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -579,13 +563,10 @@ func testDB_Pluck(t *testing.T, db *DB) {
 
 func TestDB_Count(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Count)
+		runWrapDB(t, d, testDB_Count, &Foo{})
 	}
 }
 func testDB_Count(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -610,20 +591,12 @@ func testDB_Count(t *testing.T, db *DB) {
 
 func TestDB_AddIndexSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_AddIndexSQL)
+		runWrapDB(t, d, testDB_AddIndexSQL, &Foo{})
 	}
 }
 
 func testDB_AddIndexSQL(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
-	db, err := Open("ql-mem", "test.db")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = db.Close() }()
-	_, err = db.Automigrate(&Foo{})
+	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -645,13 +618,11 @@ func testDB_AddIndexSQL(t *testing.T, db *DB) {
 
 func TestDB_AddIndex(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_AddIndexSQL)
+		runWrapDB(t, d, testDB_AddIndex, &Foo{})
 	}
 }
+
 func testDB_AddIndex(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)

@@ -134,14 +134,12 @@ BEGIN TRANSACTION;
 COMMIT;`
 	o[SaveSQL] = s
 	s = `
-BEGIN TRANSACTION;
-	UPDATE foos SET stuff = $1  WHERE id = $2;
-COMMIT;`
+UPDATE "foos" SET "stuff" = $1  WHERE "foos"."id" = $2
+`
 	o[UpdateSQL] = s
 	s = `
-BEGIN TRANSACTION;
-	INSERT INTO foo (stuff) VALUES ($1);
-COMMIT;`
+INSERT INTO "foo" ("stuff") VALUES ($1) RETURNING "foo"."id";
+`
 	o[SingularTable] = s
 	s = `
 SELECT * FROM "users"   ORDER BY "users"."id" ASC LIMIT 1
@@ -163,7 +161,7 @@ SELECT * FROM "users"  WHERE ("users"."id" = $1) ORDER BY "users"."id" DESC LIMI
 	o[FindSQL1] = s
 	s = `SELECT * FROM "users"   LIMIT 2`
 	o[FindSQL2] = s
-	s = `CREATE INDEX _idx_foo_stuff ON foos(stuff) `
+	s = `CREATE INDEX _idx_foo_stuff ON "foos"("stuff")`
 	o[AddIndexSQL] = s
 	s = `
 BEGIN TRANSACTION;

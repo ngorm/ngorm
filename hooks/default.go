@@ -611,10 +611,12 @@ func UpdateSQL(b *Book, e *engine.Engine) error {
 
 	}
 	var buf bytes.Buffer
-	_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
-	_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
-	_, _ = buf.WriteString("COMMIT;")
-	e.Scope.SQL = buf.String()
+	if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
+		_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+		_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
+		_, _ = buf.WriteString("COMMIT;")
+		e.Scope.SQL = buf.String()
+	}
 	return nil
 }
 

@@ -885,7 +885,10 @@ func (db *DB) AddIndex(indexName string, columns ...string) (sql.Result, error) 
 	if err != nil {
 		return nil, err
 	}
-	return db.ExecTx(util.WrapTX(sql.Q), sql.Args...)
+	if isQL(db) {
+		return db.ExecTx(util.WrapTX(sql.Q), sql.Args...)
+	}
+	return db.SQLCommon().Exec(sql.Q, sql.Args...)
 }
 
 // DropTableIfExists drop table if it is exist
