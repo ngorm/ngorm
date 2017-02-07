@@ -4,6 +4,7 @@ package hooks
 import (
 	"bytes"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"reflect"
@@ -778,4 +779,366 @@ func Delete(b *Book, e *engine.Engine) error {
 		return errors.New("missing after delete hook")
 	}
 	return ad.Exec(b, e)
+}
+
+func Preload(b *Book, e *engine.Engine) error {
+	if e.Search.Preload == nil {
+		return nil
+	}
+
+	preloadedMap := map[string]bool{}
+	fields, err := scope.Fields(e, e.Scope.Value)
+	if err != nil {
+		return err
+	}
+
+	for _, preload := range e.Search.Preload {
+		var (
+			preloadFields = strings.Split(preload.Schema, ".")
+			cs            = e
+			currentFields = fields
+		)
+
+		for idx, preloadField := range preloadFields {
+			var conds []interface{}
+
+			if cs == nil {
+				continue
+			}
+
+			// if not preloaded
+			if preloadKey := strings.Join(preloadFields[:idx+1], "."); !preloadedMap[preloadKey] {
+
+				// assign search conditions to last preload
+				if idx == len(preloadFields)-1 {
+					//currentPreloadConditions = preload.Conditions
+				}
+
+				for _, field := range currentFields {
+					if field.Name != preloadField || field.Relationship == nil {
+						continue
+					}
+
+					switch field.Relationship.Kind {
+					case "has_one":
+						err = PreloadHasOne(b, cs, field, conds)
+						if err != nil {
+							return err
+						}
+					case "has_many":
+						//cs.handleHasManyPreload(field, currentPreloadConditions)
+					case "belongs_to":
+						//cs.handleBelongsToPreload(field, currentPreloadConditions)
+					case "many_to_many":
+						//cs.handleManyToManyPreload(field, currentPreloadConditions)
+					default:
+						return errors.New("unsupported relation")
+					}
+
+					preloadedMap[preloadKey] = true
+					break
+				}
+
+				if !preloadedMap[preloadKey] {
+					m, err := scope.GetModelStruct(e, e.Scope.Value)
+					if err != nil {
+						return err
+					}
+					return fmt.Errorf("can't preload field %s for %s",
+						preloadField, m.ModelType)
+				}
+			}
+
+			// preload next level
+			if idx < len(preloadFields)-1 {
+				cs, err = ColumnAsScope(cs, preloadField)
+				if err != nil {
+					return err
+				}
+				currentFields, err = scope.Fields(cs, cs.Scope.Value)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func ColumnAsScope(e *engine.Engine, column string) (*engine.Engine, error) {
+	iv := reflect.ValueOf(e.Scope.Value)
+	if iv.Kind() == reflect.Ptr {
+		iv = iv.Elem()
+	}
+
+	switch iv.Kind() {
+	case reflect.Slice:
+		m, err := scope.GetModelStruct(e, e.Scope.Value)
+		if err != nil {
+			return nil, err
+		}
+		if fieldStruct, ok := m.ModelType.FieldByName(column); ok {
+			fieldType := fieldStruct.Type
+			if fieldType.Kind() == reflect.Slice || fieldType.Kind() == reflect.Ptr {
+				fieldType = fieldType.Elem()
+			}
+
+			// a map of results
+			rm := map[interface{}]bool{}
+
+			results := reflect.New(reflect.SliceOf(reflect.PtrTo(fieldType))).Elem()
+
+			for i := 0; i < iv.Len(); i++ {
+				result := iv.Index(i)
+				if result.Kind() == reflect.Ptr {
+					result = result.Elem()
+				}
+				result = result.FieldByName(column)
+				if result.Kind() == reflect.Ptr {
+					result = result.Elem()
+				}
+				if result.Kind() == reflect.Slice {
+					for j := 0; j < result.Len(); j++ {
+						if elem := result.Index(j); elem.CanAddr() && rm[elem.Addr()] != true {
+							rm[elem.Addr()] = true
+							results = reflect.Append(results, elem.Addr())
+						}
+					}
+				} else if result.CanAddr() && rm[result.Addr()] != true {
+					rm[result.Addr()] = true
+					results = reflect.Append(results, result.Addr())
+				}
+			}
+			ne := cloneEngine(e)
+			ne.Scope.Value = results.Interface()
+			return ne, nil
+		}
+	case reflect.Struct:
+		if field := iv.FieldByName(column); field.CanAddr() {
+			ne := cloneEngine(e)
+			ne.Scope.Value = field.Addr().Interface()
+			return ne, nil
+		}
+	}
+	return nil, errors.New("can get engine out of column " + column)
+}
+
+func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
+	rel := field.Relationship
+
+	// get relations's primary keys
+	primaryKeys := ColumnAsArray(rel.AssociationForeignFieldNames, e.Scope.Value)
+	if len(primaryKeys) == 0 {
+		return nil
+	}
+
+	// preload conditions
+	pdb, pCond := PreloadDBWithConditions(e, conditions)
+
+	// find relations
+	query := fmt.Sprintf("%v IN (%v)",
+		toQueryCondition(e, rel.ForeignDBNames), toQueryMarks(primaryKeys))
+	values := toQueryValues(primaryKeys)
+	if rel.PolymorphicType != "" {
+		query += fmt.Sprintf(" AND %v = ?", scope.Quote(e, rel.PolymorphicDBName))
+		values = append(values, rel.PolymorphicValue)
+	}
+
+	results := makeSlice(field.Struct.Type)
+	//scope.Err(pdb.Where(query, values...).Find(results, pCond...).Error)
+	search.Where(pdb, query, values...)
+	search.Inline(pdb, pCond...)
+	pdb.Scope.Value = results
+	q, ok := b.Query.Get(model.Query)
+	if !ok {
+		return errors.New("missing query hook")
+	}
+	err := q.Exec(b, pdb)
+	if err != nil {
+		return err
+	}
+
+	// assign find results
+	rVal := reflect.ValueOf(results)
+	if rVal.Kind() == reflect.Ptr {
+		rVal = rVal.Elem()
+	}
+	iScopeVal := reflect.ValueOf(e.Scope.Value)
+	if iScopeVal.Kind() == reflect.Ptr {
+		iScopeVal = iScopeVal.Elem()
+	}
+
+	if iScopeVal.Kind() == reflect.Slice {
+		for j := 0; j < iScopeVal.Len(); j++ {
+			for i := 0; i < rVal.Len(); i++ {
+				result := rVal.Index(i)
+				foreignValues := getValueFromFields(result, rel.ForeignFieldNames)
+				iVal := iScopeVal.Index(j)
+				if iVal.Kind() == reflect.Ptr {
+					iVal = iVal.Elem()
+				}
+				if equalAsString(getValueFromFields(iVal, rel.AssociationForeignFieldNames), foreignValues) {
+					iVal.FieldByName(field.Name).Set(result)
+					break
+				}
+			}
+		}
+	} else {
+		for i := 0; i < rVal.Len(); i++ {
+			result := rVal.Index(i)
+			err := field.Set(result)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func equalAsString(a interface{}, b interface{}) bool {
+	return toString(a) == toString(b)
+}
+
+func toString(str interface{}) string {
+	if values, ok := str.([]interface{}); ok {
+		var results []string
+		for _, value := range values {
+			results = append(results, toString(value))
+		}
+		return strings.Join(results, "_")
+	} else if bytes, ok := str.([]byte); ok {
+		return string(bytes)
+	} else if reflectValue := reflect.Indirect(reflect.ValueOf(str)); reflectValue.IsValid() {
+		return fmt.Sprintf("%v", reflectValue.Interface())
+	}
+	return ""
+}
+func getValueFromFields(value reflect.Value, fieldNames []string) (results []interface{}) {
+	// If value is a nil pointer, Indirect returns a zero Value!
+	// Therefor we need to check for a zero value,
+	// as FieldByName could panic
+	if indirectValue := reflect.Indirect(value); indirectValue.IsValid() {
+		for _, fieldName := range fieldNames {
+			if fieldValue := indirectValue.FieldByName(fieldName); fieldValue.IsValid() {
+				result := fieldValue.Interface()
+				if r, ok := result.(driver.Valuer); ok {
+					result, _ = r.Value()
+				}
+				results = append(results, result)
+			}
+		}
+	}
+	return
+}
+func makeSlice(elemType reflect.Type) interface{} {
+	if elemType.Kind() == reflect.Slice {
+		elemType = elemType.Elem()
+	}
+	sliceType := reflect.SliceOf(elemType)
+	slice := reflect.New(sliceType)
+	slice.Elem().Set(reflect.MakeSlice(sliceType, 0, 0))
+	return slice.Interface()
+}
+func toQueryValues(values [][]interface{}) (results []interface{}) {
+	for _, value := range values {
+		for _, v := range value {
+			results = append(results, v)
+		}
+	}
+	return
+}
+func toQueryMarks(primaryValues [][]interface{}) string {
+	var results []string
+	for _, primaryValue := range primaryValues {
+		var marks []string
+		for _, _ = range primaryValue {
+			marks = append(marks, "?")
+		}
+
+		if len(marks) > 1 {
+			results = append(results, fmt.Sprintf("(%v)", strings.Join(marks, ",")))
+		} else {
+			results = append(results, strings.Join(marks, ""))
+		}
+	}
+	return strings.Join(results, ",")
+}
+
+func toQueryCondition(e *engine.Engine, columns []string) string {
+	var newColumns []string
+	for _, column := range columns {
+		newColumns = append(newColumns, scope.Quote(e, column))
+	}
+
+	if len(columns) > 1 {
+		return fmt.Sprintf("(%v)", strings.Join(newColumns, ","))
+	}
+	return strings.Join(newColumns, ",")
+}
+
+func ColumnAsArray(columns []string, values ...interface{}) (results [][]interface{}) {
+	for _, value := range values {
+		indirectValue := reflect.ValueOf(value)
+		if indirectValue.Kind() == reflect.Ptr {
+			indirectValue = indirectValue.Elem()
+		}
+
+		switch indirectValue.Kind() {
+		case reflect.Slice:
+			for i := 0; i < indirectValue.Len(); i++ {
+				var result []interface{}
+				object := indirectValue.Index(i)
+				if object.Kind() == reflect.Ptr {
+					object = object.Elem()
+				}
+				var hasValue = false
+				for _, column := range columns {
+					field := object.FieldByName(column)
+					if hasValue || !util.IsBlank(field) {
+						hasValue = true
+					}
+					result = append(result, field.Interface())
+				}
+
+				if hasValue {
+					results = append(results, result)
+				}
+			}
+		case reflect.Struct:
+			var result []interface{}
+			var hasValue = false
+			for _, column := range columns {
+				field := indirectValue.FieldByName(column)
+				if hasValue || !util.IsBlank(field) {
+					hasValue = true
+				}
+				result = append(result, field.Interface())
+			}
+
+			if hasValue {
+				results = append(results, result)
+			}
+		}
+	}
+
+	return
+}
+
+func PreloadDBWithConditions(e *engine.Engine, conditions []interface{}) (*engine.Engine, []interface{}) {
+	var (
+		preloadDB         = cloneEngine(e)
+		preloadConditions []interface{}
+	)
+
+	for _, condition := range conditions {
+		/*
+			if scopes, ok := condition.(func(*DB) *DB); ok {
+				preloadDB = scopes(preloadDB)
+			} else {
+				preloadConditions = append(preloadConditions, condition)
+			}
+		*/
+		preloadConditions = append(preloadConditions, condition)
+	}
+	return preloadDB, preloadConditions
 }
