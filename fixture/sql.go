@@ -164,12 +164,10 @@ SELECT * FROM "users"  WHERE ("users"."id" = $1) ORDER BY "users"."id" DESC LIMI
 	s = `CREATE INDEX _idx_foo_stuff ON "foos"("stuff")`
 	o[AddIndexSQL] = s
 	s = `
-BEGIN TRANSACTION;
-	DELETE FROM foos  WHERE id = $1 ;
-COMMIT;
+DELETE FROM "foos"  WHERE "foos"."id" = $1
 `
 	o[DeleteSQL] = s
-	s = `CREATE UNIQUE INDEX idx_foo_stuff ON foos(stuff) `
+	s = `CREATE UNIQUE INDEX idx_foo_stuff ON "foos"("stuff")`
 	o[AddUniqueIndex] = s
 	return o
 }

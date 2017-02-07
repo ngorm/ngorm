@@ -680,24 +680,30 @@ func DeleteSQL(b *Book, e *engine.Engine) error {
 		if err != nil {
 			return err
 		}
-		e.Scope.SQL = util.WrapTX(fmt.Sprintf(
+		e.Scope.SQL = fmt.Sprintf(
 			"UPDATE %v SET deleted_at=%v%v%v",
 			scope.QuotedTableName(e, e.Scope.Value),
 			scope.AddToVars(e, e.Now()),
 			util.AddExtraSpaceIfExist(c),
 			util.AddExtraSpaceIfExist(extraOption),
-		))
+		)
+		if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
+			e.Scope.SQL = util.WrapTX(e.Scope.SQL)
+		}
 	} else {
 		c, err := builder.CombinedCondition(e, e.Scope.Value)
 		if err != nil {
 			return err
 		}
-		e.Scope.SQL = util.WrapTX(fmt.Sprintf(
+		e.Scope.SQL = fmt.Sprintf(
 			"DELETE FROM %v%v%v",
 			scope.QuotedTableName(e, e.Scope.Value),
 			util.AddExtraSpaceIfExist(c),
 			util.AddExtraSpaceIfExist(extraOption),
-		))
+		)
+		if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
+			e.Scope.SQL = util.WrapTX(e.Scope.SQL)
+		}
 	}
 	return nil
 }
@@ -736,24 +742,37 @@ func Delete(b *Book, e *engine.Engine) error {
 	if err != nil {
 		return err
 	}
-	tx, err := e.SQLDB.Begin()
-	if err != nil {
-		return err
+	if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
+		tx, err := e.SQLDB.Begin()
+		if err != nil {
+			return err
+		}
+		result, err := tx.Exec(e.Scope.SQL, e.Scope.SQLVars...)
+		if err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+		a, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		e.RowsAffected = a
+		err = tx.Commit()
+		if err != nil {
+			return err
+		}
+	} else {
+		result, err := e.SQLDB.Exec(e.Scope.SQL, e.Scope.SQLVars...)
+		if err != nil {
+			return err
+		}
+		a, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		e.RowsAffected = a
 	}
-	result, err := tx.Exec(e.Scope.SQL, e.Scope.SQLVars...)
-	if err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	a, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	e.RowsAffected = a
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
+
 	ad, ok := b.Delete.Get(model.AfterDelete)
 	if !ok {
 		return errors.New("missing after delete hook")

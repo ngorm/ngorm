@@ -963,7 +963,10 @@ func (db *DB) AddUniqueIndex(indexName string, columns ...string) (sql.Result, e
 	if err != nil {
 		return nil, err
 	}
-	return db.ExecTx(util.WrapTX(db.e.Scope.SQL), db.e.Scope.SQLVars...)
+	if isQL(db) {
+		return db.ExecTx(util.WrapTX(db.e.Scope.SQL), db.e.Scope.SQLVars...)
+	}
+	return db.SQLCommon().Exec(db.e.Scope.SQL, db.e.Scope.SQLVars...)
 }
 
 // RemoveIndex remove index with name
@@ -982,9 +985,12 @@ func (db *DB) DropColumn(column string) (sql.Result, error) {
 	}
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v DROP COLUMN %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column))
-	return db.ExecTx(
-		util.WrapTX(db.e.Scope.SQL), db.e.Scope.SQLVars...,
-	)
+	if isQL(db) {
+		return db.ExecTx(
+			util.WrapTX(db.e.Scope.SQL), db.e.Scope.SQLVars...,
+		)
+	}
+	return db.SQLCommon().Exec(db.e.Scope.SQL, db.e.Scope.SQLVars...)
 }
 
 // ModifyColumn modify column to type

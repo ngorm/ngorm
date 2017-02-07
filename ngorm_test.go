@@ -644,9 +644,6 @@ func TestDB_DeleteSQL(t *testing.T) {
 }
 
 func testDB_DeleteSQL(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -664,14 +661,11 @@ func testDB_DeleteSQL(t *testing.T, db *DB) {
 
 func TestDB_Delete(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Delete)
+		runWrapDB(t, d, testDB_Delete, &Foo{})
 	}
 }
 
 func testDB_Delete(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -698,14 +692,11 @@ func testDB_Delete(t *testing.T, db *DB) {
 
 func TestDB_AddUniqueIndex(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_AddUniqueIndex)
+		runWrapDB(t, d, testDB_AddUniqueIndex, &Foo{})
 	}
 }
 
 func testDB_AddUniqueIndex(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -729,14 +720,11 @@ func testDB_AddUniqueIndex(t *testing.T, db *DB) {
 
 func TestDB_RemoveIndex(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_RemoveIndex)
+		runWrapDB(t, d, testDB_RemoveIndex, &Foo{})
 	}
 }
 
 func testDB_RemoveIndex(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -761,14 +749,11 @@ func testDB_RemoveIndex(t *testing.T, db *DB) {
 
 func TestDB_DropColumn(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_DropColumn)
+		runWrapDB(t, d, testDB_DropColumn, &Foo{})
 	}
 }
 
 func testDB_DropColumn(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -785,14 +770,11 @@ func testDB_DropColumn(t *testing.T, db *DB) {
 
 func TestDB_FirstOrCreate(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_FirstOrCreate)
+		runWrapDB(t, d, testDB_FirstOrCreate, &Foo{})
 	}
 }
 
 func testDB_FirstOrCreate(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
