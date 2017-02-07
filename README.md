@@ -32,7 +32,7 @@ Documentation https://godoc.org/github.com/ngorm/ngorm
 Database support
 
 - [x] [ql](https://godoc.org/github.com/cznic/ql)
-- [ ] postgresql
+- [x] postgresql
 - [ ] mysql
 - [ ] mssql
 - [ ] sqlite
