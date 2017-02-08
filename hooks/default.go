@@ -826,9 +826,15 @@ func Preload(b *Book, e *engine.Engine) error {
 							return err
 						}
 					case "has_many":
-						//cs.handleHasManyPreload(field, currentPreloadConditions)
+						err = PreloadHasMany(b, cs, field, conds)
+						if err != nil {
+							return err
+						}
 					case "belongs_to":
-						//cs.handleBelongsToPreload(field, currentPreloadConditions)
+						err = PreloadBelogsTo(b, cs, field, conds)
+						if err != nil {
+							return err
+						}
 					case "many_to_many":
 						//cs.handleManyToManyPreload(field, currentPreloadConditions)
 					default:
@@ -865,6 +871,69 @@ func Preload(b *Book, e *engine.Engine) error {
 	return nil
 }
 
+func PreloadBelogsTo(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
+	relation := field.Relationship
+
+	// preload conditions
+	pdb, pCond := PreloadDBWithConditions(e, conditions)
+
+	// get relations's primary keys
+	primaryKeys := ColumnAsArray(relation.ForeignFieldNames, e.Scope.Value)
+	if len(primaryKeys) == 0 {
+		return nil
+	}
+
+	// find relations
+	query := fmt.Sprintf("%v IN (%v)",
+		toQueryCondition(e, relation.AssociationForeignDBNames),
+		toQueryMarks(primaryKeys))
+	values := toQueryValues(primaryKeys)
+
+	results := makeSlice(field.Struct.Type)
+	search.Where(pdb, query, values...)
+	search.Inline(pdb, pCond...)
+	pdb.Scope.Value = results
+	q, ok := b.Query.Get(model.Query)
+	if !ok {
+		return errors.New("missing query hook")
+	}
+	err := q.Exec(b, pdb)
+	if err != nil {
+		return err
+	}
+
+	// assign find results
+	rVal := reflect.ValueOf(results)
+	if rVal.Kind() == reflect.Ptr {
+		rVal = rVal.Elem()
+	}
+	iScopeVal := reflect.ValueOf(e.Scope.Value)
+	if iScopeVal.Kind() == reflect.Ptr {
+		iScopeVal = iScopeVal.Elem()
+	}
+
+	for i := 0; i < rVal.Len(); i++ {
+		result := rVal.Index(i)
+		if iScopeVal.Kind() == reflect.Slice {
+			value := getValueFromFields(result, relation.AssociationForeignFieldNames)
+			for j := 0; j < iScopeVal.Len(); j++ {
+				object := iScopeVal.Index(j)
+				if object.Kind() == reflect.Ptr {
+					object = object.Elem()
+				}
+				if equalAsString(getValueFromFields(object, relation.ForeignFieldNames), value) {
+					object.FieldByName(field.Name).Set(result)
+				}
+			}
+		} else {
+			err := field.Set(result)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 func ColumnAsScope(e *engine.Engine, column string) (*engine.Engine, error) {
 	iv := reflect.ValueOf(e.Scope.Value)
 	if iv.Kind() == reflect.Ptr {
@@ -945,7 +1014,6 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 	}
 
 	results := makeSlice(field.Struct.Type)
-	//scope.Err(pdb.Where(query, values...).Find(results, pCond...).Error)
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
 	pdb.Scope.Value = results
@@ -990,6 +1058,80 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 			if err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
+	relation := field.Relationship
+
+	// get relations's primary keys
+	primaryKeys := ColumnAsArray(relation.AssociationForeignFieldNames, e.Scope.Value)
+	if len(primaryKeys) == 0 {
+		return nil
+	}
+
+	// preload conditions
+	pdb, pCond := PreloadDBWithConditions(e, conditions)
+
+	// find relations
+	query := fmt.Sprintf("%v IN (%v)",
+		toQueryCondition(e, relation.ForeignDBNames), toQueryMarks(primaryKeys))
+	values := toQueryValues(primaryKeys)
+	if relation.PolymorphicType != "" {
+		query += fmt.Sprintf(" AND %v = ?",
+			scope.Quote(e, relation.PolymorphicDBName))
+		values = append(values, relation.PolymorphicValue)
+	}
+
+	results := makeSlice(field.Struct.Type)
+	search.Where(pdb, query, values...)
+	search.Inline(pdb, pCond...)
+	pdb.Scope.Value = results
+	q, ok := b.Query.Get(model.Query)
+	if !ok {
+		return errors.New("missing query hook")
+	}
+	err := q.Exec(b, pdb)
+	if err != nil {
+		return err
+	}
+	// assign find results
+	rVal := reflect.ValueOf(results)
+	if rVal.Kind() == reflect.Ptr {
+		rVal = rVal.Elem()
+	}
+	iScopeVal := reflect.ValueOf(e.Scope.Value)
+	if iScopeVal.Kind() == reflect.Ptr {
+		iScopeVal = iScopeVal.Elem()
+	}
+
+	if iScopeVal.Kind() == reflect.Slice {
+		preloadMap := make(map[string][]reflect.Value)
+		for i := 0; i < rVal.Len(); i++ {
+			result := rVal.Index(i)
+			foreignValues := getValueFromFields(result, relation.ForeignFieldNames)
+			preloadMap[toString(foreignValues)] = append(preloadMap[toString(foreignValues)], result)
+		}
+
+		for j := 0; j < iScopeVal.Len(); j++ {
+			object := iScopeVal.Index(j)
+			if object.Kind() == reflect.Ptr {
+				object = object.Elem()
+			}
+			objectRealValue := getValueFromFields(object, relation.AssociationForeignFieldNames)
+			f := object.FieldByName(field.Name)
+			if results, ok := preloadMap[toString(objectRealValue)]; ok {
+				f.Set(reflect.Append(f, results...))
+			} else {
+				f.Set(reflect.MakeSlice(f.Type(), 0, 0))
+			}
+		}
+	} else {
+		err := field.Set(rVal)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
