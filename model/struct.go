@@ -55,6 +55,7 @@ const (
 	Delete                  = "ngorm:delete"
 	DeleteSQL               = "ngorm:delete_sql"
 	SaveAssociations        = "ngorm:save_associations"
+	Preload                 = "ngorm:preload"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a

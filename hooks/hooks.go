@@ -91,6 +91,7 @@ func DefaultBook() *Book {
 	b.Query.Set(HookFunc(model.HookQueryExec, QueryExec))
 	b.Query.Set(HookFunc(model.HookQuerySQL, QuerySQL))
 	b.Query.Set(HookFunc(model.HookAfterQuery, AfterQuery))
+	b.Query.Set(HookFunc(model.Preload, Preload))
 
 	// Update hooks
 	b.Update.Set(HookFunc(model.BeforeUpdate, BeforeUpdate))

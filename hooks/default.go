@@ -836,7 +836,10 @@ func Preload(b *Book, e *engine.Engine) error {
 							return err
 						}
 					case "many_to_many":
-						//cs.handleManyToManyPreload(field, currentPreloadConditions)
+						err = PreloadManyToMany(b, cs, field, conds)
+						if err != nil {
+							return err
+						}
 					default:
 						return errors.New("unsupported relation")
 					}
@@ -933,6 +936,193 @@ func PreloadBelogsTo(b *Book, e *engine.Engine, field *model.Field, conditions [
 		}
 	}
 	return nil
+}
+
+func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
+	var (
+		relation         = field.Relationship
+		joinTableHandler = relation.JoinTableHandler
+		fieldType        = field.Struct.Type.Elem()
+		foreignKeyValue  interface{}
+		foreignKeyType   = reflect.ValueOf(&foreignKeyValue).Type()
+		linkHash         = map[string][]reflect.Value{}
+		isPtr            bool
+	)
+
+	if fieldType.Kind() == reflect.Ptr {
+		isPtr = true
+		fieldType = fieldType.Elem()
+	}
+
+	var sourceKeys = []string{}
+	for _, key := range joinTableHandler.Source.ForeignKeys {
+		sourceKeys = append(sourceKeys, key.DBName)
+	}
+
+	// preload conditions
+	preloadDB, preloadConditions := PreloadDBWithConditions(e, conditions)
+
+	// generate query with join table
+	newScope := cloneEngine(e)
+	newScope.Scope.Value = reflect.New(fieldType).Interface()
+	search.Table(newScope, scope.TableName(newScope, newScope.Scope.Value))
+	search.Select(newScope, "*")
+
+	preloadDB, err := JoinWith(preloadDB, joinTableHandler, joinTableHandler, e.Scope.Value)
+	if err != nil {
+		return err
+	}
+
+	// preload inline conditions
+	if len(preloadConditions) > 0 {
+		search.Where(preloadDB, preloadConditions[0], preloadConditions[1:]...)
+	}
+
+	err = builder.PrepareQuery(preloadDB, preloadDB.Scope.Value)
+	if err != nil {
+		return err
+	}
+
+	rows, err := preloadDB.SQLDB.Query(preloadDB.Scope.SQL, preloadDB.Scope.SQLVars...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	columns, _ := rows.Columns()
+	for rows.Next() {
+		var (
+			elem = reflect.New(fieldType).Elem()
+		)
+		fields, err := scope.Fields(e, elem.Addr().Interface())
+		if err != nil {
+			return err
+		}
+
+		// register foreign keys in join tables
+		var joinTableFields []*model.Field
+		for _, sourceKey := range sourceKeys {
+			joinTableFields = append(joinTableFields, &model.Field{
+				StructField: &model.StructField{DBName: sourceKey, IsNormal: true},
+				Field:       reflect.New(foreignKeyType).Elem()})
+		}
+
+		scope.Scan(rows, columns, append(fields, joinTableFields...))
+
+		var foreignKeys = make([]interface{}, len(sourceKeys))
+		// generate hashed forkey keys in join table
+		for idx, joinTableField := range joinTableFields {
+			if !joinTableField.Field.IsNil() {
+				foreignKeys[idx] = joinTableField.Field.Elem().Interface()
+			}
+		}
+		hashedSourceKeys := toString(foreignKeys)
+
+		if isPtr {
+			linkHash[hashedSourceKeys] = append(linkHash[hashedSourceKeys], elem.Addr())
+		} else {
+			linkHash[hashedSourceKeys] = append(linkHash[hashedSourceKeys], elem)
+		}
+	}
+
+	// assign find results
+	indirectScopeValue := reflect.ValueOf(e.Scope.Value)
+	if indirectScopeValue.Kind() == reflect.Ptr {
+		indirectScopeValue = indirectScopeValue.Elem()
+	}
+	var (
+		fieldsSourceMap   = map[string][]reflect.Value{}
+		foreignFieldNames = []string{}
+	)
+
+	for _, dbName := range relation.ForeignFieldNames {
+		if field, err := scope.FieldByName(e, e.Scope.Value, dbName); err == nil {
+			foreignFieldNames = append(foreignFieldNames, field.Name)
+		}
+	}
+
+	if indirectScopeValue.Kind() == reflect.Slice {
+		for j := 0; j < indirectScopeValue.Len(); j++ {
+			object := indirectScopeValue.Index(j)
+			if object.Kind() == reflect.Ptr {
+				object = object.Elem()
+			}
+			key := toString(getValueFromFields(object, foreignFieldNames))
+			fieldsSourceMap[key] = append(fieldsSourceMap[key], object.FieldByName(field.Name))
+		}
+	} else if indirectScopeValue.IsValid() {
+		key := toString(getValueFromFields(indirectScopeValue, foreignFieldNames))
+		fieldsSourceMap[key] = append(fieldsSourceMap[key], indirectScopeValue.FieldByName(field.Name))
+	}
+	for source, link := range linkHash {
+		for i, field := range fieldsSourceMap[source] {
+			//If not 0 this means Value is a pointer and we already added preloaded models to it
+			if fieldsSourceMap[source][i].Len() != 0 {
+				continue
+			}
+			field.Set(reflect.Append(fieldsSourceMap[source][i], link...))
+		}
+
+	}
+	return nil
+}
+
+func JoinWith(e *engine.Engine, s, handler *model.JoinTableHandler, source interface{}) (*engine.Engine, error) {
+	ne := cloneEngine(e)
+	ne.Scope.Value = source
+	tableName := handler.TableName
+	quotedTableName := scope.Quote(ne, tableName)
+	var (
+		joinConditions []string
+		values         []interface{}
+	)
+	m, err := scope.GetModelStruct(ne, source)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.Source.ModelType == m.ModelType {
+		destinationTableName := scope.QuotedTableName(ne, reflect.New(s.Destination.ModelType).Interface())
+		for _, foreignKey := range s.Destination.ForeignKeys {
+			joinConditions = append(joinConditions, fmt.Sprintf("%v.%v = %v.%v",
+				quotedTableName, scope.Quote(e, foreignKey.DBName),
+				destinationTableName, scope.Quote(ne, foreignKey.AssociationDBName)))
+		}
+
+		var foreignDBNames []string
+		var foreignFieldNames []string
+
+		for _, foreignKey := range s.Source.ForeignKeys {
+			foreignDBNames = append(foreignDBNames, foreignKey.DBName)
+			if field, err := scope.FieldByName(ne, source, foreignKey.AssociationDBName); err == nil {
+				foreignFieldNames = append(foreignFieldNames, field.Name)
+			}
+		}
+
+		foreignFieldValues := ColumnAsArray(foreignFieldNames, e.Scope.Value)
+
+		var condString string
+		if len(foreignFieldValues) > 0 {
+			var quotedForeignDBNames []string
+			for _, dbName := range foreignDBNames {
+				quotedForeignDBNames = append(quotedForeignDBNames, tableName+"."+dbName)
+			}
+
+			condString = fmt.Sprintf("%v IN (%v)",
+				toQueryCondition(e, quotedForeignDBNames),
+				toQueryMarks(foreignFieldValues))
+
+			keys := ColumnAsArray(foreignFieldNames, e.Scope.Value)
+			values = append(values, toQueryValues(keys))
+		} else {
+			condString = fmt.Sprintf("1 <> 1")
+		}
+		search.Join(ne, fmt.Sprintf("INNER JOIN %v ON %v",
+			quotedTableName, strings.Join(joinConditions, " AND ")))
+		search.Where(ne, condString, toQueryValues(foreignFieldValues)...)
+		return ne, nil
+	}
+	return nil, errors.New("wrong source type for join table handler")
 }
 func ColumnAsScope(e *engine.Engine, column string) (*engine.Engine, error) {
 	iv := reflect.ValueOf(e.Scope.Value)
