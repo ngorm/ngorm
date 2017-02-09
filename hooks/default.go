@@ -35,6 +35,14 @@ func Query(b *Book, e *engine.Engine) error {
 	if !ok {
 		return errors.New("missing query exec hook")
 	}
+	err = exec.Exec(b, e)
+	if err != nil {
+		return err
+	}
+	exec, ok = b.Query.Get(model.HookAfterQuery)
+	if !ok {
+		return nil
+	}
 	return exec.Exec(b, e)
 }
 
@@ -118,6 +126,12 @@ func QuerySQL(b *Book, e *engine.Engine) error {
 //AfterQuery executes any call back after the  Qeery hook has been executed. Any
 //callback registered with qeky model.HookQueryAfterFind will be executed.
 func AfterQuery(b *Book, e *engine.Engine) error {
+	if e.Search.Preload != nil {
+		err := Preload(b, e)
+		if err != nil {
+			return err
+		}
+	}
 	af, ok := b.Query.Get(model.HookAfterFindQuery)
 	if ok {
 		return af.Exec(b, e)

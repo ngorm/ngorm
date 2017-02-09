@@ -1,6 +1,7 @@
 package ngorm
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -794,5 +795,166 @@ func testDB_FirstOrCreate(t *testing.T, db *DB) {
 	}
 	if second.ID != first.ID {
 		t.Errorf("expected %d got %d", first.ID, second.ID)
+	}
+}
+
+func TestDB_Preload(t *testing.T) {
+	for _, d := range AllTestDB() {
+		runWrapDB(t, d, testDB_Preload,
+			&fixture.User{},
+			&fixture.Email{},
+			&fixture.Language{},
+			&fixture.Company{},
+			&fixture.CreditCard{},
+			&fixture.Address{},
+		)
+	}
+}
+
+func testDB_Preload(t *testing.T, db *DB) {
+	//if isQL(db) {
+	//t.Skip()
+	//}
+	t.Skip()
+	_, err := db.Begin().Automigrate(
+		&fixture.User{},
+		&fixture.Email{},
+		&fixture.Language{},
+		&fixture.Company{},
+		&fixture.CreditCard{},
+		&fixture.Address{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	user1 := getPreparedUser(db, "user1", "Preload")
+	err = db.Begin().Save(user1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	preloadDB := db.Begin().Where("role = ?", "Preload").Preload("BillingAddress").Preload("ShippingAddress").
+		Preload("CreditCard").Preload("Emails").Preload("Company")
+	var user fixture.User
+	err = preloadDB.Find(&user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkUserHasPreloadData(db, user, t)
+
+	user2 := getPreparedUser(db, "user2", "Preload")
+	err = db.Begin().Save(user2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	user3 := getPreparedUser(db, "user3", "Preload")
+	err = db.Begin().Save(user3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var users []fixture.User
+	preloadDB = db.Begin().Where("role = ?", "Preload").Preload("BillingAddress").Preload("ShippingAddress").
+		Preload("CreditCard").Preload("Emails").Preload("Company")
+	err = preloadDB.Find(&users)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, user := range users {
+		checkUserHasPreloadData(db, user, t)
+	}
+
+	var users2 []*fixture.User
+	preloadDB = db.Begin().Where("role = ?", "Preload").Preload("BillingAddress").Preload("ShippingAddress").
+		Preload("CreditCard").Preload("Emails").Preload("Company")
+	err = preloadDB.Find(&users2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, user := range users2 {
+		checkUserHasPreloadData(db, *user, t)
+	}
+
+	var users3 []*fixture.User
+	preloadDB = db.Begin().Where("role = ?", "Preload").Preload("BillingAddress").Preload("ShippingAddress").
+		Preload("CreditCard").Preload("Emails").Preload("Company")
+	err = preloadDB.Preload("Emails", "email = ?", user3.Emails[0].Email).Find(&users3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, user := range users3 {
+		if user.Name == user3.Name {
+			if len(user.Emails) != 1 {
+				t.Errorf("should only preload one emails for user3 when with condition")
+			}
+		} else if len(user.Emails) != 0 {
+			t.Errorf("should not preload any emails for other users when with condition")
+		} else if user.Emails == nil {
+			t.Errorf("should return an empty slice to indicate zero results")
+		}
+	}
+}
+
+func checkUserHasPreloadData(db *DB, user fixture.User, t *testing.T) {
+	u := getPreparedUser(db, user.Name, "Preload")
+	if user.BillingAddress.Address1 != u.BillingAddress.Address1 {
+		t.Errorf("Failed to preload %s  BillingAddress", user.Name)
+	}
+
+	if user.ShippingAddress.Address1 != u.ShippingAddress.Address1 {
+		t.Errorf("Failed to preload %s ShippingAddress", user.Name)
+	}
+
+	if user.CreditCard.Number != u.CreditCard.Number {
+		t.Errorf("Failed to preload %s  CreditCard", user.Name)
+	}
+
+	if user.Company.Name != u.Company.Name {
+		t.Errorf("Failed to preload %s Company", user.Name)
+	}
+
+	if len(user.Emails) != len(u.Emails) {
+		t.Errorf("Failed to preload %s Emails", user.Name)
+	} else {
+		var found int
+		for _, e1 := range u.Emails {
+			for _, e2 := range user.Emails {
+				if e1.Email == e2.Email {
+					found++
+					break
+				}
+			}
+		}
+		if found != len(u.Emails) {
+			t.Errorf("Failed to preload %s email details", user.Name)
+		}
+	}
+}
+
+func getPreparedUser(db *DB, name string, role string) *fixture.User {
+	var company fixture.Company
+	err := db.Begin().Where(fixture.Company{Name: role}).FirstOrCreate(&company)
+	if err != nil {
+		panic(err)
+	}
+	return &fixture.User{
+		Name:            name,
+		Age:             20,
+		Role:            fixture.Role{role},
+		BillingAddress:  fixture.Address{Address1: fmt.Sprintf("Billing Address %v", name)},
+		ShippingAddress: fixture.Address{Address1: fmt.Sprintf("Shipping Address %v", name)},
+		CreditCard:      fixture.CreditCard{Number: fmt.Sprintf("123456%v", name)},
+		Emails: []fixture.Email{
+			{Email: fmt.Sprintf("user_%v@example1.com", name)}, {Email: fmt.Sprintf("user_%v@example2.com", name)},
+		},
+		Company: company,
+		Languages: []fixture.Language{
+			{Name: fmt.Sprintf("lang_1_%v", name)},
+			{Name: fmt.Sprintf("lang_2_%v", name)},
+		},
 	}
 }
