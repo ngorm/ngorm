@@ -1,0 +1,22 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "0.1.0",
+    "command": "go",
+    "isShellCommand": true,
+    "showOutput": "always",
+    "options": {
+        "env": {
+            "NGORM_PG_CONN": "postgres://postgres@localhost:5432/ngorm?sslmode=disable"
+        }
+    },
+    "tasks": [
+        {
+            "taskName": "test",
+            "args": [
+                "./..."
+            ],
+            "isTestCommand": true
+        }
+    ]
+}
