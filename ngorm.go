@@ -147,12 +147,6 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 	)
 	ctx, cancel := context.WithCancel(context.Background())
 	h := hooks.DefaultBook()
-	switch dia.GetName() {
-	case "ql", "ql-mem":
-		h.Create.Set(
-			hooks.HookFunc(model.AfterCreate, hooks.QLAfterCreate),
-		)
-	}
 	return &DB{
 		db:        db,
 		dialect:   dia,
@@ -245,7 +239,7 @@ func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
 }
 
 func isQL(db *DB) bool {
-	return db.Dialect().GetName() == "ql" || db.Dialect().GetName() == "ql-mem"
+	return dialects.IsQL(db.Dialect())
 }
 
 //DropTableSQL generates sql query for DROP TABLE. The generated query is
