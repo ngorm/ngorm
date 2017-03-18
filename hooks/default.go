@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ngorm/ngorm/builder"
+	"github.com/ngorm/ngorm/dialects"
 	"github.com/ngorm/ngorm/engine"
 	"github.com/ngorm/ngorm/errmsg"
 	"github.com/ngorm/ngorm/model"
@@ -310,9 +311,18 @@ func CreateExec(b *Book, e *engine.Engine) error {
 	return nil
 }
 
+//AfterCreate executes hooks after Creating records
+func AfterCreate(b *Book, e *engine.Engine) error {
+	if dialects.IsQL(e.Dialect) {
+		return QLAfterCreate(b, e)
+	}
+	return nil
+}
+
 //QLAfterCreate hook executed after a new record has been created. This is for
 //ql dialect use only.
 func QLAfterCreate(b *Book, e *engine.Engine) error {
+
 	ne := cloneEngine(e)
 	ne.Scope.Set(model.IgnoreProtectedAttrs, true)
 	ne.Scope.Set(model.UpdateInterface, util.ToSearchableMap(e.Scope.Value))
