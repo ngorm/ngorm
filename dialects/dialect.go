@@ -119,3 +119,8 @@ func (d *DefaultOpener) Open(dialect string, args ...interface{}) (model.SQLComm
 func Opener() *DefaultOpener {
 	return baseOpener
 }
+
+//IsQl returns true if the dialect is ql
+func IsQL(d Dialect) bool {
+	return d.GetName() == "ql" || d.GetName() == "ql-mem"
+}
