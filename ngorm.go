@@ -67,7 +67,6 @@ import (
 	"github.com/ngorm/ngorm/scope"
 	"github.com/ngorm/ngorm/search"
 	"github.com/ngorm/ngorm/util"
-	"github.com/uber-go/zap"
 )
 
 //Opener is an interface that is used to open up connection to SQL databases.
@@ -142,9 +141,7 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 		return nil, err
 	}
 	dia.SetDB(db)
-	o := zap.New(
-		zap.NewTextEncoder(zap.TextNoTime()), // drop timestamps in tests
-	)
+	o := ""
 	ctx, cancel := context.WithCancel(context.Background())
 	h := hooks.DefaultBook()
 	return &DB{
