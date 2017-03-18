@@ -812,10 +812,6 @@ func TestDB_Preload(t *testing.T) {
 }
 
 func testDB_Preload(t *testing.T, db *DB) {
-	//if isQL(db) {
-	//t.Skip()
-	//}
-	t.Skip()
 	_, err := db.Begin().Automigrate(
 		&fixture.User{},
 		&fixture.Email{},
@@ -824,15 +820,20 @@ func testDB_Preload(t *testing.T, db *DB) {
 		&fixture.CreditCard{},
 		&fixture.Address{},
 	)
+	// if isQL(db) {
+	// 	t.Skip()
+	// }
 	if err != nil {
 		t.Fatal(err)
 	}
-	user1 := getPreparedUser(db, "user1", "Preload")
+	user1, err := getPreparedUser(db, "user1", "Preload")
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = db.Begin().Save(user1)
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	preloadDB := db.Begin().Where("role = ?", "Preload").Preload("BillingAddress").Preload("ShippingAddress").
 		Preload("CreditCard").Preload("Emails").Preload("Company")
 	var user fixture.User
@@ -842,13 +843,19 @@ func testDB_Preload(t *testing.T, db *DB) {
 	}
 	checkUserHasPreloadData(db, user, t)
 
-	user2 := getPreparedUser(db, "user2", "Preload")
+	user2, err := getPreparedUser(db, "user2", "Preload")
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = db.Begin().Save(user2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	user3 := getPreparedUser(db, "user3", "Preload")
+	user3, err := getPreparedUser(db, "user3", "Preload")
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = db.Begin().Save(user3)
 	if err != nil {
 		t.Fatal(err)
@@ -900,7 +907,10 @@ func testDB_Preload(t *testing.T, db *DB) {
 }
 
 func checkUserHasPreloadData(db *DB, user fixture.User, t *testing.T) {
-	u := getPreparedUser(db, user.Name, "Preload")
+	u, err := getPreparedUser(db, user.Name, "Preload")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if user.BillingAddress.Address1 != u.BillingAddress.Address1 {
 		t.Errorf("Failed to preload %s  BillingAddress", user.Name)
 	}
@@ -935,16 +945,16 @@ func checkUserHasPreloadData(db *DB, user fixture.User, t *testing.T) {
 	}
 }
 
-func getPreparedUser(db *DB, name string, role string) *fixture.User {
+func getPreparedUser(db *DB, name string, role string) (*fixture.User, error) {
 	var company fixture.Company
 	err := db.Begin().Where(fixture.Company{Name: role}).FirstOrCreate(&company)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return &fixture.User{
 		Name:            name,
 		Age:             20,
-		Role:            fixture.Role{role},
+		Role:            fixture.Role{Name: role},
 		BillingAddress:  fixture.Address{Address1: fmt.Sprintf("Billing Address %v", name)},
 		ShippingAddress: fixture.Address{Address1: fmt.Sprintf("Shipping Address %v", name)},
 		CreditCard:      fixture.CreditCard{Number: fmt.Sprintf("123456%v", name)},
@@ -956,5 +966,5 @@ func getPreparedUser(db *DB, name string, role string) *fixture.User {
 			{Name: fmt.Sprintf("lang_1_%v", name)},
 			{Name: fmt.Sprintf("lang_2_%v", name)},
 		},
-	}
+	}, nil
 }
