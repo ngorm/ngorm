@@ -238,7 +238,6 @@ func Create(b *Book, e *engine.Engine) error {
 		)
 		e.Scope.SQL = strings.Replace(sql, "$$", "?", -1)
 	}
-
 	return nil
 }
 
@@ -316,7 +315,11 @@ func AfterCreate(b *Book, e *engine.Engine) error {
 	if dialects.IsQL(e.Dialect) {
 		return QLAfterCreate(b, e)
 	}
-	return nil
+	s, ok := b.Update.Get(model.HookSaveAfterAss)
+	if !ok {
+		return fmt.Errorf("missing hook %s", model.HookSaveAfterAss)
+	}
+	return s.Exec(b, e)
 }
 
 //QLAfterCreate hook executed after a new record has been created. This is for
@@ -342,7 +345,15 @@ func QLAfterCreate(b *Book, e *engine.Engine) error {
 	if !ok {
 		return errors.New("missing update exec hook")
 	}
-	return exec.Exec(b, ne)
+	err = exec.Exec(b, ne)
+	if err != nil {
+		return err
+	}
+	s, ok := b.Update.Get(model.HookSaveAfterAss)
+	if !ok {
+		return fmt.Errorf("missing hook %s", model.HookSaveAfterAss)
+	}
+	return s.Exec(b, ne)
 }
 
 func fixWhere(s *model.Scope) error {
@@ -503,6 +514,67 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 							return err
 						}
 					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+//SaveAfterAssociation saves associations on the model
+func SaveAfterAssociation(b *Book, e *engine.Engine) error {
+	if !scope.ShouldSaveAssociation(e) {
+		return nil
+	}
+	fds, err := scope.Fields(e, e.Scope.Value)
+	if err != nil {
+		return err
+	}
+	for _, field := range fds {
+		if ok, rel := scope.SaveFieldAsAssociation(e, field); ok {
+			switch rel.Kind {
+			case "has_many":
+				// pretty.Println(rel)
+				fv := field.Field.Addr()
+				if fv.Kind() == reflect.Ptr {
+					fv = fv.Elem()
+				}
+			case "has_one":
+				fieldValue := field.Field.Addr().Interface()
+				ne := cloneEngine(e)
+				ne.Scope.Value = fieldValue
+				// pretty.Println(rel)
+				if len(rel.ForeignFieldNames) != 0 {
+					// set value's foreign key
+					for idx, fieldName := range rel.ForeignFieldNames {
+						associationForeignName := rel.AssociationForeignFieldNames[idx]
+						for _, fd := range fds {
+							if fd.Name == associationForeignName {
+								err = scope.SetColumn(ne, fieldName, fd.Field.Interface())
+								if err != nil {
+									return err
+								}
+							}
+						}
+					}
+				}
+				c, ok := b.Create.Get(model.HookCreateSQL)
+				if !ok {
+					return errors.New("missing create sql hook")
+				}
+				err = c.Exec(b, ne)
+				if err != nil {
+					return err
+				}
+				// fmt.Println(ne.Scope.SQL)
+				// fmt.Println(ne.Scope.SQLVars)
+				ce, ok := b.Create.Get(model.HookCreateExec)
+				if !ok {
+					return errors.New("missing create exec hook")
+				}
+				err = ce.Exec(b, ne)
+				if err != nil {
+					return err
 				}
 			}
 		}
