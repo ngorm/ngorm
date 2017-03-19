@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ngorm/ngorm/dialects"
-	"github.com/ngorm/ngorm/logger"
 	"github.com/ngorm/ngorm/model"
 )
 
@@ -26,7 +25,6 @@ type Engine struct {
 	Scope     *model.Scope
 	StructMap *model.SafeStructsMap
 	SQLDB     model.SQLCommon
-	Log       *logger.Zapper
 
 	Now func() time.Time
 }

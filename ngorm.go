@@ -61,7 +61,6 @@ import (
 	"github.com/ngorm/ngorm/engine"
 	"github.com/ngorm/ngorm/errmsg"
 	"github.com/ngorm/ngorm/hooks"
-	"github.com/ngorm/ngorm/logger"
 	"github.com/ngorm/ngorm/model"
 	"github.com/ngorm/ngorm/regexes"
 	"github.com/ngorm/ngorm/scope"
@@ -84,7 +83,6 @@ type DB struct {
 	singularTable bool
 	structMap     *model.SafeStructsMap
 	hooks         *hooks.Book
-	log           *logger.Zapper
 	e             *engine.Engine
 	err           error
 	now           func() time.Time
@@ -99,7 +97,6 @@ func (db *DB) clone() *DB {
 		singularTable: db.singularTable,
 		structMap:     db.structMap,
 		hooks:         db.hooks,
-		log:           db.log,
 		now:           time.Now,
 	}
 	ne := n.NewEngine()
@@ -141,7 +138,6 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 		return nil, err
 	}
 	dia.SetDB(db)
-	o := ""
 	ctx, cancel := context.WithCancel(context.Background())
 	h := hooks.DefaultBook()
 	return &DB{
@@ -151,7 +147,6 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 		ctx:       ctx,
 		hooks:     h,
 		cancel:    cancel,
-		log:       logger.New(o),
 	}, nil
 }
 
@@ -165,7 +160,6 @@ func (db *DB) NewEngine() *engine.Engine {
 		Ctx:           db.ctx,
 		Dialect:       db.dialect,
 		SQLDB:         db.db,
-		Log:           db.log,
 		Now:           db.now,
 	}
 }

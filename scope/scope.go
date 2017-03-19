@@ -907,7 +907,6 @@ func CreateTable(e *engine.Engine, value interface{}) error {
 		}
 		err = CreateJoinTable(e, field)
 		if err != nil {
-			e.Log.Info(err.Error() + field.Name)
 			return err
 		}
 	}

@@ -637,7 +637,6 @@ func cloneEngine(e *engine.Engine) *engine.Engine {
 		Dialect:       e.Dialect,
 		StructMap:     e.StructMap,
 		SQLDB:         e.SQLDB,
-		Log:           e.Log,
 	}
 }
 
