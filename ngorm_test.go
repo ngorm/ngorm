@@ -820,9 +820,6 @@ func testDB_Preload(t *testing.T, db *DB) {
 		&fixture.CreditCard{},
 		&fixture.Address{},
 	)
-	if isQL(db) {
-		t.Skip()
-	}
 	if err != nil {
 		t.Fatal(err)
 	}

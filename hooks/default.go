@@ -313,7 +313,7 @@ func CreateExec(b *Book, e *engine.Engine) error {
 //AfterCreate executes hooks after Creating records
 func AfterCreate(b *Book, e *engine.Engine) error {
 	if dialects.IsQL(e.Dialect) {
-		return QLAfterCreate(b, e)
+		QLAfterCreate(b, e)
 	}
 	s, ok := b.Update.Get(model.HookSaveAfterAss)
 	if !ok {
@@ -345,15 +345,7 @@ func QLAfterCreate(b *Book, e *engine.Engine) error {
 	if !ok {
 		return errors.New("missing update exec hook")
 	}
-	err = exec.Exec(b, ne)
-	if err != nil {
-		return err
-	}
-	s, ok := b.Update.Get(model.HookSaveAfterAss)
-	if !ok {
-		return fmt.Errorf("missing hook %s", model.HookSaveAfterAss)
-	}
-	return s.Exec(b, ne)
+	return exec.Exec(b, ne)
 }
 
 func fixWhere(s *model.Scope) error {
@@ -501,6 +493,9 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 			if err != nil {
 				return err
 			}
+			if dialects.IsQL(e.Dialect) {
+				QLAfterCreate(b, ne)
+			}
 			if len(relationship.ForeignFieldNames) != 0 {
 				// set value's foreign key
 				for idx, fieldName := range relationship.ForeignFieldNames {
@@ -534,7 +529,6 @@ func SaveAfterAssociation(b *Book, e *engine.Engine) error {
 		if ok, rel := scope.SaveFieldAsAssociation(e, field); ok {
 			switch rel.Kind {
 			case "has_many":
-				// pretty.Println(rel)
 				fv := field.Field.Addr()
 				if fv.Kind() == reflect.Ptr {
 					fv = fv.Elem()
@@ -543,7 +537,6 @@ func SaveAfterAssociation(b *Book, e *engine.Engine) error {
 				fieldValue := field.Field.Addr().Interface()
 				ne := cloneEngine(e)
 				ne.Scope.Value = fieldValue
-				// pretty.Println(rel)
 				if len(rel.ForeignFieldNames) != 0 {
 					// set value's foreign key
 					for idx, fieldName := range rel.ForeignFieldNames {
@@ -998,7 +991,10 @@ func PreloadBelogsTo(b *Book, e *engine.Engine, field *model.Field, conditions [
 	if err != nil {
 		return err
 	}
-
+	if dialects.IsQL(pdb.Dialect) {
+		fmt.Println(pdb.Scope.SQL)
+		fmt.Println(pdb.Scope.SQLVars)
+	}
 	// assign find results
 	rVal := reflect.ValueOf(results)
 	if rVal.Kind() == reflect.Ptr {
