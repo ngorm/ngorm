@@ -15,16 +15,13 @@ type Foo struct {
 	Stuff string
 }
 
-func isPostgres(db *DB) bool {
-	return db.Dialect().GetName() == "postgres"
-}
 func TestDB_CreateTable(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_CreateTable, &Foo{}, &fixture.User{})
+		runWrapDB(t, d, testDBCreateTable, &Foo{}, &fixture.User{})
 	}
 }
 
-func testDB_CreateTable(t *testing.T, db *DB) {
+func testDBCreateTable(t *testing.T, db *DB) {
 	sql, err := db.CreateTableSQL(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -48,11 +45,11 @@ func testDB_CreateTable(t *testing.T, db *DB) {
 
 func TestDB_DropTable(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_DropTable)
+		runWrapDB(t, d, testDBDropTable)
 	}
 }
 
-func testDB_DropTable(t *testing.T, db *DB) {
+func testDBDropTable(t *testing.T, db *DB) {
 	_, err := db.DropTable(&Foo{})
 	if err == nil {
 		t.Error("expected error")
@@ -84,7 +81,7 @@ func testDB_DropTable(t *testing.T, db *DB) {
 
 func TestDB_Automigrate(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Automigrate,
+		runWrapDB(t, d, testDBAutomigrate,
 			&fixture.User{},
 			&fixture.Email{},
 			&fixture.Language{},
@@ -95,7 +92,7 @@ func TestDB_Automigrate(t *testing.T) {
 	}
 }
 
-func testDB_Automigrate(t *testing.T, db *DB) {
+func testDBAutomigrate(t *testing.T, db *DB) {
 	sql, err := db.AutomigrateSQL(
 		&fixture.User{},
 		&fixture.Email{},
@@ -128,7 +125,7 @@ func testDB_Automigrate(t *testing.T, db *DB) {
 
 func TestDB_Create(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Create,
+		runWrapDB(t, d, testDBCreate,
 			&fixture.User{},
 			&fixture.Email{},
 			&fixture.Language{},
@@ -138,7 +135,7 @@ func TestDB_Create(t *testing.T) {
 		)
 	}
 }
-func testDB_Create(t *testing.T, db *DB) {
+func testDBCreate(t *testing.T, db *DB) {
 	_, err := db.Automigrate(
 		&fixture.User{},
 		&fixture.Email{},
@@ -151,7 +148,7 @@ func testDB_Create(t *testing.T, db *DB) {
 		t.Fatal(err)
 	}
 	n := time.Now()
-	user := fixture.User{Name: "Jinzhu", Age: 18, Birthday: &n}
+	user := fixture.User{Name: "gernest", Age: 29, Birthday: &n}
 	_, err = db.CreateSQL(&user)
 	if err != nil {
 		t.Fatal(err)
@@ -164,14 +161,11 @@ func testDB_Create(t *testing.T, db *DB) {
 
 func TestDB_SaveSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_SaveSQL)
+		runWrapDB(t, d, testDBSaveSQL)
 	}
 }
 
-func testDB_SaveSQL(t *testing.T, db *DB) {
-	if isPostgres(db) {
-		t.Skip()
-	}
+func testDBSaveSQL(t *testing.T, db *DB) {
 	sql, err := db.SaveSQL(&Foo{ID: 10, Stuff: "twenty"})
 	if err != nil {
 		t.Fatal(err)
@@ -184,11 +178,11 @@ func testDB_SaveSQL(t *testing.T, db *DB) {
 
 func TestDB_UpdateSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_UpdateSQL)
+		runWrapDB(t, d, testDBUpdateSQL)
 	}
 }
 
-func testDB_UpdateSQL(t *testing.T, db *DB) {
+func testDBUpdateSQL(t *testing.T, db *DB) {
 	foo := Foo{ID: 10, Stuff: "twenty"}
 	sql, err := db.Model(&foo).UpdateSQL("stuff", "hello")
 	if err != nil {
@@ -202,11 +196,11 @@ func testDB_UpdateSQL(t *testing.T, db *DB) {
 
 func TestDB_SingularTable(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_SingularTable)
+		runWrapDB(t, d, testDBSingularTable)
 	}
 }
 
-func testDB_SingularTable(t *testing.T, db *DB) {
+func testDBSingularTable(t *testing.T, db *DB) {
 	db.SingularTable(true)
 	sql, err := db.CreateSQL(&Foo{})
 	if err != nil {
@@ -221,11 +215,11 @@ func testDB_SingularTable(t *testing.T, db *DB) {
 
 func TestDB_HasTable(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_HasTable, &Foo{})
+		runWrapDB(t, d, testDBHasTable, &Foo{})
 	}
 }
 
-func testDB_HasTable(t *testing.T, db *DB) {
+func testDBHasTable(t *testing.T, db *DB) {
 	if db.HasTable("foos") {
 		t.Error("expected false")
 	}
@@ -246,11 +240,11 @@ func testDB_HasTable(t *testing.T, db *DB) {
 
 func TestDB_FirstSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_FirstSQL)
+		runWrapDB(t, d, testDBFirstSQL)
 	}
 }
 
-func testDB_FirstSQL(t *testing.T, db *DB) {
+func testDBFirstSQL(t *testing.T, db *DB) {
 	// First record order by primary key
 	sql, err := db.FirstSQL(&fixture.User{})
 	if err != nil {
@@ -274,11 +268,11 @@ func testDB_FirstSQL(t *testing.T, db *DB) {
 
 func TestDB_First(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_First, &Foo{})
+		runWrapDB(t, d, testDBFirst, &Foo{})
 	}
 }
 
-func testDB_First(t *testing.T, db *DB) {
+func testDBFirst(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -302,10 +296,10 @@ func testDB_First(t *testing.T, db *DB) {
 
 func TestDB_LastSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_LastSQL)
+		runWrapDB(t, d, testDBLastSQL)
 	}
 }
-func testDB_LastSQL(t *testing.T, db *DB) {
+func testDBLastSQL(t *testing.T, db *DB) {
 	// First record order by primary key
 	sql, err := db.LastSQL(&fixture.User{})
 	if err != nil {
@@ -329,11 +323,11 @@ func testDB_LastSQL(t *testing.T, db *DB) {
 
 func TestDB_Last(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Last, &Foo{})
+		runWrapDB(t, d, testDBLast, &Foo{})
 	}
 }
 
-func testDB_Last(t *testing.T, db *DB) {
+func testDBLast(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -358,11 +352,11 @@ func testDB_Last(t *testing.T, db *DB) {
 
 func TestDB_FindSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_FindSQL)
+		runWrapDB(t, d, testDBFindSQL)
 	}
 }
 
-func testDB_FindSQL(t *testing.T, db *DB) {
+func testDBFindSQL(t *testing.T, db *DB) {
 	// First record order by primary key
 	users := []*fixture.User{}
 	sql, err := db.FindSQL(&users)
@@ -387,11 +381,11 @@ func testDB_FindSQL(t *testing.T, db *DB) {
 
 func TestDB_Find(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Find, &Foo{})
+		runWrapDB(t, d, testDBFind, &Foo{})
 	}
 }
 
-func testDB_Find(t *testing.T, db *DB) {
+func testDBFind(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -416,11 +410,11 @@ func testDB_Find(t *testing.T, db *DB) {
 
 func TestDB_FirstOrInit(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_FirstOrInit, &Foo{})
+		runWrapDB(t, d, testDBFirstOrInit, &Foo{})
 	}
 }
 
-func testDB_FirstOrInit(t *testing.T, db *DB) {
+func testDBFirstOrInit(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -437,10 +431,10 @@ func testDB_FirstOrInit(t *testing.T, db *DB) {
 
 func TestDB_Save(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Save, &Foo{})
+		runWrapDB(t, d, testDBSave, &Foo{})
 	}
 }
-func testDB_Save(t *testing.T, db *DB) {
+func testDBSave(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -475,10 +469,10 @@ func testDB_Save(t *testing.T, db *DB) {
 
 func TestDB_Update(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Update, &Foo{})
+		runWrapDB(t, d, testDBUpdate, &Foo{})
 	}
 }
-func testDB_Update(t *testing.T, db *DB) {
+func testDBUpdate(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -513,10 +507,10 @@ func testDB_Update(t *testing.T, db *DB) {
 
 func TestDB_Assign(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Assign, &fixture.User{})
+		runWrapDB(t, d, testDBAssign, &fixture.User{})
 	}
 }
-func testDB_Assign(t *testing.T, db *DB) {
+func testDBAssign(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&fixture.User{})
 	if err != nil {
 		t.Fatal(err)
@@ -536,10 +530,10 @@ func testDB_Assign(t *testing.T, db *DB) {
 
 func TestDB_Pluck(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Pluck, &Foo{})
+		runWrapDB(t, d, testDBPluck, &Foo{})
 	}
 }
-func testDB_Pluck(t *testing.T, db *DB) {
+func testDBPluck(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -564,10 +558,10 @@ func testDB_Pluck(t *testing.T, db *DB) {
 
 func TestDB_Count(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Count, &Foo{})
+		runWrapDB(t, d, testDBCount, &Foo{})
 	}
 }
-func testDB_Count(t *testing.T, db *DB) {
+func testDBCount(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -592,11 +586,11 @@ func testDB_Count(t *testing.T, db *DB) {
 
 func TestDB_AddIndexSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_AddIndexSQL, &Foo{})
+		runWrapDB(t, d, testDBAddIndexSQL, &Foo{})
 	}
 }
 
-func testDB_AddIndexSQL(t *testing.T, db *DB) {
+func testDBAddIndexSQL(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -619,11 +613,11 @@ func testDB_AddIndexSQL(t *testing.T, db *DB) {
 
 func TestDB_AddIndex(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_AddIndex, &Foo{})
+		runWrapDB(t, d, testDBAddIndex, &Foo{})
 	}
 }
 
-func testDB_AddIndex(t *testing.T, db *DB) {
+func testDBAddIndex(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -640,11 +634,11 @@ func testDB_AddIndex(t *testing.T, db *DB) {
 
 func TestDB_DeleteSQL(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_DeleteSQL)
+		runWrapDB(t, d, testDBDeleteSQL)
 	}
 }
 
-func testDB_DeleteSQL(t *testing.T, db *DB) {
+func testDBDeleteSQL(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -662,11 +656,11 @@ func testDB_DeleteSQL(t *testing.T, db *DB) {
 
 func TestDB_Delete(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Delete, &Foo{})
+		runWrapDB(t, d, testDBDelete, &Foo{})
 	}
 }
 
-func testDB_Delete(t *testing.T, db *DB) {
+func testDBDelete(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -693,11 +687,11 @@ func testDB_Delete(t *testing.T, db *DB) {
 
 func TestDB_AddUniqueIndex(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_AddUniqueIndex, &Foo{})
+		runWrapDB(t, d, testDBAddUniqueIndex, &Foo{})
 	}
 }
 
-func testDB_AddUniqueIndex(t *testing.T, db *DB) {
+func testDBAddUniqueIndex(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -721,11 +715,11 @@ func testDB_AddUniqueIndex(t *testing.T, db *DB) {
 
 func TestDB_RemoveIndex(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_RemoveIndex, &Foo{})
+		runWrapDB(t, d, testDBRemoveIndex, &Foo{})
 	}
 }
 
-func testDB_RemoveIndex(t *testing.T, db *DB) {
+func testDBRemoveIndex(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -750,11 +744,11 @@ func testDB_RemoveIndex(t *testing.T, db *DB) {
 
 func TestDB_DropColumn(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_DropColumn, &Foo{})
+		runWrapDB(t, d, testDBDropColumn, &Foo{})
 	}
 }
 
-func testDB_DropColumn(t *testing.T, db *DB) {
+func testDBDropColumn(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -771,11 +765,11 @@ func testDB_DropColumn(t *testing.T, db *DB) {
 
 func TestDB_FirstOrCreate(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_FirstOrCreate, &Foo{})
+		runWrapDB(t, d, testDBFirstOrCreate, &Foo{})
 	}
 }
 
-func testDB_FirstOrCreate(t *testing.T, db *DB) {
+func testDBFirstOrCreate(t *testing.T, db *DB) {
 	_, err := db.Automigrate(&Foo{})
 	if err != nil {
 		t.Fatal(err)
@@ -800,7 +794,7 @@ func testDB_FirstOrCreate(t *testing.T, db *DB) {
 
 func TestDB_Preload(t *testing.T) {
 	for _, d := range AllTestDB() {
-		runWrapDB(t, d, testDB_Preload,
+		runWrapDB(t, d, testDBPreload,
 			&fixture.User{},
 			&fixture.Email{},
 			&fixture.Language{},
@@ -811,7 +805,7 @@ func TestDB_Preload(t *testing.T) {
 	}
 }
 
-func testDB_Preload(t *testing.T, db *DB) {
+func testDBPreload(t *testing.T, db *DB) {
 	_, err := db.Begin().Automigrate(
 		&fixture.User{},
 		&fixture.Email{},

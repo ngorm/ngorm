@@ -2,16 +2,17 @@ package fixture
 
 import "strings"
 
+// keys for storing expected output
 const (
-	CreateTable1   = "ceate_table_1"
-	CreateTable2   = "ceate_table_2"
+	CreateTable1   = "create_table_1"
+	CreateTable2   = "create_table_2"
 	DropTable      = "drop_table"
 	AutoMigrate    = "automigrate"
-	SaveSQL        = "sqve_sql"
+	SaveSQL        = "save_sql"
 	UpdateSQL      = "update_sql"
 	SingularTable  = "singular_table"
-	FirstSQL1      = "firsr_sql_1"
-	FirstSQL2      = "firsr_sql_2"
+	FirstSQL1      = "first_sql_1"
+	FirstSQL2      = "first_sql_2"
 	LastSQL1       = "last_sql_1"
 	LastSQL2       = "last_sql_2"
 	FindSQL1       = "find_sql_1"
@@ -128,10 +129,7 @@ COMMIT;`
 	CREATE TABLE "addresses" ("id" serial,"address1" text,"address2" text,"post" text,"created_at" timestamp with time zone,"updated_at" timestamp with time zone,"deleted_at" timestamp with time zone ) ;
 `
 	o[AutoMigrate] = s
-	s = `
-BEGIN TRANSACTION;
-	UPDATE foos SET stuff = $1  WHERE id = $2;
-COMMIT;`
+	s = `UPDATE "foos" SET "stuff" = $1  WHERE "foos"."id" = $2`
 	o[SaveSQL] = s
 	s = `
 UPDATE "foos" SET "stuff" = $1  WHERE "foos"."id" = $2
@@ -171,6 +169,8 @@ DELETE FROM "foos"  WHERE "foos"."id" = $1
 	o[AddUniqueIndex] = s
 	return o
 }
+
+// GetSQL returns sql fixture with given key based on the given dialect
 func GetSQL(dialect string, key string) string {
 	if d, ok := samples[dialect]; ok {
 		return strings.TrimSpace(d[key])
