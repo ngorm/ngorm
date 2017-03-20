@@ -45,7 +45,7 @@ enlightened.
 
 ## Installation
 
-	go get -u github.com/gernest/ngorm
+	go get -u github.com/ngorm/ngorm
 
 
 
