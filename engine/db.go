@@ -11,6 +11,8 @@ import (
 
 //Engine is the driving force for ngorm. It contains, Scope, Search and other
 //utility properties for easily building complex SQL queries.
+//
+// This actx as context, allowing passing values around. For fuc
 type Engine struct {
 	RowsAffected int64
 
