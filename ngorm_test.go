@@ -884,17 +884,17 @@ func testDBPreload(t *testing.T, db *DB) {
 		t.Fatal(err)
 	}
 
-	// for _, user := range users3 {
-	// 	if user.Name == user3.Name {
-	// 		if len(user.Emails) != 1 {
-	// 			t.Errorf("should only preload one emails for user3 when with condition")
-	// 		}
-	// 	} else if len(user.Emails) != 0 {
-	// 		t.Errorf("should not preload any emails for other users when with condition")
-	// 	} else if user.Emails == nil {
-	// 		t.Errorf("should return an empty slice to indicate zero results")
-	// 	}
-	// }
+	for _, user := range users3 {
+		if user.Name == user3.Name {
+			if len(user.Emails) != 1 {
+				t.Errorf("should only preload one emails for user3 when with condition")
+			}
+		} else if len(user.Emails) != 0 {
+			t.Errorf("should not preload any emails for other users when with condition")
+		} else if user.Emails == nil {
+			t.Errorf("should return an empty slice to indicate zero results")
+		}
+	}
 }
 
 func checkUserHasPreloadData(db *DB, user fixture.User, t *testing.T) {
@@ -903,38 +903,41 @@ func checkUserHasPreloadData(db *DB, user fixture.User, t *testing.T) {
 		t.Fatal(err)
 	}
 	if user.BillingAddress.Address1 != u.BillingAddress.Address1 {
-		t.Errorf("BillingAddress: expected %s got %s", u.BillingAddress.Address1, user.BillingAddress.Address1)
+		t.Errorf("BillingAddress: expected %s got %s",
+			u.BillingAddress.Address1, user.BillingAddress.Address1)
 	}
 
 	if user.ShippingAddress.Address1 != u.ShippingAddress.Address1 {
-		t.Errorf("ShippingAddress: expected %s got %s", u.ShippingAddress.Address1, user.ShippingAddress.Address1)
+		t.Errorf("ShippingAddress: expected %s got %s",
+			u.ShippingAddress.Address1, user.ShippingAddress.Address1)
 	}
 
 	if user.CreditCard.Number != u.CreditCard.Number {
-		t.Errorf("CreditCard: expected %s got %s", u.CreditCard.Number, user.CreditCard.Number)
+		t.Errorf("CreditCard: expected %s got %s",
+			u.CreditCard.Number, user.CreditCard.Number)
 	}
 
 	if user.Company.Name != u.Company.Name {
 		t.Errorf(" Company: expected %s got %s", u.Company.Name, user.Company.Name)
 	}
 
-	// if len(user.Emails) != len(u.Emails) {
-	// 	t.Errorf("Emails: expected %d emails got %d", len(u.Emails), len(user.Emails))
+	if len(user.Emails) != len(u.Emails) {
+		t.Errorf("Emails: expected %d emails got %d", len(u.Emails), len(user.Emails))
 
-	// } else {
-	// 	var found int
-	// 	for _, e1 := range u.Emails {
-	// 		for _, e2 := range user.Emails {
-	// 			if e1.Email == e2.Email {
-	// 				found++
-	// 				break
-	// 			}
-	// 		}
-	// 	}
-	// 	if found != len(u.Emails) {
-	// 		t.Errorf("expected %d emails got %d", len(u.Emails), found)
-	// 	}
-	// }
+	} else {
+		var found int
+		for _, e1 := range u.Emails {
+			for _, e2 := range user.Emails {
+				if e1.Email == e2.Email {
+					found++
+					break
+				}
+			}
+		}
+		if found != len(u.Emails) {
+			t.Errorf("expected %d emails got %d", len(u.Emails), found)
+		}
+	}
 }
 
 func getPreparedUser(db *DB, name string, role string) (*fixture.User, error) {
