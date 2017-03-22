@@ -47,4 +47,4 @@ Database support
 
 ## Usage
 
-See [GUIDE](https://ngorm.github.io/) for getting started, examples and so much more.
+See [GUIDE](https://ngorm.github.io/docs) for getting started, examples and so much more.
