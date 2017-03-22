@@ -43,9 +43,9 @@ func Quote(e *engine.Engine, str string) string {
 	return e.Dialect.Quote(str)
 }
 
-//Fields extracts []*model.Fields from value, value is obvously a struct or
+//Fields extracts []*model.Fields from value, value is  a struct or
 //something. This is only done when e.Scope.Fields is nil, for the case of non
-//nil value then *e.Scope.Fiedls is returned without computing anything.
+//nil value then *e.Scope.Fields is returned without computing anything.
 func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
 	var fields []*model.Field
 	i := reflect.ValueOf(value)
@@ -80,10 +80,10 @@ func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
 //the e.Scope.Value to value, you must set this value manually if you want to
 //set the scope value.
 //
-// value must be a go struct or a slict of go struct. The computed *model.Struct is cached , so
+// value must be a go struct or a slice of go struct. The computed *model.Struct is cached , so
 // multiple calls to this function with the same value won't compute anything
 // and return the cached copy. It is less unlikely that the structs will be
-// changine at runtime.
+// changing at runtime.
 //
 // The value can implement engine.Tabler interface to help easily identify the
 // table name for the model.
@@ -240,7 +240,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 //updates the ModelStruct m accordingly.
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
-//of loggic and no any error should be absorbed.
+//of logic and no any error should be absorbed.
 func buildRelationSlice(e *engine.Engine, modelValue interface{}, refType reflect.Type, m *model.Struct, field *model.StructField) error {
 	var (
 		rel                    = &model.Relationship{}
@@ -406,7 +406,7 @@ func buildRelationSlice(e *engine.Engine, modelValue interface{}, refType reflec
 //updates the ModelStruct m accordingly.
 //
 //TODO: (gernest) Proper error handling.Make sure we return error, this is a lot
-//of loggic and no any error should be absorbed.
+//of logic and no any error should be absorbed.
 func buildRelationStruct(e *engine.Engine, modelValue interface{}, refType reflect.Type, m *model.Struct, field *model.StructField) error {
 	var (
 		// user has one profile, associationType is User, profile use UserID as foreign key
@@ -693,7 +693,7 @@ func QuotedTableName(e *engine.Engine, value interface{}) string {
 //AddToVars add value to e.Scope.SQLVars it returns  the positional binding of
 //the values.
 //
-// The way positional arguments are handled inthe database/sql package relies on
+// The way positional arguments are handled in the database/sql package relies on
 // database specific setting.
 //
 // For instance in ql
@@ -1057,7 +1057,7 @@ func AutoIndex(e *engine.Engine, value interface{}) error {
 }
 
 //AddIndex add extra queries fo creating database index. The indexes are packed
-//on e.Sope.Exprs and it sets the e.Scope.MultiExpr to true signaling that there
+//on e.Scope.Exprs and it sets the e.Scope.MultiExpr to true signaling that there
 //are additional multiple SQL queries bundled in the e.Scope.
 //
 // if unique is true this will generate CREATE UNIQUE INDEX and in case of false
@@ -1095,19 +1095,19 @@ func AddIndex(e *engine.Engine, unique bool, value interface{}, indexName string
 // must be wrapped in a transaction block.
 //
 // We don't need to rap the transaction block at this level so as to enable
-// flexibility of combining multiple querries that will be wrapped under the
+// flexibility of combining multiple queries that will be wrapped under the
 // same transaction.
 func DropTable(e *engine.Engine, value interface{}) error {
 	e.Scope.SQL = fmt.Sprintf("DROP TABLE %v", QuotedTableName(e, value))
 	return nil
 }
 
-//Automigrate generates  sql for creting database table for model value if the
-//table doesnt exist yet. It also alters fields if the model has been updated.
+//Automigrate generates  sql for creating database table for model value if the
+//table doesn't exist yet. It also alters fields if the model has been updated.
 //
 // NOTE For the case of an updated model which will need to alter the table to
 // reflect the new changes, the SQL is stored under e.Scope.Exprs. The caller
-// must be aware of this, and remember to chceck if e.Scope.MultiExpr is true so
+// must be aware of this, and remember to check if e.Scope.MultiExpr is true so
 // as to get the additional SQL.
 func Automigrate(e *engine.Engine, value interface{}) error {
 	tableName := TableName(e, value)
@@ -1184,7 +1184,7 @@ func HasConditions(e *engine.Engine, modelValue interface{}) bool {
 }
 
 //UpdatedAttrsWithValues returns a map of field names with value. This takes
-//value, and updates any field that needts to be updated by adding the field
+//value, and updates any field that needs to be updated by adding the field
 //name mapped to the new field value to the returned map results.
 //
 // That applies if the value is a struct. Any other type of values are handeled
@@ -1231,7 +1231,7 @@ func UpdatedAttrsWithValues(e *engine.Engine, value interface{}) (results map[st
 //ConvertInterfaceToMap tries to convert value into a map[string]interface{}
 //
 // The map keys are field names, and the values are the supposed field values.
-// This cunction only supports maps, []interface{} and structs.
+// This function only supports maps, []interface{} and structs.
 //
 // For [interface{}, if the first value is a string, then it must be a
 // succession of key pair values like
@@ -1242,7 +1242,7 @@ func UpdatedAttrsWithValues(e *engine.Engine, value interface{}) (results map[st
 //
 // 	// Provided you have a function
 //	func some(args...string){}
-//	//and you use to pass the following argumens.
+//	//and you use to pass the following arguments.
 //	some("name?","gernest")
 //	//passsing args to this function will yield map["name?"]="gernest"
 func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredField bool) map[string]interface{} {
@@ -1256,7 +1256,7 @@ func ConvertInterfaceToMap(e *engine.Engine, values interface{}, withIgnoredFiel
 			case string:
 
 				// If the first key is a string. The whole slice is treated as a
-				// succesive ke,value pairs.
+				// successive ke,value pairs.
 				size := len(value)
 				pos := 0
 				for pos < size {
@@ -1319,7 +1319,7 @@ func SaveFieldAsAssociation(e *engine.Engine, field *model.Field) (bool, *model.
 //Initialize initializes value for e.Scope.Value There are three areas where we
 //look for values to initialize the model with.
 //
-// 	e.Seach.WhereConditions
+// 	e.Search.WhereConditions
 // 	e.Search.InitAttrs
 //	e.Search.AssignAttr
 //

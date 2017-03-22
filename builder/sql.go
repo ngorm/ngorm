@@ -1,5 +1,5 @@
 // Package builder contains functions for SQL building. Most of the functions
-// builds the SQL from the enine.Engine, and uptates the struct in a convenient
+// builds the SQL from the engine.Engine, and updates the struct in a convenient
 // manner.
 //
 // Be aware that, you should not pass a raw engine.Engine as some of the
@@ -20,7 +20,7 @@ import (
 	"github.com/ngorm/ngorm/scope"
 )
 
-//Where buiilds the sql where condition. The clause is a map
+//Where builds the sql where condition. The clause is a map
 //of two important keys, one is query and the second is args. It is possible to
 //use a struct instead of a map for clause, but for now we can stick with this
 //else we will need to do a giant refactoring.
@@ -40,7 +40,7 @@ import (
 //  map[string]interface{}{"query": query, "args": values}
 // Where query can be anything of the above types and values is possibly a slice
 // of positional values. Positional values are values which will be inserted in
-// place of a placeholder e.g ?. For instance s querry,
+// place of a placeholder e.g ?. For instance s query,
 //
 //  select * from home where item=? && importance =?
 // Then we can pass
@@ -48,7 +48,7 @@ import (
 //  []interface}{"milk", "critical"}
 //
 // The args slice has "milk" as the first thing and "critical" as the second.
-// Now we can reconstruct the querry after appling the positional argument and
+// Now we can reconstruct the query after appling the positional argument and
 // get the following.
 //
 //  select * from home where item="milk" && importance="critical"
@@ -146,7 +146,7 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 //not being a valid ngorm model, please check scope.PrimaryKey for more details.
 //
 // So, if the modelValue has primary key field id, and the value supplied is an
-// integrer 14.The string generated will be id=$1 provided value is the first
+// integer 14.The string generated will be id=$1 provided value is the first
 // positional argument. Practically speaking it is the same as id=14.
 func PrimaryCondition(e *engine.Engine, modelValue, value interface{}) (string, error) {
 	pk, err := scope.PrimaryKey(e, modelValue)
@@ -167,7 +167,7 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) 
 	)
 
 	if !e.Search.Unscoped && scope.HasColumn(e, modelValue, "deleted_at") {
-		sql := fmt.Sprintf("%vdeleted_at IS NULL",
+		sql := fmt.Sprintf("%v deleted_at IS NULL",
 			e.Dialect.QueryFieldName(quotedTableName))
 		primaryConditions = append(primaryConditions, sql)
 	}
@@ -374,7 +374,7 @@ func Select(e *engine.Engine, modelValue interface{}, clause map[string]interfac
 	return
 }
 
-//JoinSQL bilds JOIN SQL clause for modelValue using engine e as context.
+//JoinSQL builds JOIN SQL clause for modelValue using engine e as context.
 func JoinSQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	var j []string
 	for _, clause := range e.Search.JoinConditions {
@@ -444,7 +444,7 @@ func HavingSQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	return " HAVING " + combinedSQL, nil
 }
 
-// PrepareQuery sets the e.Scope.SQL by generating the whole sql query isnide
+// PrepareQuery sets the e.Scope.SQL by generating the whole sql query inside
 // engine.
 func PrepareQuery(e *engine.Engine, modelValue interface{}) error {
 	sql, err := PrepareQuerySQL(e, modelValue)

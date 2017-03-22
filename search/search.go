@@ -46,7 +46,7 @@ func Order(e *engine.Engine, value interface{}, reorder ...bool) {
 	}
 }
 
-//Select add SELECT querry
+//Select add SELECT query
 func Select(e *engine.Engine, query interface{}, values ...interface{}) {
 	if regexes.DistinctSQL.MatchString(fmt.Sprint(query)) {
 		e.Search.IgnoreOrderQuery = true
@@ -54,7 +54,7 @@ func Select(e *engine.Engine, query interface{}, values ...interface{}) {
 	e.Search.Selects = map[string]interface{}{"query": query, "args": values}
 }
 
-//Omit ommits seacrh condition
+//Omit omits seacrh condition
 func Omit(e *engine.Engine, columns ...string) {
 	e.Search.Omits = columns
 }
@@ -102,7 +102,7 @@ func Preload(e *engine.Engine, schema string, values ...interface{}) {
 	e.Search.Preload = preloads
 }
 
-//Raw set the seacrh querry to RAw
+//Raw set the seacrh query to RAw
 func Raw(e *engine.Engine, b bool) {
 	e.Search.Raw = b
 }

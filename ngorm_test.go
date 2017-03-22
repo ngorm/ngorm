@@ -16,7 +16,7 @@ type Foo struct {
 }
 
 func TestDB_CreateTable(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBCreateTable, &Foo{}, &fixture.User{})
 	}
 }
@@ -44,7 +44,7 @@ func testDBCreateTable(t *testing.T, db *DB) {
 }
 
 func TestDB_DropTable(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBDropTable)
 	}
 }
@@ -80,7 +80,7 @@ func testDBDropTable(t *testing.T, db *DB) {
 }
 
 func TestDB_Automigrate(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBAutomigrate,
 			&fixture.User{},
 			&fixture.Email{},
@@ -124,7 +124,7 @@ func testDBAutomigrate(t *testing.T, db *DB) {
 }
 
 func TestDB_Create(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBCreate,
 			&fixture.User{},
 			&fixture.Email{},
@@ -160,7 +160,7 @@ func testDBCreate(t *testing.T, db *DB) {
 }
 
 func TestDB_SaveSQL(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBSaveSQL)
 	}
 }
@@ -177,7 +177,7 @@ func testDBSaveSQL(t *testing.T, db *DB) {
 }
 
 func TestDB_UpdateSQL(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBUpdateSQL)
 	}
 }
@@ -195,7 +195,7 @@ func testDBUpdateSQL(t *testing.T, db *DB) {
 }
 
 func TestDB_SingularTable(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBSingularTable)
 	}
 }
@@ -214,7 +214,7 @@ func testDBSingularTable(t *testing.T, db *DB) {
 }
 
 func TestDB_HasTable(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBHasTable, &Foo{})
 	}
 }
@@ -239,7 +239,7 @@ func testDBHasTable(t *testing.T, db *DB) {
 }
 
 func TestDB_FirstSQL(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBFirstSQL)
 	}
 }
@@ -267,7 +267,7 @@ func testDBFirstSQL(t *testing.T, db *DB) {
 }
 
 func TestDB_First(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBFirst, &Foo{})
 	}
 }
@@ -295,7 +295,7 @@ func testDBFirst(t *testing.T, db *DB) {
 }
 
 func TestDB_LastSQL(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBLastSQL)
 	}
 }
@@ -322,7 +322,7 @@ func testDBLastSQL(t *testing.T, db *DB) {
 }
 
 func TestDB_Last(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBLast, &Foo{})
 	}
 }
@@ -351,7 +351,7 @@ func testDBLast(t *testing.T, db *DB) {
 }
 
 func TestDB_FindSQL(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBFindSQL)
 	}
 }
@@ -380,7 +380,7 @@ func testDBFindSQL(t *testing.T, db *DB) {
 }
 
 func TestDB_Find(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBFind, &Foo{})
 	}
 }
@@ -409,7 +409,7 @@ func testDBFind(t *testing.T, db *DB) {
 }
 
 func TestDB_FirstOrInit(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBFirstOrInit, &Foo{})
 	}
 }
@@ -430,7 +430,7 @@ func testDBFirstOrInit(t *testing.T, db *DB) {
 }
 
 func TestDB_Save(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBSave, &Foo{})
 	}
 }
@@ -468,7 +468,7 @@ func testDBSave(t *testing.T, db *DB) {
 }
 
 func TestDB_Update(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBUpdate, &Foo{})
 	}
 }
@@ -506,7 +506,7 @@ func testDBUpdate(t *testing.T, db *DB) {
 }
 
 func TestDB_Assign(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBAssign, &fixture.User{})
 	}
 }
@@ -529,7 +529,7 @@ func testDBAssign(t *testing.T, db *DB) {
 }
 
 func TestDB_Pluck(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBPluck, &Foo{})
 	}
 }
@@ -557,7 +557,7 @@ func testDBPluck(t *testing.T, db *DB) {
 }
 
 func TestDB_Count(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBCount, &Foo{})
 	}
 }
@@ -585,7 +585,7 @@ func testDBCount(t *testing.T, db *DB) {
 }
 
 func TestDB_AddIndexSQL(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBAddIndexSQL, &Foo{})
 	}
 }
@@ -612,7 +612,7 @@ func testDBAddIndexSQL(t *testing.T, db *DB) {
 }
 
 func TestDB_AddIndex(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBAddIndex, &Foo{})
 	}
 }
@@ -633,7 +633,7 @@ func testDBAddIndex(t *testing.T, db *DB) {
 }
 
 func TestDB_DeleteSQL(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBDeleteSQL)
 	}
 }
@@ -655,7 +655,7 @@ func testDBDeleteSQL(t *testing.T, db *DB) {
 }
 
 func TestDB_Delete(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBDelete, &Foo{})
 	}
 }
@@ -686,7 +686,7 @@ func testDBDelete(t *testing.T, db *DB) {
 }
 
 func TestDB_AddUniqueIndex(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBAddUniqueIndex, &Foo{})
 	}
 }
@@ -714,7 +714,7 @@ func testDBAddUniqueIndex(t *testing.T, db *DB) {
 }
 
 func TestDB_RemoveIndex(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBRemoveIndex, &Foo{})
 	}
 }
@@ -743,7 +743,7 @@ func testDBRemoveIndex(t *testing.T, db *DB) {
 }
 
 func TestDB_DropColumn(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBDropColumn, &Foo{})
 	}
 }
@@ -764,7 +764,7 @@ func testDBDropColumn(t *testing.T, db *DB) {
 }
 
 func TestDB_FirstOrCreate(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBFirstOrCreate, &Foo{})
 	}
 }
@@ -793,7 +793,7 @@ func testDBFirstOrCreate(t *testing.T, db *DB) {
 }
 
 func TestDB_Preload(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, testDBPreload,
 			&fixture.User{},
 			&fixture.Email{},
@@ -965,7 +965,7 @@ func getPreparedUser(db *DB, name string, role string) (*fixture.User, error) {
 }
 
 func TestRelationship_Belongs_To(t *testing.T) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		runWrapDB(t, d, belongsTo,
 			&bUser{}, &bAddr{},
 		)

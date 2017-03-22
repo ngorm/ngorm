@@ -1,9 +1,9 @@
 //Package ngorm i a Go Object relation mapper that focus on performance,
 //maintainability, modularity,	battle testing, extensibility , safety and
-//developer frindliness.
+//developer friendliness.
 //
 // To achieve all of the goals, the project is divided into many components. The
-// components are desined in a functional style API, whereby objects are
+// components are designed in a functional style API, whereby objects are
 // explicitly passed around as arguments to functions that operate on them.
 //
 // This tries to avoid defining methods on structs. This comes at a cost of
@@ -26,14 +26,14 @@
 // package subpackages operate on this struct by accepting it as the first
 // argument.
 //
-// Having this as a separate layer helps fine tuning the generated querries and
+// Having this as a separate layer helps fine tuning the generated queries and
 // also it make easy to test and very that the ORM is doing the right thing. So,
-// the generated query can be easily optimised without adding a lot of overhead.
+// the generated query can be easily optimise without adding a lot of overhead.
 //
 // Query execution
 //
 // This is s the phase where the generated sql query is executed. This phase is as generic as
-// possible in a way that you can easily implement adoptes for non SQL database
+// possible in a way that you can easily implement adopters for non SQL database
 // and still reap all the benefits of this package.
 //
 //
@@ -177,7 +177,7 @@ func (db *DB) CreateTable(models ...interface{}) (sql.Result, error) {
 }
 
 //ExecTx wraps the query execution in a Transaction. This ensure all operations
-//are Rolled back in case the execution fials.
+//are Rolled back in case the execution fails.
 func (db *DB) ExecTx(query string, args ...interface{}) (sql.Result, error) {
 	tx, err := db.db.Begin()
 	if err != nil {
@@ -334,7 +334,7 @@ func (db *DB) Close() error {
 
 //Create creates a new record.
 //
-// You can hijack the execution of the generated SQL by overiding
+// You can hijack the execution of the generated SQL by overriding
 // model.HookCreateExec hook.
 func (db *DB) Create(value interface{}) error {
 	sql, err := db.CreateSQL(value)
@@ -343,7 +343,7 @@ func (db *DB) Create(value interface{}) error {
 	}
 	c, ok := db.hooks.Create.Get(model.HookCreateExec)
 	if !ok {
-		return errors.New("missing execution hook")
+		return fmt.Errorf("missing %s hook", model.HookCreateExec)
 	}
 	e := db.NewEngine()
 	e.Scope.Value = value
@@ -379,7 +379,7 @@ func (db *DB) Create(value interface{}) error {
 //
 //	model.HookUpdateTimestamp
 // New record needs to have CreatedAt and UpdatedAt properly set. This is
-// excuted to update the record timestamps( The default hook for this assumes
+// executed to update the record timestamps( The default hook for this assumes
 // you used model.Model convention for naming the timestamp fields).
 //
 //	model.Create
@@ -388,8 +388,8 @@ func (db *DB) Create(value interface{}) error {
 // NOTE: All the hooks must be tailored towards generating SQL not executing
 // anything that might change the state of the table.
 //
-// All the other hooks apart from model.Create should write SQQL gerries in
-// e.Scope.Epxrs only model.Create hook should write to e.Scope.SQL.
+// All the other hooks apart from model.Create should write SQL queries in
+// e.Scope.Exprs only model.Create hook should write to e.Scope.SQL.
 //
 // The end query is wrapped under TRANSACTION block.
 func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
@@ -451,7 +451,7 @@ func (db *DB) Save(value interface{}) error {
 }
 
 //Model sets value as the database model. This model will be used for future
-//calls on the erturned DB e.g
+//calls on the returned DB e.g
 //
 //	db.Model(&user).Update("name","hero")
 func (db *DB) Model(value interface{}) *DB {
@@ -519,8 +519,8 @@ func (db *DB) Set(key string, value interface{}) *DB {
 	return db
 }
 
-//SingularTable enables or diables singular tables name. By default this is
-//diables, meaning table names are in plurar.
+//SingularTable enables or disables singular tables name. By default this is
+//disabled, meaning table names are in plural.
 //
 //	Model	| Plural table name
 //	----------------------------
@@ -551,7 +551,7 @@ func (db *DB) HasTable(value interface{}) bool {
 	return db.Dialect().HasTable(name)
 }
 
-//First  fets the first record and order by primary key.
+//First  fetches the first record and order by primary key.
 func (db *DB) First(out interface{}, where ...interface{}) error {
 	db.Set(model.OrderByPK, "ASC")
 	search.Inline(db.e, where...)
@@ -713,10 +713,10 @@ func (db *DB) Offset(offset interface{}) *DB {
 	return db
 }
 
-// Order specify order when retrieve records from database, set reorder to `true` to overwrite defined conditions
+// Order specify order when retrieve records from database, set reorder to
+// `true` to overwrite defined conditions
 //     db.Order("name DESC")
 //     db.Order("name DESC", true) // reorder
-//     db.Order(gorm.Expr("name = ? DESC", "first")) // sql expression
 func (db *DB) Order(value interface{}, reorder ...bool) *DB {
 	if db.e == nil {
 		db.e = db.NewEngine()
@@ -725,8 +725,9 @@ func (db *DB) Order(value interface{}, reorder ...bool) *DB {
 	return db
 }
 
-// Select specify fields that you want to retrieve from database when querying, by default, will select all fields;
-// When creating/updating, specify fields that you want to save to database
+// Select specify fields that you want to retrieve from database when querying,
+// by default, will select all fields; When creating/updating, specify fields
+// that you want to save to database
 func (db *DB) Select(query interface{}, args ...interface{}) *DB {
 	if db.e == nil {
 		db.e = db.NewEngine()
@@ -735,7 +736,8 @@ func (db *DB) Select(query interface{}, args ...interface{}) *DB {
 	return db
 }
 
-// Omit specify fields that you want to ignore when saving to database for creating, updating
+// Omit specify fields that you want to ignore when saving to database for
+// creating, updating
 func (db *DB) Omit(columns ...string) *DB {
 	if db.e == nil {
 		db.e = db.NewEngine()
@@ -774,7 +776,6 @@ func (db *DB) Where(query interface{}, args ...interface{}) *DB {
 
 // FirstOrInit find first matched record or initialize a new one with given
 //conditions (only works with struct, map conditions)
-// https://jinzhu.github.io/gorm/curd.html#firstorinit
 func (db *DB) FirstOrInit(out interface{}, where ...interface{}) error {
 	if db.e == nil {
 		db.e = db.NewEngine()

@@ -7,7 +7,7 @@ import (
 )
 
 func BenchmarkCreateSQL(b *testing.B) {
-	for _, d := range AllTestDB() {
+	for _, d := range allTestDB() {
 		db, err := d.Open()
 		if err != nil {
 			b.Fatal(err)

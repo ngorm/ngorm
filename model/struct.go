@@ -181,7 +181,7 @@ func (s *SafeStructsMap) Set(key reflect.Type, value *Struct) {
 	s.m[key] = value
 }
 
-//Get retrieves the value stored with the gived key.
+//Get retrieves the value stored with the given key.
 func (s *SafeStructsMap) Get(key reflect.Type) *Struct {
 	s.l.RLock()
 	defer s.l.RUnlock()
@@ -231,7 +231,7 @@ func (s *Scope) Get(key string) (interface{}, bool) {
 	return v, ok
 }
 
-//GetAll erturns all values stored in this context.
+//GetAll returns all values stored in this context.
 func (s *Scope) GetAll() map[string]interface{} {
 	s.mu.RLock()
 	a := make(map[string]interface{})

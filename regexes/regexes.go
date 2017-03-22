@@ -1,11 +1,11 @@
-// Package regexes exposes pre compiled reqular expressions that are used by
+// Package regexes exposes pre compiled regular expressions that are used by
 // ngorm.
 package regexes
 
 import "regexp"
 
 var (
-	//DistinctSQL matches distict sql query
+	//DistinctSQL matches distinct sql query
 	DistinctSQL = regexp.MustCompile(`(?i)distinct[^a-z]+[a-z]+`)
 
 	//Column matches database column
@@ -18,7 +18,7 @@ var (
 	//Comparison matches comparison in sql query
 	Comparison = regexp.MustCompile("(?i) (=|<>|>|<|LIKE|IS|IN) ")
 
-	//CountingQuery matches cound query.
+	//CountingQuery matches count query.
 	CountingQuery = regexp.MustCompile("(?i)^count(.+)$")
 
 	//KeyName matches _ in a string

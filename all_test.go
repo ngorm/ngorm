@@ -84,7 +84,7 @@ func initialize() error {
 	return nil
 }
 
-func AllTestDB() []testDB {
+func allTestDB() []testDB {
 	return tsdb
 }
 

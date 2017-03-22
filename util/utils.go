@@ -7,8 +7,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"reflect"
-	"regexp"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -137,17 +135,7 @@ func toQueryValues(values [][]interface{}) (results []interface{}) {
 	return
 }
 
-func fileWithLineNum() string {
-	for i := 2; i < 15; i++ {
-		_, file, line, ok := runtime.Caller(i)
-		if ok && (!regexp.MustCompile(`jinzhu/gorm/.*.go`).MatchString(file) || regexp.MustCompile(`jinzhu/gorm/.*test.go`).MatchString(file)) {
-			return fmt.Sprintf("%v:%v", file, line)
-		}
-	}
-	return ""
-}
-
-//IsBlank returns true if the value represent a zero value of the specified valut ype.
+//IsBlank returns true if the value represent a zero value of the specified value ype.
 func IsBlank(value reflect.Value) bool {
 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 }
@@ -263,6 +251,7 @@ func ToSearchableMap(attrs ...interface{}) (result interface{}) {
 	return
 }
 
+// WrapTX returnstx intranstaction block
 func WrapTX(tx string) string {
 	t := `
 BEGIN TRANSACTION;

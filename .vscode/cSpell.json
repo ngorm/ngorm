@@ -8,7 +8,24 @@
     "words": [
         "postgres",
         "foos",
-        "ngorm"
+        "ngorm",
+        "SQLDB",
+        "Tabler",
+        "rerr",
+        "Unaddressable",
+        "sqls",
+        "conds",
+        "tsdb",
+        "golint",
+        "smap",
+        "curr",
+        "Unscoped",
+        "jinzhu",
+        "Strs",
+        "Singula",
+        "ASSOCIATIONFOREIGNKEY",
+        "gorm",
+        "mssql"
     ],
     // flagWords - list of words to be always considered incorrect
     // This is useful for offensive words and common spelling errors.

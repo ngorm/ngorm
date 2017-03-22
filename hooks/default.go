@@ -22,11 +22,16 @@ import (
 	"github.com/ngorm/ngorm/util"
 )
 
-//Query executes sql QUery without transaction.
+//Query executes sql Query without transaction. This first executes QuerySQL
+//which generates appropriate SQl query then QueryExec hook is executed to
+//execute the generated query.
+//
+// If all is well HookAfterQuery is executed, if this hook is not registered
+// then no error is returned.
 func Query(b *Book, e *engine.Engine) error {
 	sql, ok := b.Query.Get(model.HookQuerySQL)
 	if !ok {
-		return errors.New("missing query sql hook")
+		return fmt.Errorf("hooks: missing %s hook ", model.HookQuerySQL)
 	}
 	err := sql.Exec(b, e)
 	if err != nil {
@@ -34,7 +39,7 @@ func Query(b *Book, e *engine.Engine) error {
 	}
 	exec, ok := b.Query.Get(model.HookQueryExec)
 	if !ok {
-		return errors.New("missing query exec hook")
+		return fmt.Errorf("hooks: missing %s hook ", model.HookQueryExec)
 	}
 	err = exec.Exec(b, e)
 	if err != nil {
@@ -47,7 +52,13 @@ func Query(b *Book, e *engine.Engine) error {
 	return exec.Exec(b, e)
 }
 
-//QueryExec  executes SQL querries.
+//QueryExec  executes SQL queries and scans the result to the pointer object
+//that is in e.Scope.Value.
+//
+// The value stored in e.Scope.Value can only either be a struct or a slice
+// other types are not supported.
+//
+// NOTE: queries are not executed in transaction context.
 func QueryExec(b *Book, e *engine.Engine) error {
 	var isSlice, isPtr bool
 	var resultType reflect.Type
@@ -109,7 +120,8 @@ func QueryExec(b *Book, e *engine.Engine) error {
 	return nil
 }
 
-//QuerySQL generates SQL for queries
+//QuerySQL generates SQL for queries. This uses `builder.PrepareQuery` to build
+//the desired SQL query.
 func QuerySQL(b *Book, e *engine.Engine) error {
 	if orderBy, ok := e.Scope.Get(model.OrderByPK); ok {
 		pf, err := scope.PrimaryField(e, e.Scope.Value)
@@ -117,15 +129,16 @@ func QuerySQL(b *Book, e *engine.Engine) error {
 		} else {
 			search.Order(e, fmt.Sprintf("%v%v %v",
 				e.Dialect.QueryFieldName(
-					scope.QuotedTableName(e, e.Scope.Value)), scope.Quote(e, pf.DBName), orderBy))
+					scope.QuotedTableName(e, e.Scope.Value)),
+				scope.Quote(e, pf.DBName), orderBy))
 		}
 
 	}
 	return builder.PrepareQuery(e, e.Scope.Value)
 }
 
-//AfterQuery executes any call back after the  Qeery hook has been executed. Any
-//callback registered with qeky model.HookQueryAfterFind will be executed.
+//AfterQuery executes any call back after the  Query hook has been executed. Any
+//callback registered with key model.HookQueryAfterFind will be executed.
 func AfterQuery(b *Book, e *engine.Engine) error {
 	if e.Search.Preload != nil {
 		err := Preload(b, e)
@@ -767,7 +780,7 @@ func UpdateExec(b *Book, e *engine.Engine) error {
 	return tx.Commit()
 }
 
-//Update generates and executes sql query for updating records.This reliesn on
+//Update generates and executes sql query for updating records.This relies on
 //two hooks.
 //	model.HookUpdateSQL
 // Which generates the sql for UPDATE
@@ -790,6 +803,7 @@ func Update(b *Book, e *engine.Engine) error {
 	return exec.Exec(b, e)
 }
 
+// DeleteSQL generatesSQL for deleting records.
 func DeleteSQL(b *Book, e *engine.Engine) error {
 	var extraOption string
 	if str, ok := e.Scope.Get(model.DeleteOption); ok {
@@ -829,6 +843,7 @@ func DeleteSQL(b *Book, e *engine.Engine) error {
 	return nil
 }
 
+// BeforeDelete is called before deleting any record
 func BeforeDelete(b *Book, e *engine.Engine) error {
 	if !scope.HasConditions(e, e.Scope.Value) {
 		return errors.New("Missing WHERE clause while deleting")
@@ -839,6 +854,7 @@ func BeforeDelete(b *Book, e *engine.Engine) error {
 	return nil
 }
 
+// AfterDelete is executed after deletion of records
 func AfterDelete(b *Book, e *engine.Engine) error {
 	if ad, ok := b.Delete.Get(model.HookAfterDelete); ok {
 		return ad.Exec(b, e)
@@ -846,10 +862,12 @@ func AfterDelete(b *Book, e *engine.Engine) error {
 	return nil
 }
 
+// Delete deletes records. This makes sure to call BeforeDelete hook before
+// deleting anything and also calls AfterDelete before exiting.
 func Delete(b *Book, e *engine.Engine) error {
 	bd, ok := b.Delete.Get(model.BeforeDelete)
 	if !ok {
-		return errors.New("missing before delete hook")
+		return fmt.Errorf("missing %s hook", model.BeforeDelete)
 	}
 	err := bd.Exec(b, e)
 	if err != nil {
@@ -857,7 +875,7 @@ func Delete(b *Book, e *engine.Engine) error {
 	}
 	sql, ok := b.Delete.Get(model.DeleteSQL)
 	if !ok {
-		return errors.New("missing before delete hook")
+		return fmt.Errorf("missing %s hook", model.DeleteSQL)
 	}
 	err = sql.Exec(b, e)
 	if err != nil {
@@ -896,11 +914,12 @@ func Delete(b *Book, e *engine.Engine) error {
 
 	ad, ok := b.Delete.Get(model.AfterDelete)
 	if !ok {
-		return errors.New("missing after delete hook")
+		return fmt.Errorf("missing %s hook", model.AfterDelete)
 	}
 	return ad.Exec(b, e)
 }
 
+// Preload executes preload conditions.
 func Preload(b *Book, e *engine.Engine) error {
 	if e.Search.Preload == nil {
 		return nil
@@ -951,7 +970,7 @@ func Preload(b *Book, e *engine.Engine) error {
 							return err
 						}
 					case "belongs_to":
-						err = PreloadBelogsTo(b, cs, field, conds)
+						err = PreloadBelongsTo(b, cs, field, conds)
 						if err != nil {
 							return err
 						}
@@ -961,9 +980,9 @@ func Preload(b *Book, e *engine.Engine) error {
 							return err
 						}
 					default:
-						return errors.New("unsupported relation")
+						return fmt.Errorf("hooks: can't preload %sunsupported relation",
+							field.Relationship.Kind)
 					}
-
 					preloadedMap[preloadKey] = true
 					break
 				}
@@ -994,7 +1013,8 @@ func Preload(b *Book, e *engine.Engine) error {
 	return nil
 }
 
-func PreloadBelogsTo(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
+// PreloadBelongsTo preloads belongs_to relationship
+func PreloadBelongsTo(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
 	relation := field.Relationship
 
 	// preload conditions
@@ -1057,6 +1077,7 @@ func PreloadBelogsTo(b *Book, e *engine.Engine, field *model.Field, conditions [
 	return nil
 }
 
+// PreloadManyToMany preloads many_to_many relation
 func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
 	var (
 		relation         = field.Relationship
@@ -1186,6 +1207,7 @@ func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions
 	return nil
 }
 
+// JoinWith does sql join
 func JoinWith(e *engine.Engine, s, handler *model.JoinTableHandler, source interface{}) (*engine.Engine, error) {
 	ne := cloneEngine(e)
 	ne.Scope.Value = source
@@ -1243,6 +1265,8 @@ func JoinWith(e *engine.Engine, s, handler *model.JoinTableHandler, source inter
 	}
 	return nil, errors.New("wrong source type for join table handler")
 }
+
+// ColumnAsScope returnsnew Engine withthe value of the column used asscope.
 func ColumnAsScope(e *engine.Engine, column string) (*engine.Engine, error) {
 	iv := reflect.ValueOf(e.Scope.Value)
 	if iv.Kind() == reflect.Ptr {
@@ -1301,6 +1325,7 @@ func ColumnAsScope(e *engine.Engine, column string) (*engine.Engine, error) {
 	return nil, errors.New("can get engine out of column " + column)
 }
 
+// PreloadHasOne preloads has_one relation
 func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
 	rel := field.Relationship
 
@@ -1328,7 +1353,7 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 	pdb.Scope.Value = results
 	q, ok := b.Query.Get(model.Query)
 	if !ok {
-		return errors.New("missing query hook")
+		return fmt.Errorf("missing %s hook", model.Query)
 	}
 	err := q.Exec(b, pdb)
 	if err != nil {
@@ -1372,6 +1397,7 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 	return nil
 }
 
+// PreloadHasMany preloads has_many relation
 func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
 	relation := field.Relationship
 
@@ -1502,7 +1528,7 @@ func toQueryMarks(primaryValues [][]interface{}) string {
 	var results []string
 	for _, primaryValue := range primaryValues {
 		var marks []string
-		for _, _ = range primaryValue {
+		for _ = range primaryValue {
 			marks = append(marks, "?")
 		}
 
@@ -1527,6 +1553,7 @@ func toQueryCondition(e *engine.Engine, columns []string) string {
 	return strings.Join(newColumns, ",")
 }
 
+// ColumnAsArray returns an array of column values
 func ColumnAsArray(columns []string, values ...interface{}) (results [][]interface{}) {
 	for _, value := range values {
 		indirectValue := reflect.ValueOf(value)
@@ -1575,6 +1602,7 @@ func ColumnAsArray(columns []string, values ...interface{}) (results [][]interfa
 	return
 }
 
+// PreloadDBWithConditions returns engine with preload conditions set
 func PreloadDBWithConditions(e *engine.Engine, conditions []interface{}) (*engine.Engine, []interface{}) {
 	var (
 		preloadDB         = cloneEngine(e)
