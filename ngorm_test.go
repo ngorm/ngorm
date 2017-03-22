@@ -1011,3 +1011,32 @@ func belongsTo(t *testing.T, db *DB) {
 		t.Error("expected Ship to be created")
 	}
 }
+func TestDB_AddForeignKeySQL(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAddForeignKeySQL,
+			&fixture.User{},
+		)
+	}
+}
+func testAddForeignKeySQL(t *testing.T, db *DB) {
+	_, err := db.Begin().Automigrate(
+		&fixture.User{},
+	)
+	sql, err := db.Model(&fixture.User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
+	if isQL(db) {
+		if err == nil {
+			t.Error("expected an error")
+		}
+	} else {
+		if err != nil {
+			t.Fatal(err)
+		}
+		e := `ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;`
+		e = strings.TrimSpace(e)
+		sql = strings.TrimSpace(sql)
+		if e != sql {
+			t.Errorf("expected %s \n got %s", e, sql)
+		}
+	}
+
+}

@@ -1024,3 +1024,39 @@ func (db *DB) FirstOrCreate(out interface{}, where ...interface{}) error {
 	}
 	return nil
 }
+
+// AddForeignKey adds foreign key to an existing table.
+func (db *DB) AddForeignKey(field string, dest string, onDelete string, onUpdate string) error {
+	sql, err := db.AddForeignKeySQL(field, dest, onDelete, onUpdate)
+	if err != nil {
+		return err
+	}
+	_, err = db.SQLCommon().Exec(sql)
+	if err != nil {
+		return fmt.Errorf("%v \n %s", err, sql)
+	}
+	return nil
+}
+
+// AddForeignKeySQL generates sql to adds foreign key to an existing table.
+func (db *DB) AddForeignKeySQL(field string, dest string, onDelete string, onUpdate string) (string, error) {
+	if db.e == nil || db.e.Scope.Value == nil {
+		return "", errors.New("missing model, you can specify model by db.Model(&v).AddForeignKey")
+	}
+	if isQL(db) {
+		return "", errors.New("ql does not support foreign key")
+	}
+	name := scope.TableName(db.e, db.e.Scope.Value)
+	keyName := db.Dialect().BuildForeignKeyName(
+		name, field, dest)
+
+	if db.Dialect().HasForeignKey(name, keyName) {
+		return "", errors.New("key already exists")
+	}
+	var query = `ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s ON UPDATE %s;`
+	sql := fmt.Sprintf(query,
+		scope.QuotedTableName(db.e, db.e.Scope.Value),
+		scope.Quote(db.e, keyName),
+		scope.Quote(db.e, field), dest, onDelete, onUpdate)
+	return sql, nil
+}
