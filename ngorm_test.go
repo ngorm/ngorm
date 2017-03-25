@@ -1040,3 +1040,55 @@ func testAddForeignKeySQL(t *testing.T, db *DB) {
 	}
 
 }
+
+type Blog struct {
+	ID         uint   `gorm:"primary_key"`
+	Locale     string `gorm:"primary_key"`
+	Subject    string
+	Body       string
+	Tags       []Tag `gorm:"many2many:blog_tags;"`
+	SharedTags []Tag `gorm:"many2many:shared_blog_tags;ForeignKey:id;AssociationForeignKey:id"`
+	LocaleTags []Tag `gorm:"many2many:locale_blog_tags;ForeignKey:id,locale;AssociationForeignKey:id"`
+}
+
+type Tag struct {
+	ID     uint   `gorm:"primary_key"`
+	Locale string `gorm:"primary_key"`
+	Value  string
+	Blogs  []*Blog `gorm:"many2many:blogs_tags"`
+}
+
+func TestRelationship_Many_To_Many(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testRelManyToMany,
+			&Blog{},
+			&Tag{},
+		)
+	}
+}
+func testRelManyToMany(t *testing.T, db *DB) {
+	_, err := db.Begin().Automigrate(
+		&Blog{}, &Tag{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// e, err := db.Begin().AutomigrateSQL(&Blog{}, &Tag{})
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// pretty.Println(e)
+	blog := Blog{
+		Locale:  "ZH",
+		Subject: "subject",
+		Body:    "body",
+		Tags: []Tag{
+			{Locale: "ZH", Value: "tag1"},
+			{Locale: "ZH", Value: "tag2"},
+		},
+	}
+	err = db.Begin().Save(&blog)
+	if err != nil {
+		t.Error(err)
+	}
+}

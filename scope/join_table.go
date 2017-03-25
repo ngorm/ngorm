@@ -75,13 +75,10 @@ func AddJoinRelation(table string, s *model.JoinTableHandler,
 	var values []interface{}
 	for key, value := range searchMap {
 		assignColumns = append(assignColumns, Quote(e, key))
-		binVars = append(binVars, `?`)
-		conditions = append(conditions, fmt.Sprintf("%v = ?", Quote(e, key)))
 		values = append(values, value)
-	}
-
-	for _, value := range values {
-		values = append(values, value)
+		bind := e.Dialect.BindVar(len(values))
+		binVars = append(binVars, bind)
+		conditions = append(conditions, fmt.Sprintf("%v = %s", Quote(e, key), bind))
 	}
 
 	quotedTable := Quote(e, table)

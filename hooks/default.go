@@ -529,6 +529,130 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 	return nil
 }
 
+//AfterAssociation saves associations on the model
+func AfterAssociation(b *Book, e *engine.Engine) error {
+	if !scope.ShouldSaveAssociation(e) {
+		return nil
+	}
+	fds, err := scope.Fields(e, e.Scope.Value)
+	if err != nil {
+		return err
+	}
+	for _, field := range fds {
+		if ok, rel := scope.SaveFieldAsAssociation(e, field); ok {
+			switch rel.Kind {
+			case "has_many", "has_one", "many_to_many":
+				value := field.Field
+				switch value.Kind() {
+				case reflect.Slice:
+					for i := 0; i < value.Len(); i++ {
+						ne := cloneEngine(e)
+						elem := value.Index(i).Addr().Interface()
+						ne.Scope.Value = elem
+						if rel.JoinTableHandler == nil && len(rel.ForeignFieldNames) != 0 {
+							for idx, fieldName := range rel.ForeignFieldNames {
+								associationForeignName := rel.AssociationForeignFieldNames[idx]
+								for _, fd := range fds {
+									if fd.Name == associationForeignName {
+										err = scope.SetColumn(ne, fieldName, fd.Field.Interface())
+										if err != nil {
+											return err
+										}
+									}
+								}
+							}
+						}
+						if rel.PolymorphicType != "" {
+							err = scope.SetColumn(ne, rel.PolymorphicType, rel.PolymorphicValue)
+							if err != nil {
+								return err
+							}
+						}
+						c, ok := b.Create.Get(model.HookCreateSQL)
+						if !ok {
+							return errors.New("missing create sql hook")
+						}
+						err = c.Exec(b, ne)
+						if err != nil {
+							return err
+						}
+						ce, ok := b.Create.Get(model.HookCreateExec)
+						if !ok {
+							return errors.New("missing create exec hook")
+						}
+						err = ce.Exec(b, ne)
+						if err != nil {
+							return err
+						}
+						if h := rel.JoinTableHandler; h != nil {
+							ne.Scope.SQL = ""
+							ne.Scope.SQLVars = nil
+							expr, err := scope.AddJoinRelation(h.TableName, h, ne, e.Scope.Value, ne.Scope.Value)
+							if err != nil {
+								return err
+							}
+							if dialects.IsQL(e.Dialect) {
+								expr.Q = util.WrapTX(expr.Q)
+								tx, err := ne.SQLDB.Begin()
+								if err != nil {
+									return err
+								}
+								_, err = tx.Exec(expr.Q, expr.Args...)
+								if err != nil {
+									tx.Rollback()
+									return err
+								}
+								return tx.Commit()
+							}
+							_, err = ne.SQLDB.Exec(expr.Q, expr.Args...)
+							return err
+						}
+
+					}
+				default:
+					fieldValue := field.Field.Addr().Interface()
+					ne := cloneEngine(e)
+					ne.Scope.Value = fieldValue
+					if len(rel.ForeignFieldNames) != 0 {
+						// set value's foreign key
+						for idx, fieldName := range rel.ForeignFieldNames {
+							associationForeignName := rel.AssociationForeignFieldNames[idx]
+							for _, fd := range fds {
+								if fd.Name == associationForeignName {
+									err = scope.SetColumn(ne, fieldName, fd.Field.Interface())
+									if err != nil {
+										return err
+									}
+								}
+							}
+						}
+					}
+					c, ok := b.Create.Get(model.HookCreateSQL)
+					if !ok {
+						return errors.New("missing create sql hook")
+					}
+					err = c.Exec(b, ne)
+					if err != nil {
+						return err
+					}
+					ce, ok := b.Create.Get(model.HookCreateExec)
+					if !ok {
+						return errors.New("missing create exec hook")
+					}
+					err = ce.Exec(b, ne)
+					if err != nil {
+						return err
+					}
+
+				}
+			default:
+				// pretty.Println(rel)
+			}
+		}
+	}
+	return nil
+}
+
 //SaveAfterAssociation saves associations on the model
 func SaveAfterAssociation(b *Book, e *engine.Engine) error {
 	if !scope.ShouldSaveAssociation(e) {
@@ -615,6 +739,8 @@ func SaveAfterAssociation(b *Book, e *engine.Engine) error {
 				if err != nil {
 					return err
 				}
+			default:
+				// pretty.Println(rel)
 			}
 		}
 	}
