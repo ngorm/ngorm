@@ -1073,11 +1073,9 @@ func testRelManyToMany(t *testing.T, db *DB) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// e, err := db.Begin().AutomigrateSQL(&Blog{}, &Tag{})
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// pretty.Println(e)
+	if isQL(db) {
+		t.Skip()
+	}
 	blog := Blog{
 		Locale:  "ZH",
 		Subject: "subject",
