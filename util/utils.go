@@ -260,3 +260,61 @@ COMMIT;
 `
 	return fmt.Sprintf(t, tx)
 }
+
+// ColumnAsArray returns an array of column values
+func ColumnAsArray(columns []string, values ...interface{}) (results [][]interface{}) {
+	for _, value := range values {
+		indirectValue := reflect.ValueOf(value)
+		if indirectValue.Kind() == reflect.Ptr {
+			indirectValue = indirectValue.Elem()
+		}
+
+		switch indirectValue.Kind() {
+		case reflect.Slice:
+			for i := 0; i < indirectValue.Len(); i++ {
+				var result []interface{}
+				object := indirectValue.Index(i)
+				if object.Kind() == reflect.Ptr {
+					object = object.Elem()
+				}
+				var hasValue = false
+				for _, column := range columns {
+					field := object.FieldByName(column)
+					if hasValue || !IsBlank(field) {
+						hasValue = true
+					}
+					result = append(result, field.Interface())
+				}
+
+				if hasValue {
+					results = append(results, result)
+				}
+			}
+		case reflect.Struct:
+			var result []interface{}
+			var hasValue = false
+			for _, column := range columns {
+				field := indirectValue.FieldByName(column)
+				if hasValue || !IsBlank(field) {
+					hasValue = true
+				}
+				result = append(result, field.Interface())
+			}
+
+			if hasValue {
+				results = append(results, result)
+			}
+		}
+	}
+
+	return
+}
+
+func ToQueryValues(values [][]interface{}) (results []interface{}) {
+	for _, value := range values {
+		for _, v := range value {
+			results = append(results, v)
+		}
+	}
+	return
+}

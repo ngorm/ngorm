@@ -1148,16 +1148,16 @@ func PreloadBelongsTo(b *Book, e *engine.Engine, field *model.Field, conditions 
 	pdb, pCond := PreloadDBWithConditions(e, conditions)
 
 	// get relations's primary keys
-	primaryKeys := ColumnAsArray(relation.ForeignFieldNames, e.Scope.Value)
+	primaryKeys := util.ColumnAsArray(relation.ForeignFieldNames, e.Scope.Value)
 	if len(primaryKeys) == 0 {
 		return nil
 	}
 
 	// find relations
 	query := fmt.Sprintf("%v IN (%v)",
-		toQueryCondition(e, relation.AssociationForeignDBNames),
-		toQueryMarks(primaryKeys))
-	values := toQueryValues(primaryKeys)
+		scope.ToQueryCondition(e, relation.AssociationForeignDBNames),
+		scope.ToQueryMarks(primaryKeys))
+	values := util.ToQueryValues(primaryKeys)
 
 	results := makeSlice(field.Struct.Type)
 	search.Where(pdb, query, values...)
@@ -1367,7 +1367,7 @@ func JoinWith(e *engine.Engine, s, handler *model.JoinTableHandler, source inter
 			}
 		}
 
-		foreignFieldValues := ColumnAsArray(foreignFieldNames, e.Scope.Value)
+		foreignFieldValues := util.ColumnAsArray(foreignFieldNames, e.Scope.Value)
 
 		var condString string
 		if len(foreignFieldValues) > 0 {
@@ -1377,17 +1377,17 @@ func JoinWith(e *engine.Engine, s, handler *model.JoinTableHandler, source inter
 			}
 
 			condString = fmt.Sprintf("%v IN (%v)",
-				toQueryCondition(e, quotedForeignDBNames),
-				toQueryMarks(foreignFieldValues))
+				scope.ToQueryCondition(e, quotedForeignDBNames),
+				scope.ToQueryMarks(foreignFieldValues))
 
-			keys := ColumnAsArray(foreignFieldNames, e.Scope.Value)
-			values = append(values, toQueryValues(keys))
+			keys := util.ColumnAsArray(foreignFieldNames, e.Scope.Value)
+			values = append(values, util.ToQueryValues(keys))
 		} else {
 			condString = fmt.Sprintf("1 <> 1")
 		}
 		search.Join(ne, fmt.Sprintf("INNER JOIN %v ON %v",
 			quotedTableName, strings.Join(joinConditions, " AND ")))
-		search.Where(ne, condString, toQueryValues(foreignFieldValues)...)
+		search.Where(ne, condString, util.ToQueryValues(foreignFieldValues)...)
 		return ne, nil
 	}
 	return nil, errors.New("wrong source type for join table handler")
@@ -1457,7 +1457,7 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 	rel := field.Relationship
 
 	// get relations's primary keys
-	primaryKeys := ColumnAsArray(rel.AssociationForeignFieldNames, e.Scope.Value)
+	primaryKeys := util.ColumnAsArray(rel.AssociationForeignFieldNames, e.Scope.Value)
 	if len(primaryKeys) == 0 {
 		return nil
 	}
@@ -1467,8 +1467,8 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 
 	// find relations
 	query := fmt.Sprintf("%v IN (%v)",
-		toQueryCondition(e, rel.ForeignDBNames), toQueryMarks(primaryKeys))
-	values := toQueryValues(primaryKeys)
+		scope.ToQueryCondition(e, rel.ForeignDBNames), scope.ToQueryMarks(primaryKeys))
+	values := util.ToQueryValues(primaryKeys)
 	if rel.PolymorphicType != "" {
 		query += fmt.Sprintf(" AND %v = ?", scope.Quote(e, rel.PolymorphicDBName))
 		values = append(values, rel.PolymorphicValue)
@@ -1529,7 +1529,7 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 	relation := field.Relationship
 
 	// get relations's primary keys
-	primaryKeys := ColumnAsArray(relation.AssociationForeignFieldNames, e.Scope.Value)
+	primaryKeys := util.ColumnAsArray(relation.AssociationForeignFieldNames, e.Scope.Value)
 	if len(primaryKeys) == 0 {
 		return nil
 	}
@@ -1539,8 +1539,8 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 
 	// find relations
 	query := fmt.Sprintf("%v IN (%v)",
-		toQueryCondition(e, relation.ForeignDBNames), toQueryMarks(primaryKeys))
-	values := toQueryValues(primaryKeys)
+		scope.ToQueryCondition(e, relation.ForeignDBNames), scope.ToQueryMarks(primaryKeys))
+	values := util.ToQueryValues(primaryKeys)
 	if relation.PolymorphicType != "" {
 		query += fmt.Sprintf(" AND %v = ?",
 			scope.Quote(e, relation.PolymorphicDBName))
@@ -1642,91 +1642,6 @@ func makeSlice(elemType reflect.Type) interface{} {
 	slice := reflect.New(sliceType)
 	slice.Elem().Set(reflect.MakeSlice(sliceType, 0, 0))
 	return slice.Interface()
-}
-func toQueryValues(values [][]interface{}) (results []interface{}) {
-	for _, value := range values {
-		for _, v := range value {
-			results = append(results, v)
-		}
-	}
-	return
-}
-func toQueryMarks(primaryValues [][]interface{}) string {
-	var results []string
-	for _, primaryValue := range primaryValues {
-		var marks []string
-		for _ = range primaryValue {
-			marks = append(marks, "?")
-		}
-
-		if len(marks) > 1 {
-			results = append(results, fmt.Sprintf("(%v)", strings.Join(marks, ",")))
-		} else {
-			results = append(results, strings.Join(marks, ""))
-		}
-	}
-	return strings.Join(results, ",")
-}
-
-func toQueryCondition(e *engine.Engine, columns []string) string {
-	var newColumns []string
-	for _, column := range columns {
-		newColumns = append(newColumns, scope.Quote(e, column))
-	}
-
-	if len(columns) > 1 {
-		return fmt.Sprintf("(%v)", strings.Join(newColumns, ","))
-	}
-	return strings.Join(newColumns, ",")
-}
-
-// ColumnAsArray returns an array of column values
-func ColumnAsArray(columns []string, values ...interface{}) (results [][]interface{}) {
-	for _, value := range values {
-		indirectValue := reflect.ValueOf(value)
-		if indirectValue.Kind() == reflect.Ptr {
-			indirectValue = indirectValue.Elem()
-		}
-
-		switch indirectValue.Kind() {
-		case reflect.Slice:
-			for i := 0; i < indirectValue.Len(); i++ {
-				var result []interface{}
-				object := indirectValue.Index(i)
-				if object.Kind() == reflect.Ptr {
-					object = object.Elem()
-				}
-				var hasValue = false
-				for _, column := range columns {
-					field := object.FieldByName(column)
-					if hasValue || !util.IsBlank(field) {
-						hasValue = true
-					}
-					result = append(result, field.Interface())
-				}
-
-				if hasValue {
-					results = append(results, result)
-				}
-			}
-		case reflect.Struct:
-			var result []interface{}
-			var hasValue = false
-			for _, column := range columns {
-				field := indirectValue.FieldByName(column)
-				if hasValue || !util.IsBlank(field) {
-					hasValue = true
-				}
-				result = append(result, field.Interface())
-			}
-
-			if hasValue {
-				results = append(results, result)
-			}
-		}
-	}
-
-	return
 }
 
 // PreloadDBWithConditions returns engine with preload conditions set

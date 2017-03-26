@@ -39,6 +39,19 @@ func (e *Engine) AddError(err error) error {
 	return nil
 }
 
+// Clone returns a new copy of engine
+func (e *Engine) Clone() *Engine {
+	return &Engine{
+		Scope:         model.NewScope(),
+		Search:        &model.Search{},
+		SingularTable: e.SingularTable,
+		Ctx:           e.Ctx,
+		Dialect:       e.Dialect,
+		StructMap:     e.StructMap,
+		SQLDB:         e.SQLDB,
+	}
+}
+
 //DBTabler is an interface for getting database table name from the *Engine
 type DBTabler interface {
 	TableName(*Engine) string

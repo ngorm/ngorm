@@ -856,7 +856,7 @@ func (db *DB) Count(value interface{}) error {
 // AddIndexSQL generates SQL to add index for columns with given name
 func (db *DB) AddIndexSQL(indexName string, columns ...string) (*model.Expr, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).AddIndexSQL")
+		return nil, fmt.Errorf("missing model .AddIndexSQL")
 	}
 	err := builder.AddIndex(db.e, false, indexName, columns...)
 	if err != nil {
@@ -928,7 +928,7 @@ func (db *DB) UpdateColumn(attrs ...interface{}) error {
 // UpdateColumns update attributes without
 func (db *DB) UpdateColumns(values interface{}) error {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return fmt.Errorf("missing model call db.Model(&Foo{}).UpdateColumns")
+		return fmt.Errorf("missing model .UpdateColumns")
 	}
 	db.e.Scope.Set(model.UpdateColumn, true)
 	db.e.Scope.Set(model.SaveAssociations, false)
@@ -943,7 +943,7 @@ func (db *DB) UpdateColumns(values interface{}) error {
 // AddUniqueIndex add unique index for columns with given name
 func (db *DB) AddUniqueIndex(indexName string, columns ...string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).AddUniqueIndex")
+		return nil, fmt.Errorf("missing model .AddUniqueIndex")
 	}
 	err := builder.AddIndex(db.e, true, indexName, columns...)
 	if err != nil {
@@ -958,7 +958,7 @@ func (db *DB) AddUniqueIndex(indexName string, columns ...string) (sql.Result, e
 // RemoveIndex remove index with name
 func (db *DB) RemoveIndex(indexName string) error {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return fmt.Errorf("missing model call db.Model(&Foo{}).RemoveIndex")
+		return fmt.Errorf("missing model .RemoveIndex")
 	}
 	return db.Dialect().RemoveIndex(
 		scope.TableName(db.e, db.e.Scope.Value), indexName)
@@ -967,7 +967,7 @@ func (db *DB) RemoveIndex(indexName string) error {
 // DropColumn drop a column
 func (db *DB) DropColumn(column string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).DropColumn")
+		return nil, fmt.Errorf("missing model .DropColumn")
 	}
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v DROP COLUMN %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column))
@@ -982,7 +982,7 @@ func (db *DB) DropColumn(column string) (sql.Result, error) {
 // ModifyColumn modify column to type
 func (db *DB) ModifyColumn(column string, typ string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model call db.Model(&Foo{}).ModifyColumn")
+		return nil, fmt.Errorf("missing model .ModifyColumn")
 	}
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v MODIFY %v %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column), typ)
@@ -1059,4 +1059,120 @@ func (db *DB) AddForeignKeySQL(field string, dest string, onDelete string, onUpd
 		scope.Quote(db.e, keyName),
 		scope.Quote(db.e, field), dest, onDelete, onUpdate)
 	return sql, nil
+}
+
+// Association returns association object
+func (db *DB) Association(column string) (*Association, error) {
+	if db.e == nil || db.e.Scope.Value == nil {
+		return nil, fmt.Errorf("missing model .ModifyColumn")
+	}
+	p, err := scope.PrimaryField(db.e, db.e.Scope.Value)
+	if err != nil {
+		return nil, err
+	}
+	if p.IsBlank {
+		return nil, errors.New("primary field can not be blank")
+	}
+	field, err := scope.FieldByName(db.e, db.e.Scope.Value, column)
+	if err != nil {
+		return nil, err
+	}
+	ndb := db.Begin()
+	ndb.e.Scope.Value = db.e.Scope.Value
+	ndb.e.Scope.Set(model.AssociationSource, db.e.Scope.Value)
+	if field.Relationship == nil || len(field.Relationship.ForeignFieldNames) == 0 {
+		v := reflect.ValueOf(db.e.Scope.Value)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		return nil, fmt.Errorf("invalid association %v for %v", column, v.Type())
+	}
+	return &Association{db: ndb, column: column, field: field}, nil
+}
+
+func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
+	sdb := db.Begin()
+	sdb.e.Scope.Value = source
+
+	ndb := db.Begin()
+	ndb.e.Scope.Value = value
+
+	sdb.e.Scope.Set(model.AssociationSource, source)
+
+	foreignKeys = append(foreignKeys, ndb.e.Scope.TypeName()+"Id")
+	foreignKeys = append(foreignKeys, sdb.e.Scope.TypeName()+"Id")
+
+	for _, foreignKey := range foreignKeys {
+		fromField, err := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey)
+		if err != nil {
+			return err
+		}
+		toField, err := scope.FieldByName(ndb.e, value, foreignKey)
+		if err != nil {
+			return err
+		}
+
+		if fromField != nil {
+			if rel := fromField.Relationship; rel != nil {
+				if rel.Kind == "many_to_many" {
+					h := rel.JoinTableHandler
+					err = scope.JoinWith(h, ndb.e, sdb.e.Scope.Value)
+					if err != nil {
+						return err
+					}
+					return ndb.Find(value)
+				} else if rel.Kind == "belongs_to" {
+					for idx, foreignKey := range rel.ForeignDBNames {
+						if field, ok := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey); ok != nil {
+							ndb = ndb.Where(fmt.Sprintf("%v = ?",
+								scope.Quote(ndb.e, rel.AssociationForeignDBNames[idx])),
+								field.Field.Interface())
+						}
+					}
+					return ndb.Find(value)
+				} else if rel.Kind == "has_many" || rel.Kind == "has_one" {
+					for idx, foreignKey := range rel.ForeignDBNames {
+						field, err := scope.FieldByName(sdb.e, sdb.e.Scope.Value, rel.AssociationForeignDBNames[idx])
+						if err == nil {
+							ndb = ndb.Where(fmt.Sprintf("%v = ?",
+								scope.Quote(ndb.e, foreignKey)), field.Field.Interface())
+						}
+
+					}
+
+					if rel.PolymorphicType != "" {
+						ndb = ndb.Where(fmt.Sprintf("%v = ?",
+							scope.Quote(ndb.e, rel.PolymorphicDBName)), rel.PolymorphicValue)
+					}
+					return ndb.Find(value)
+				}
+			} else {
+				pk, err := scope.PrimaryKey(sdb.e, value)
+				if err != nil {
+					return err
+				}
+				sql := fmt.Sprintf("%v = ?",
+					scope.Quote(sdb.e, pk))
+				return ndb.Where(sql, fromField.Field.Interface()).Find(value)
+			}
+			return nil
+		} else if toField != nil {
+			pk, err := scope.PrimaryKey(sdb.e, value)
+			if err != nil {
+				return err
+			}
+			sql := fmt.Sprintf("%v = ?",
+				scope.Quote(ndb.e, toField.DBName))
+			return ndb.Where(sql, pk).Find(value)
+		}
+	}
+	return fmt.Errorf("invalid association %v", foreignKeys)
+}
+
+// Related get related associations
+func (db *DB) Related(value interface{}, foreignKeys ...string) error {
+	if db.e == nil || db.e.Scope.Value == nil {
+		return fmt.Errorf("missing model ")
+	}
+	return db.related(db.e.Scope.Value, value, foreignKeys...)
 }

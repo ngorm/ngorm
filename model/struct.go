@@ -57,6 +57,7 @@ const (
 	SaveAssociations        = "ngorm:save_associations"
 	Preload                 = "ngorm:preload"
 	HookSaveAfterAss        = "ngorm:save_after_association"
+	AssociationSource       = "ngorm:association:source"
 )
 
 //Model defines common fields that are used for defining SQL Tables. This is a
@@ -240,6 +241,19 @@ func (s *Scope) GetAll() map[string]interface{} {
 	}
 	s.mu.RUnlock()
 	return a
+}
+
+// TypeName returns the name of the type contained in Scope.Value
+func (s *Scope) TypeName() string {
+	val := reflect.ValueOf(s.Value)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	typ := val.Type()
+	for typ.Kind() == reflect.Slice || typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	return typ.Name()
 }
 
 //Search is the search level of SQL building

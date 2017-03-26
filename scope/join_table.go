@@ -1,12 +1,15 @@
 package scope
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/ngorm/ngorm/engine"
 	"github.com/ngorm/ngorm/model"
+	"github.com/ngorm/ngorm/search"
+	"github.com/ngorm/ngorm/util"
 )
 
 // SetupJoinTable  initialize a default join table handler
@@ -92,4 +95,64 @@ func AddJoinRelation(table string, s *model.JoinTableHandler,
 		strings.Join(conditions, " AND "),
 	)
 	return &model.Expr{Q: sql, Args: values}, nil
+}
+
+// JoinWith query with `Join` conditions
+func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interface{}) error {
+	ne.Scope.Value = source
+	tableName := handler.TableName
+	quotedTableName := Quote(ne, tableName)
+	var joinConditions []string
+	var values []interface{}
+	m, err := GetModelStruct(ne, source)
+	if err != nil {
+		return err
+	}
+	if handler.Source.ModelType == m.ModelType {
+		d := reflect.New(handler.Destination.ModelType).Interface()
+		destinationTableName := QuotedTableName(ne, d)
+		for _, foreignKey := range handler.Destination.ForeignKeys {
+			joinConditions = append(joinConditions, fmt.Sprintf("%v.%v = %v.%v",
+				quotedTableName,
+				Quote(ne, foreignKey.DBName),
+				destinationTableName,
+				Quote(ne, foreignKey.AssociationDBName)))
+		}
+
+		var foreignDBNames []string
+		var foreignFieldNames []string
+
+		for _, foreignKey := range handler.Source.ForeignKeys {
+			foreignDBNames = append(foreignDBNames, foreignKey.DBName)
+			if field, ok := FieldByName(ne, source, foreignKey.AssociationDBName); ok != nil {
+				foreignFieldNames = append(foreignFieldNames, field.Name)
+			}
+		}
+
+		foreignFieldValues := util.ColumnAsArray(foreignFieldNames, ne.Scope.Value)
+
+		var condString string
+		if len(foreignFieldValues) > 0 {
+			var quotedForeignDBNames []string
+			for _, dbName := range foreignDBNames {
+				quotedForeignDBNames = append(quotedForeignDBNames, tableName+"."+dbName)
+			}
+
+			condString = fmt.Sprintf("%v IN (%v)",
+				ToQueryCondition(ne, quotedForeignDBNames),
+				ToQueryMarks(foreignFieldValues))
+
+			keys := util.ColumnAsArray(foreignFieldNames, ne.Scope.Value)
+			values = append(values, util.ToQueryValues(keys))
+		} else {
+			condString = fmt.Sprintf("1 <> 1")
+		}
+
+		search.Join(ne,
+			fmt.Sprintf("INNER JOIN %v ON %v",
+				quotedTableName,
+				strings.Join(joinConditions, " AND ")))
+		search.Where(ne, condString, util.ToQueryValues(foreignFieldValues)...)
+	}
+	return errors.New("wrong source type for join table handler")
 }

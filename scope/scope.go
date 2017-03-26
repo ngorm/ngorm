@@ -1330,3 +1330,32 @@ func Initialize(e *engine.Engine) {
 	UpdatedAttrsWithValues(e, e.Search.InitAttrs)
 	UpdatedAttrsWithValues(e, e.Search.AssignAttrs)
 }
+
+func ToQueryCondition(e *engine.Engine, columns []string) string {
+	var newColumns []string
+	for _, column := range columns {
+		newColumns = append(newColumns, Quote(e, column))
+	}
+
+	if len(columns) > 1 {
+		return fmt.Sprintf("(%v)", strings.Join(newColumns, ","))
+	}
+	return strings.Join(newColumns, ",")
+}
+
+func ToQueryMarks(primaryValues [][]interface{}) string {
+	var results []string
+	for _, primaryValue := range primaryValues {
+		var marks []string
+		for _ = range primaryValue {
+			marks = append(marks, "?")
+		}
+
+		if len(marks) > 1 {
+			results = append(results, fmt.Sprintf("(%v)", strings.Join(marks, ",")))
+		} else {
+			results = append(results, strings.Join(marks, ""))
+		}
+	}
+	return strings.Join(results, ",")
+}
