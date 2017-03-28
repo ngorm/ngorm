@@ -22,4 +22,7 @@ var (
 
 	//ErrInvalidFieldValue invalid field value
 	ErrInvalidFieldValue = errors.New("ngorm: field value not valid")
+
+	// ErrMissingModel when the struct model is not set for the database operation
+	ErrMissingModel = errors.New("missing model")
 )

@@ -468,7 +468,7 @@ func (db *DB) Update(attrs ...interface{}) error {
 //Updates runs UPDATE query
 func (db *DB) Updates(values interface{}, ignoreProtectedAttrs ...bool) error {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return errors.New("missing model, before calling this startwith db.Model")
+		return errmsg.ErrMissingModel
 	}
 	var ignore bool
 	if len(ignoreProtectedAttrs) > 0 {
@@ -491,7 +491,7 @@ func (db *DB) UpdateSQL(attrs ...interface{}) (*model.Expr, error) {
 //UpdatesSQL generates sql that will be used when you run db.UpdatesSQL
 func (db *DB) UpdatesSQL(values interface{}, ignoreProtectedAttrs ...bool) (*model.Expr, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, errors.New("missing model, before calling this startwith db.Model")
+		return nil, errmsg.ErrMissingModel
 	}
 	var ignore bool
 	if len(ignoreProtectedAttrs) > 0 {
@@ -856,7 +856,7 @@ func (db *DB) Count(value interface{}) error {
 // AddIndexSQL generates SQL to add index for columns with given name
 func (db *DB) AddIndexSQL(indexName string, columns ...string) (*model.Expr, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model .AddIndexSQL")
+		return nil, errmsg.ErrMissingModel
 	}
 	err := builder.AddIndex(db.e, false, indexName, columns...)
 	if err != nil {
@@ -928,7 +928,7 @@ func (db *DB) UpdateColumn(attrs ...interface{}) error {
 // UpdateColumns update attributes without
 func (db *DB) UpdateColumns(values interface{}) error {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return fmt.Errorf("missing model .UpdateColumns")
+		return errmsg.ErrMissingModel
 	}
 	db.e.Scope.Set(model.UpdateColumn, true)
 	db.e.Scope.Set(model.SaveAssociations, false)
@@ -943,7 +943,7 @@ func (db *DB) UpdateColumns(values interface{}) error {
 // AddUniqueIndex add unique index for columns with given name
 func (db *DB) AddUniqueIndex(indexName string, columns ...string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model .AddUniqueIndex")
+		return nil, errmsg.ErrMissingModel
 	}
 	err := builder.AddIndex(db.e, true, indexName, columns...)
 	if err != nil {
@@ -958,7 +958,7 @@ func (db *DB) AddUniqueIndex(indexName string, columns ...string) (sql.Result, e
 // RemoveIndex remove index with name
 func (db *DB) RemoveIndex(indexName string) error {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return fmt.Errorf("missing model .RemoveIndex")
+		return errmsg.ErrMissingModel
 	}
 	return db.Dialect().RemoveIndex(
 		scope.TableName(db.e, db.e.Scope.Value), indexName)
@@ -967,7 +967,7 @@ func (db *DB) RemoveIndex(indexName string) error {
 // DropColumn drop a column
 func (db *DB) DropColumn(column string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model .DropColumn")
+		return nil, errmsg.ErrMissingModel
 	}
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v DROP COLUMN %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column))
@@ -982,7 +982,7 @@ func (db *DB) DropColumn(column string) (sql.Result, error) {
 // ModifyColumn modify column to type
 func (db *DB) ModifyColumn(column string, typ string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model .ModifyColumn")
+		return nil, errmsg.ErrMissingModel
 	}
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v MODIFY %v %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column), typ)
@@ -1041,7 +1041,7 @@ func (db *DB) AddForeignKey(field string, dest string, onDelete string, onUpdate
 // AddForeignKeySQL generates sql to adds foreign key to an existing table.
 func (db *DB) AddForeignKeySQL(field string, dest string, onDelete string, onUpdate string) (string, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return "", errors.New("missing model, you can specify model by db.Model(&v).AddForeignKey")
+		return "", errmsg.ErrMissingModel
 	}
 	if isQL(db) {
 		return "", errors.New("ql does not support foreign key")
@@ -1064,7 +1064,7 @@ func (db *DB) AddForeignKeySQL(field string, dest string, onDelete string, onUpd
 // Association returns association object
 func (db *DB) Association(column string) (*Association, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return nil, fmt.Errorf("missing model .ModifyColumn")
+		return nil, errmsg.ErrMissingModel
 	}
 	p, err := scope.PrimaryField(db.e, db.e.Scope.Value)
 	if err != nil {
@@ -1172,7 +1172,7 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 // Related get related associations
 func (db *DB) Related(value interface{}, foreignKeys ...string) error {
 	if db.e == nil || db.e.Scope.Value == nil {
-		return fmt.Errorf("missing model ")
+		return errmsg.ErrMissingModel
 	}
 	return db.related(db.e.Scope.Value, value, foreignKeys...)
 }

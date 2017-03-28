@@ -7,28 +7,28 @@ import (
 )
 
 type Cat struct {
-	Id   int
+	ID   int
 	Name string
 	Toy  Toy `gorm:"polymorphic:Owner;"`
 }
 
 type Dog struct {
-	Id   int
+	ID   int
 	Name string
 	Toys []Toy `gorm:"polymorphic:Owner;"`
 }
 
 type Hamster struct {
-	Id           int
+	ID           int
 	Name         string
 	PreferredToy Toy `gorm:"polymorphic:Owner;polymorphic_value:hamster_preferred"`
 	OtherToy     Toy `gorm:"polymorphic:Owner;polymorphic_value:hamster_other"`
 }
 
 type Toy struct {
-	Id        int
+	ID        int
 	Name      string
-	OwnerId   int
+	OwnerID   int
 	OwnerType string
 }
 
