@@ -831,7 +831,7 @@ func SetColumn(e *engine.Engine, column interface{}, value interface{}) error {
 			return mostMatchedField.Set(value)
 		}
 	}
-	return errors.New("could not convert column to field")
+	return nil
 }
 
 //SelectAttrs returns the attributes in the select query.

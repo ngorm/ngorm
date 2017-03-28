@@ -175,7 +175,7 @@ func BeforeCreate(b *Book, e *engine.Engine) error {
 //Create the hook executed to create a new record.
 func Create(b *Book, e *engine.Engine) error {
 	var (
-		columns, placeholders []string
+		cols, placeholders []string
 
 		// The blank columns with default values
 		cv []string
@@ -192,7 +192,7 @@ func Create(b *Book, e *engine.Engine) error {
 					cv = append(cv, scope.Quote(e, field.DBName))
 					e.Scope.Set(model.BlankColWithValue, cv)
 				} else if !field.IsPrimaryKey || !field.IsBlank {
-					columns = append(columns, scope.Quote(e, field.DBName))
+					cols = append(cols, scope.Quote(e, field.DBName))
 					placeholders = append(placeholders, scope.AddToVars(e, field.Field.Interface()))
 				}
 			} else if field.Relationship != nil && field.Relationship.Kind == "belongs_to" {
@@ -202,8 +202,9 @@ func Create(b *Book, e *engine.Engine) error {
 						return err
 					}
 					if !scope.ChangeableField(e, foreignField) {
-						columns = append(columns, scope.Quote(e, foreignField.DBName))
-						placeholders = append(placeholders, scope.AddToVars(e, foreignField.Field.Interface()))
+						cols = append(cols, scope.Quote(e, foreignField.DBName))
+						placeholders = append(placeholders,
+							scope.AddToVars(e, foreignField.Field.Interface()))
 					}
 				}
 			}
@@ -232,7 +233,7 @@ func Create(b *Book, e *engine.Engine) error {
 	lastInsertIDReturningSuffix :=
 		e.Dialect.LastInsertIDReturningSuffix(tableName, returningColumn)
 
-	if len(columns) == 0 {
+	if len(cols) == 0 {
 		sql := fmt.Sprintf(
 			"INSERT INTO %v DEFAULT VALUES%v%v",
 			tableName,
@@ -244,7 +245,7 @@ func Create(b *Book, e *engine.Engine) error {
 		sql := fmt.Sprintf(
 			"INSERT INTO %v (%v) VALUES (%v)%v%v",
 			scope.QuotedTableName(e, e.Scope.Value),
-			strings.Join(columns, ","),
+			strings.Join(cols, ","),
 			strings.Join(placeholders, ","),
 			util.AddExtraSpaceIfExist(extraOption),
 			util.AddExtraSpaceIfExist(lastInsertIDReturningSuffix),
@@ -270,7 +271,7 @@ func CreateExec(b *Book, e *engine.Engine) error {
 		e.Dialect.LastInsertIDReturningSuffix(tableName, returningColumn)
 	if lastInsertIDReturningSuffix == "" || primaryField == nil {
 		var result sql.Result
-		if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
+		if dialects.IsQL(e.Dialect) {
 			tx, err := e.SQLDB.Begin()
 			if err != nil {
 				return err
@@ -338,7 +339,7 @@ func AfterCreate(b *Book, e *engine.Engine) error {
 //QLAfterCreate hook executed after a new record has been created. This is for
 //ql dialect use only.
 func QLAfterCreate(b *Book, e *engine.Engine) error {
-	ne := cloneEngine(e)
+	ne := e.Clone()
 	ne.Scope.Set(model.IgnoreProtectedAttrs, true)
 	ne.Scope.Set(model.UpdateInterface, util.ToSearchableMap(e.Scope.Value))
 	ne.Scope.Value = e.Scope.Value
@@ -490,9 +491,9 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 			// which will execute the generates SQL.
 			c, ok := b.Create.Get(model.HookCreateSQL)
 			if !ok {
-				return errors.New("missing create sql hook")
+				return fmt.Errorf("missing %s hook", model.HookCreateSQL)
 			}
-			ne := cloneEngine(e)
+			ne := e.Clone()
 			ne.Scope.Value = fieldValue
 			err = c.Exec(b, ne)
 			if err != nil {
@@ -500,7 +501,7 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 			}
 			ce, ok := b.Create.Get(model.HookCreateExec)
 			if !ok {
-				return errors.New("missing create exec hook")
+				return fmt.Errorf("missing %s hook", model.HookCreateExec)
 			}
 			err = ce.Exec(b, ne)
 			if err != nil {
@@ -541,12 +542,14 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 	for _, field := range fds {
 		if ok, rel := scope.SaveFieldAsAssociation(e, field); ok {
 			switch rel.Kind {
-			case "has_many", "has_one", "many_to_many":
+			case "has_many",
+				"has_one",
+				"many_to_many":
 				value := field.Field
 				switch value.Kind() {
 				case reflect.Slice:
 					for i := 0; i < value.Len(); i++ {
-						ne := cloneEngine(e)
+						ne := e.Clone()
 						elem := value.Index(i).Addr().Interface()
 						ne.Scope.Value = elem
 						if rel.JoinTableHandler == nil && len(rel.ForeignFieldNames) != 0 {
@@ -592,6 +595,7 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 								return err
 							}
 							if dialects.IsQL(e.Dialect) {
+								//TODO: ql
 								// expr.Q = util.WrapTX(expr.Q)
 								// tx, err := ne.SQLDB.Begin()
 								// if err != nil {
@@ -612,7 +616,7 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 					}
 				default:
 					fieldValue := field.Field.Addr().Interface()
-					ne := cloneEngine(e)
+					ne := e.Clone()
 					ne.Scope.Value = fieldValue
 					if len(rel.ForeignFieldNames) != 0 {
 						// set value's foreign key
@@ -645,100 +649,6 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 						return err
 					}
 
-				}
-			default:
-				// pretty.Println(rel)
-			}
-		}
-	}
-	return nil
-}
-
-//SaveAfterAssociation saves associations on the model
-func SaveAfterAssociation(b *Book, e *engine.Engine) error {
-	if !scope.ShouldSaveAssociation(e) {
-		return nil
-	}
-	fds, err := scope.Fields(e, e.Scope.Value)
-	if err != nil {
-		return err
-	}
-	for _, field := range fds {
-		if ok, rel := scope.SaveFieldAsAssociation(e, field); ok {
-			switch rel.Kind {
-			case "has_many":
-				fieldValue := field.Field.Addr()
-				if fieldValue.Kind() == reflect.Ptr {
-					fieldValue = fieldValue.Elem()
-				}
-				for i := 0; i < fieldValue.Len(); i++ {
-					fv := fieldValue.Index(i).Addr().Interface()
-					ne := cloneEngine(e)
-					ne.Scope.Value = fv
-					if len(rel.ForeignFieldNames) != 0 {
-						// set value's foreign key
-						for idx, fieldName := range rel.ForeignFieldNames {
-							associationForeignName := rel.AssociationForeignFieldNames[idx]
-							for _, fd := range fds {
-								if fd.Name == associationForeignName {
-									err = scope.SetColumn(ne, fieldName, fd.Field.Interface())
-									if err != nil {
-										return err
-									}
-								}
-							}
-						}
-					}
-					c, ok := b.Create.Get(model.HookCreateSQL)
-					if !ok {
-						return errors.New("missing create sql hook")
-					}
-					err = c.Exec(b, ne)
-					if err != nil {
-						return err
-					}
-					ce, ok := b.Create.Get(model.HookCreateExec)
-					if !ok {
-						return errors.New("missing create exec hook")
-					}
-					err = ce.Exec(b, ne)
-					if err != nil {
-						return err
-					}
-				}
-			case "has_one":
-				fieldValue := field.Field.Addr().Interface()
-				ne := cloneEngine(e)
-				ne.Scope.Value = fieldValue
-				if len(rel.ForeignFieldNames) != 0 {
-					// set value's foreign key
-					for idx, fieldName := range rel.ForeignFieldNames {
-						associationForeignName := rel.AssociationForeignFieldNames[idx]
-						for _, fd := range fds {
-							if fd.Name == associationForeignName {
-								err = scope.SetColumn(ne, fieldName, fd.Field.Interface())
-								if err != nil {
-									return err
-								}
-							}
-						}
-					}
-				}
-				c, ok := b.Create.Get(model.HookCreateSQL)
-				if !ok {
-					return errors.New("missing create sql hook")
-				}
-				err = c.Exec(b, ne)
-				if err != nil {
-					return err
-				}
-				ce, ok := b.Create.Get(model.HookCreateExec)
-				if !ok {
-					return errors.New("missing create exec hook")
-				}
-				err = ce.Exec(b, ne)
-				if err != nil {
-					return err
 				}
 			default:
 				// pretty.Println(rel)
@@ -792,18 +702,6 @@ func CreateSQL(b *Book, e *engine.Engine) error {
 	}
 	e.Scope.SQL = buf.String()
 	return nil
-}
-
-func cloneEngine(e *engine.Engine) *engine.Engine {
-	return &engine.Engine{
-		Scope:         model.NewScope(),
-		Search:        &model.Search{},
-		SingularTable: e.SingularTable,
-		Ctx:           e.Ctx,
-		Dialect:       e.Dialect,
-		StructMap:     e.StructMap,
-		SQLDB:         e.SQLDB,
-	}
 }
 
 //UpdateSQL builds query for updating records.
@@ -1230,7 +1128,7 @@ func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions
 	preloadDB, preloadConditions := PreloadDBWithConditions(e, conditions)
 
 	// generate query with join table
-	newScope := cloneEngine(e)
+	newScope := e.Clone()
 	newScope.Scope.Value = reflect.New(fieldType).Interface()
 	search.Table(newScope, scope.TableName(newScope, newScope.Scope.Value))
 	search.Select(newScope, "*")
@@ -1336,7 +1234,7 @@ func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions
 
 // JoinWith does sql join
 func JoinWith(e *engine.Engine, s, handler *model.JoinTableHandler, source interface{}) (*engine.Engine, error) {
-	ne := cloneEngine(e)
+	ne := e.Clone()
 	ne.Scope.Value = source
 	tableName := handler.TableName
 	quotedTableName := scope.Quote(ne, tableName)
@@ -1438,13 +1336,13 @@ func ColumnAsScope(e *engine.Engine, column string) (*engine.Engine, error) {
 					results = reflect.Append(results, result.Addr())
 				}
 			}
-			ne := cloneEngine(e)
+			ne := e.Clone()
 			ne.Scope.Value = results.Interface()
 			return ne, nil
 		}
 	case reflect.Struct:
 		if field := iv.FieldByName(column); field.CanAddr() {
-			ne := cloneEngine(e)
+			ne := e.Clone()
 			ne.Scope.Value = field.Addr().Interface()
 			return ne, nil
 		}
@@ -1647,7 +1545,7 @@ func makeSlice(elemType reflect.Type) interface{} {
 // PreloadDBWithConditions returns engine with preload conditions set
 func PreloadDBWithConditions(e *engine.Engine, conditions []interface{}) (*engine.Engine, []interface{}) {
 	var (
-		preloadDB         = cloneEngine(e)
+		preloadDB         = e.Clone()
 		preloadConditions []interface{}
 	)
 

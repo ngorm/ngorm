@@ -7,9 +7,9 @@ import (
 	"github.com/ngorm/ngorm/model"
 )
 
-//Hook is a nterface that is executed at a particular point in time. This allows
+//Hook is a interface that is executed at a particular point in time. This allows
 //doing additional transformation of any portion of the engine.Engine, and it
-//can be a way to overide default behaviour.
+//can be a way to overide default behavior.
 type Hook interface {
 	Name() string
 	Exec(h *Book, e *engine.Engine) error
@@ -55,7 +55,7 @@ func (s *simpleHook) Exec(h *Book, e *engine.Engine) error {
 	return s.e(h, e)
 }
 
-//HookFunc wraps the function f into a struct that statisfies Hook interface.
+//HookFunc wraps the function f into a struct that satisfies Hook interface.
 func HookFunc(name string, f func(*Book, *engine.Engine) error) Hook {
 	return &simpleHook{name: name, e: f}
 }
@@ -86,6 +86,7 @@ func DefaultBook() *Book {
 	b.Create.Set(HookFunc(model.HookCreateSQL, CreateSQL))
 	b.Create.Set(HookFunc(model.HookSaveBeforeAss, SaveBeforeAssociation))
 	b.Create.Set(HookFunc(model.AfterCreate, AfterCreate))
+	b.Create.Set(HookFunc(model.HookUpdateTimestamp, UpdateTimestamp))
 
 	// Query hooks
 	b.Query.Set(HookFunc(model.Query, Query))

@@ -1013,8 +1013,11 @@ func (db *DB) FirstOrCreate(out interface{}, where ...interface{}) error {
 		if err != errmsg.ErrRecordNotFound {
 			return err
 		}
+
+		// re use the existing engine
 		db.e.Scope.SQLVars = nil
 		db.e.Scope.SQL = ""
+
 		search.Inline(db.e, where...)
 		scope.Initialize(db.e)
 		return db.Create(out)
