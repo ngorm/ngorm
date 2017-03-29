@@ -61,6 +61,7 @@ func init() {
 	baseOpener = &DefaultOpener{dialects: make(map[string]Dialect)}
 }
 
+// Register adds the dialect to global dialects registry
 func Register(d Dialect) {
 	baseOpener.RegisterDialect(d)
 }
@@ -71,12 +72,15 @@ type DefaultOpener struct {
 	mu       sync.RWMutex
 }
 
+// RegisterDialect stores the dialect. This is safe to call in multiple goroutines
 func (d *DefaultOpener) RegisterDialect(dia Dialect) {
 	d.mu.Lock()
 	d.dialects[dia.GetName()] = dia
 	d.mu.Unlock()
 }
 
+// FindDialect lookup for a dialect with name dia. Returns a dialect or nil in
+// case there was no dialect found
 func (d *DefaultOpener) FindDialect(dia string) Dialect {
 	d.mu.RLock()
 	o := d.dialects[dia]
@@ -116,11 +120,12 @@ func (d *DefaultOpener) Open(dialect string, args ...interface{}) (model.SQLComm
 	return common, dia, nil
 }
 
+// Opener returns the default Opener
 func Opener() *DefaultOpener {
 	return baseOpener
 }
 
-//IsQl returns true if the dialect is ql
+//IsQL returns true if the dialect is ql
 func IsQL(d Dialect) bool {
 	return d.GetName() == "ql" || d.GetName() == "ql-mem"
 }
