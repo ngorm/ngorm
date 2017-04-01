@@ -596,18 +596,18 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 							}
 							if dialects.IsQL(e.Dialect) {
 								//TODO: ql
-								// expr.Q = util.WrapTX(expr.Q)
-								// tx, err := ne.SQLDB.Begin()
-								// if err != nil {
-								// 	return err
-								// }
-								// _, err = tx.Exec(expr.Q, expr.Args...)
-								// if err != nil {
-								// 	tx.Rollback()
-								// 	return err
-								// }
-								// return tx.Commit()
-								return nil
+								expr.Q = util.WrapTX(expr.Q)
+								tx, err := ne.SQLDB.Begin()
+								if err != nil {
+									return err
+								}
+								_, err = tx.Exec(expr.Q, expr.Args...)
+								if err != nil {
+									tx.Rollback()
+									return err
+								}
+								return tx.Commit()
+								// return nil
 							}
 							_, err = ne.SQLDB.Exec(expr.Q, expr.Args...)
 							return err

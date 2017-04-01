@@ -1042,7 +1042,7 @@ func testAddForeignKeySQL(t *testing.T, db *DB) {
 }
 
 type Blog struct {
-	ID         uint   `gorm:"primary_key"`
+	ID         int64  `gorm:"primary_key"`
 	Locale     string `gorm:"primary_key"`
 	Subject    string
 	Body       string
@@ -1052,7 +1052,7 @@ type Blog struct {
 }
 
 type Tag struct {
-	ID     uint   `gorm:"primary_key"`
+	ID     int64  `gorm:"primary_key"`
 	Locale string `gorm:"primary_key"`
 	Value  string
 	Blogs  []*Blog `gorm:"many2many:blogs_tags"`
@@ -1072,9 +1072,6 @@ func testRelManyToMany(t *testing.T, db *DB) {
 	)
 	if err != nil {
 		t.Fatal(err)
-	}
-	if isQL(db) {
-		t.Skip()
 	}
 	blog := Blog{
 		Locale:  "ZH",
