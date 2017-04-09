@@ -153,6 +153,7 @@ func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interfa
 				quotedTableName,
 				strings.Join(joinConditions, " AND ")))
 		search.Where(ne, condString, util.ToQueryValues(foreignFieldValues)...)
+		return nil
 	}
 	return errors.New("wrong source type for join table handler")
 }

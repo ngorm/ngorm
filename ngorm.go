@@ -56,6 +56,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kr/pretty"
 	"github.com/ngorm/ngorm/builder"
 	"github.com/ngorm/ngorm/dialects"
 	"github.com/ngorm/ngorm/engine"
@@ -841,6 +842,7 @@ func (db *DB) Pluck(column string, value interface{}) error {
 
 // Count get how many records for a model
 func (db *DB) Count(value interface{}) error {
+	fmt.Println("COUNTING")
 	query, ok := db.e.Search.Selects["query"]
 	if !ok || regexes.CountingQuery.MatchString(fmt.Sprint(query)) {
 		search.Select(db.e, "count(*)")
@@ -850,6 +852,8 @@ func (db *DB) Count(value interface{}) error {
 	if err != nil {
 		return err
 	}
+	pretty.Println(db.e.Scope.SQL, db.e.Scope.SQLVars)
+	pretty.Println(db.e.Scope.Value)
 	return db.SQLCommon().QueryRow(db.e.Scope.SQL, db.e.Scope.SQLVars...).Scan(value)
 }
 

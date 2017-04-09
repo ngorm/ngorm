@@ -2,10 +2,12 @@ package ngorm
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/ngorm/ngorm/model"
 	"github.com/ngorm/ngorm/scope"
+	"github.com/ngorm/ngorm/util"
 )
 
 // Association provides utility functions for dealing with association queries
@@ -32,6 +34,7 @@ func (a *Association) Append(values ...interface{}) error {
 func (a *Association) Replace(values ...interface{}) error {
 	e := a.db.e
 	rel := a.field.Relationship
+	ndb := a.db.Begin()
 	a.field.Set(reflect.Zero(a.field.Field.Type()))
 	if err := a.Save(values...); err != nil {
 		return err
@@ -45,7 +48,80 @@ func (a *Association) Replace(values ...interface{}) error {
 			}
 			return a.db.Begin().Model(e.Scope.Value).UpdateColumn(m)
 		}
+	default:
+		if rel.PolymorphicDBName != "" {
+			ndb = ndb.Where(fmt.Sprintf("%v = ?",
+				scope.Quote(e, rel.PolymorphicDBName)), rel.PolymorphicValue)
+		}
+		// Delete Relations except new created
+		if len(values) > 0 {
+			var fNames, fdDBNames []string
+			if rel.Kind == "many_to_many" {
+				// if many to many relations, get association fields name from association foreign keys
+				se := e.Clone()
+				v := reflect.New(a.field.Field.Type()).Interface()
+				for idx, dbName := range rel.AssociationForeignFieldNames {
+					if field, err := scope.FieldByName(se, v, dbName); err == nil {
+						fNames = append(fNames, field.Name)
+						fdDBNames = append(fdDBNames, rel.AssociationForeignDBNames[idx])
+					}
+				}
+			} else {
+				// If has one/many relations, use primary keys
+				fds, err := scope.PrimaryFields(e.Clone(), reflect.New(a.field.Field.Type()).Interface())
+				if err != nil {
+					return err
+				}
+				for _, field := range fds {
+					fNames = append(fNames, field.Name)
+					fdDBNames = append(fdDBNames, field.DBName)
+				}
+			}
+
+			newPrimaryKeys := util.ColumnAsArray(fNames, a.field.Field.Interface())
+
+			if len(newPrimaryKeys) > 0 {
+				sql := fmt.Sprintf("%v NOT IN (%v)",
+					scope.ToQueryCondition(ndb.e, fdDBNames),
+					scope.ToQueryMarks(newPrimaryKeys))
+				ndb = ndb.Where(sql, util.ToQueryValues(newPrimaryKeys)...)
+			}
+		}
+		if rel.Kind == "many_to_many" {
+			// if many to many relations, delete related relations from join table
+			var sourceForeignFieldNames []string
+
+			for _, dbName := range rel.ForeignFieldNames {
+				if field, err := scope.FieldByName(e, e.Scope.Value, dbName); err == nil {
+					sourceForeignFieldNames = append(sourceForeignFieldNames, field.Name)
+				}
+			}
+
+			if sourcePrimaryKeys := util.ColumnAsArray(sourceForeignFieldNames, e.Scope.Value); len(sourcePrimaryKeys) > 0 {
+				ndb = ndb.Where(fmt.Sprintf("%v IN (%v)",
+					scope.ToQueryCondition(e, rel.ForeignDBNames),
+					scope.ToQueryMarks(sourcePrimaryKeys)),
+					util.ToQueryValues(sourcePrimaryKeys)...)
+
+				// association.setErr(relationship.JoinTableHandler.Delete(relationship.JoinTableHandler, newDB, relationship))
+			}
+		} else if rel.Kind == "has_one" || rel.Kind == "has_many" {
+			// has_one or has_many relations, set foreign key to be nil (TODO or delete them?)
+			var foreignKeyMap = map[string]interface{}{}
+			for idx, foreignKey := range rel.ForeignDBNames {
+				foreignKeyMap[foreignKey] = nil
+				if field, err := scope.FieldByName(e, e.Scope.Value, rel.AssociationForeignFieldNames[idx]); err == nil {
+					ndb = ndb.Where(fmt.Sprintf("%v = ?",
+						scope.Quote(e, foreignKey)), field.Field.Interface())
+				}
+			}
+
+			fieldValue := reflect.New(a.field.Field.Type()).Interface()
+			return ndb.Model(fieldValue).UpdateColumn(foreignKeyMap)
+		}
+
 	}
+
 	return nil
 }
 
@@ -125,4 +201,56 @@ func (a *Association) Save(values ...interface{}) error {
 		}
 	}
 	return nil
+}
+
+// Count return the count of current associations
+func (a *Association) Count() (int, error) {
+	var (
+		count      = 0
+		rel        = a.field.Relationship
+		fieldValue = a.field.Field.Interface()
+		query      = a.db.Begin().Model(fieldValue)
+	)
+	if rel.Kind == "many_to_many" {
+		err := scope.JoinWith(rel.JoinTableHandler, query.e, a.db.e.Scope.Value)
+		if err != nil {
+			return 0, err
+		}
+	} else if rel.Kind == "has_many" || rel.Kind == "has_one" {
+		primaryKeys := util.ColumnAsArray(rel.AssociationForeignFieldNames, a.db.e.Scope.Value)
+		query = query.Where(
+			fmt.Sprintf("%v IN (%v)",
+				scope.ToQueryCondition(a.db.e, rel.ForeignDBNames),
+				scope.ToQueryMarks(primaryKeys)),
+			util.ToQueryValues(primaryKeys)...,
+		)
+	} else if rel.Kind == "belongs_to" {
+		primaryKeys := util.ColumnAsArray(rel.ForeignFieldNames, a.db.e.Scope.Value)
+		query = query.Where(
+			fmt.Sprintf("%v IN (%v)",
+				scope.ToQueryCondition(a.db.e, rel.AssociationForeignDBNames),
+				scope.ToQueryMarks(primaryKeys)),
+			util.ToQueryValues(primaryKeys)...,
+		)
+	}
+
+	if rel.PolymorphicType != "" {
+		query = query.Where(
+			fmt.Sprintf("%v.%v = ?",
+				scope.QuotedTableName(a.db.e, fieldValue),
+				scope.Quote(a.db.e, rel.PolymorphicDBName)),
+			rel.PolymorphicValue,
+		)
+	}
+	query.e.Scope.Value = fieldValue
+	// pretty.Println(query.e.Scope)
+	// pretty.Println(query.e.Scope.Value)
+
+	err := query.Count(&count)
+	if err != nil {
+		return 0, err
+	}
+	// pretty.Println(query.e.Scope)
+
+	return count, nil
 }
