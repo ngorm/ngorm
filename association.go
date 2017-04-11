@@ -236,21 +236,16 @@ func (a *Association) Count() (int, error) {
 
 	if rel.PolymorphicType != "" {
 		query = query.Where(
-			fmt.Sprintf("%v.%v = ?",
-				scope.QuotedTableName(a.db.e, fieldValue),
+			fmt.Sprintf("%v%v = ?",
+				a.db.e.Dialect.QueryFieldName(
+					scope.QuotedTableName(a.db.e, fieldValue)),
 				scope.Quote(a.db.e, rel.PolymorphicDBName)),
 			rel.PolymorphicValue,
 		)
 	}
-	query.e.Scope.Value = fieldValue
-	// pretty.Println(query.e.Scope)
-	// pretty.Println(query.e.Scope.Value)
-
 	err := query.Count(&count)
 	if err != nil {
 		return 0, err
 	}
-	// pretty.Println(query.e.Scope)
-
 	return count, nil
 }
