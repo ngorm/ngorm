@@ -599,7 +599,7 @@ func FieldByName(e *engine.Engine, value interface{}, name string) (*model.Field
 			return field, nil
 		}
 	}
-	return nil, errors.New("field not found")
+	return nil, fmt.Errorf("field %s not found", name)
 }
 
 //PrimaryFields returns fields that have PRIMARY_KEY tag from the struct value.

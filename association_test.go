@@ -61,7 +61,7 @@ func testPolymorphic(t *testing.T, db *DB) {
 	db.Begin().Save(&cat)
 	db.Begin().Save(&dog)
 
-	a, err := db.Model(&cat).Association("Toy")
+	a, err := db.Begin().Model(&cat).Association("Toy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,14 +72,18 @@ func testPolymorphic(t *testing.T, db *DB) {
 	if count != 1 {
 		t.Errorf("expected 1 got %d", count)
 	}
-	cts := []Toy{}
-	err = db.Begin().Find(&cts)
+
+	a, err = db.Begin().Model(&dog).Association("Toys")
 	if err != nil {
 		t.Fatal(err)
 	}
-	// if db.Model(&dog).Association("Toys").Count() != 2 {
-	// 	t.Errorf("Dog's toys count should be 2")
-	// }
+	count, err = a.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Errorf("expected 2 got %d", count)
+	}
 
 	// // Query
 	// var catToys []Toy
