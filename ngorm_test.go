@@ -1114,7 +1114,6 @@ func testRelManyToMany(t *testing.T, db *DB) {
 	//        AND "blogs"."locale" = $2
 	//        AND (( 1 <> 1 ))
 	// 	`
-	// pretty.Print(a)
 	c, err := a.Count()
 	if err != nil {
 		// t.Fatal(err)

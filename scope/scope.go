@@ -331,7 +331,7 @@ func buildRelationSlice(e *engine.Engine, modelValue interface{}, refType reflec
 					if value, ok := field.TagSettings["POLYMORPHIC_VALUE"]; ok {
 						rel.PolymorphicValue = value
 					} else {
-						rel.PolymorphicValue = e.Search.TableName
+						rel.PolymorphicValue = TableName(e, modelValue)
 					}
 					polymorphicType.IsForeignKey = true
 				}

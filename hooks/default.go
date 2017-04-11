@@ -587,6 +587,9 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 						if err != nil {
 							return err
 						}
+						if dialects.IsQL(e.Dialect) {
+							QLAfterCreate(b, ne)
+						}
 						if h := rel.JoinTableHandler; h != nil {
 							ne.Scope.SQL = ""
 							ne.Scope.SQLVars = nil
@@ -618,6 +621,12 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 					fieldValue := field.Field.Addr().Interface()
 					ne := e.Clone()
 					ne.Scope.Value = fieldValue
+					if rel.PolymorphicType != "" {
+						err = scope.SetColumn(ne, rel.PolymorphicType, rel.PolymorphicValue)
+						if err != nil {
+							return err
+						}
+					}
 					if len(rel.ForeignFieldNames) != 0 {
 						// set value's foreign key
 						for idx, fieldName := range rel.ForeignFieldNames {
@@ -648,10 +657,10 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 					if err != nil {
 						return err
 					}
-
+					if dialects.IsQL(e.Dialect) {
+						QLAfterCreate(b, ne)
+					}
 				}
-			default:
-				// pretty.Println(rel)
 			}
 		}
 	}

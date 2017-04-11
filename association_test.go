@@ -7,13 +7,13 @@ import (
 )
 
 type Cat struct {
-	ID   int
+	ID   int64
 	Name string
 	Toy  Toy `gorm:"polymorphic:Owner;"`
 }
 
 type Dog struct {
-	ID   int
+	ID   int64
 	Name string
 	Toys []Toy `gorm:"polymorphic:Owner;"`
 }
@@ -28,7 +28,7 @@ type Hamster struct {
 type Toy struct {
 	ID        int
 	Name      string
-	OwnerID   int
+	OwnerID   int64
 	OwnerType string
 }
 
@@ -61,10 +61,22 @@ func testPolymorphic(t *testing.T, db *DB) {
 	db.Begin().Save(&cat)
 	db.Begin().Save(&dog)
 
-	// if db.Model(&cat).Association("Toy").Count() != 1 {
-	// 	t.Errorf("Cat's toys count should be 1")
-	// }
-
+	a, err := db.Model(&cat).Association("Toy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	count, err := a.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Errorf("expected 1 got %d", count)
+	}
+	cts := []Toy{}
+	err = db.Begin().Find(&cts)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// if db.Model(&dog).Association("Toys").Count() != 2 {
 	// 	t.Errorf("Dog's toys count should be 2")
 	// }
