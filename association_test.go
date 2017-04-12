@@ -91,27 +91,34 @@ func testPolymorphic(t *testing.T, db *DB) {
 	if err != nil {
 		t.Error(err)
 	}
-	// if db.Model(&cat).Related(&catToys, "Toy").RecordNotFound() {
-	// 	t.Errorf("Did not find any has one polymorphic association")
-	// } else if len(catToys) != 1 {
-	// 	t.Errorf("Should have found only one polymorphic has one association")
-	// } else if catToys[0].Name != cat.Toy.Name {
-	// 	t.Errorf("Should have found the proper has one polymorphic association")
-	// }
+	if len(catToys) != 1 {
+		t.Errorf("expected 1 got %d", len(catToys))
+	}
+	if catToys[0].Name != cat.Toy.Name {
+		t.Errorf("expected %s got %s", cat.Toy.Name, catToys[0].Name)
+	}
 
-	// var dogToys []Toy
-	// if db.Model(&dog).Related(&dogToys, "Toys").RecordNotFound() {
-	// 	t.Errorf("Did not find any polymorphic has many associations")
-	// } else if len(dogToys) != len(dog.Toys) {
-	// 	t.Errorf("Should have found all polymorphic has many associations")
-	// }
+	var dogToys []Toy
+	err = db.Begin().Model(&dog).Related(&dogToys, "Toys")
+	if err != nil {
+		t.Error(err)
+	}
+	if len(dogToys) != len(dog.Toys) {
+		t.Errorf("expected %d got %d", len(dog.Toys), len(dogToys))
+	}
 
-	// var catToy Toy
-	// db.Model(&cat).Association("Toy").Find(&catToy)
-	// if catToy.Name != cat.Toy.Name {
-	// 	t.Errorf("Should find has one polymorphic association")
-	// }
-
+	var catToy Toy
+	a, err = db.Begin().Model(&cat).Association("Toy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Find(&catToy)
+	if err != nil {
+		t.Error(err)
+	}
+	if catToy.Name != cat.Toy.Name {
+		t.Errorf("expected %s got %s", cat.Toy.Name, catToy.Name)
+	}
 	// var dogToys1 []Toy
 	// db.Model(&dog).Association("Toys").Find(&dogToys1)
 	// if !compareToys(dogToys1, []string{"dog toy 1", "dog toy 2"}) {
