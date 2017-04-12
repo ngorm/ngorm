@@ -1099,7 +1099,8 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 
 	ndb := db.Begin()
 	ndb.e.Scope.Value = value
-
+	// pretty.Println(source)
+	// pretty.Println(value)
 	sdb.e.Scope.Set(model.AssociationSource, source)
 
 	foreignKeys = append(foreignKeys, ndb.e.Scope.TypeName()+"Id")
@@ -1108,58 +1109,10 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 	for _, foreignKey := range foreignKeys {
 		fromField, err := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey)
 		if err != nil {
-			return err
-		}
-		toField, err := scope.FieldByName(ndb.e, value, foreignKey)
-		if err != nil {
-			return err
-		}
-
-		if fromField != nil {
-			if rel := fromField.Relationship; rel != nil {
-				if rel.Kind == "many_to_many" {
-					h := rel.JoinTableHandler
-					err = scope.JoinWith(h, ndb.e, sdb.e.Scope.Value)
-					if err != nil {
-						return err
-					}
-					return ndb.Find(value)
-				} else if rel.Kind == "belongs_to" {
-					for idx, foreignKey := range rel.ForeignDBNames {
-						if field, ok := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey); ok != nil {
-							ndb = ndb.Where(fmt.Sprintf("%v = ?",
-								scope.Quote(ndb.e, rel.AssociationForeignDBNames[idx])),
-								field.Field.Interface())
-						}
-					}
-					return ndb.Find(value)
-				} else if rel.Kind == "has_many" || rel.Kind == "has_one" {
-					for idx, foreignKey := range rel.ForeignDBNames {
-						field, err := scope.FieldByName(sdb.e, sdb.e.Scope.Value, rel.AssociationForeignDBNames[idx])
-						if err == nil {
-							ndb = ndb.Where(fmt.Sprintf("%v = ?",
-								scope.Quote(ndb.e, foreignKey)), field.Field.Interface())
-						}
-
-					}
-
-					if rel.PolymorphicType != "" {
-						ndb = ndb.Where(fmt.Sprintf("%v = ?",
-							scope.Quote(ndb.e, rel.PolymorphicDBName)), rel.PolymorphicValue)
-					}
-					return ndb.Find(value)
-				}
-			} else {
-				pk, err := scope.PrimaryKey(sdb.e, value)
-				if err != nil {
-					return err
-				}
-				sql := fmt.Sprintf("%v = ?",
-					scope.Quote(sdb.e, pk))
-				return ndb.Where(sql, fromField.Field.Interface()).Find(value)
+			toField, err := scope.FieldByName(ndb.e, value, foreignKey)
+			if err != nil {
+				return err
 			}
-			return nil
-		} else if toField != nil {
 			pk, err := scope.PrimaryKey(sdb.e, value)
 			if err != nil {
 				return err
@@ -1168,6 +1121,50 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 				scope.Quote(ndb.e, toField.DBName))
 			return ndb.Where(sql, pk).Find(value)
 		}
+		if rel := fromField.Relationship; rel != nil {
+			if rel.Kind == "many_to_many" {
+				h := rel.JoinTableHandler
+				err = scope.JoinWith(h, ndb.e, sdb.e.Scope.Value)
+				if err != nil {
+					return err
+				}
+				return ndb.Find(value)
+			} else if rel.Kind == "belongs_to" {
+				for idx, foreignKey := range rel.ForeignDBNames {
+					if field, ok := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey); ok != nil {
+						ndb = ndb.Where(fmt.Sprintf("%v = ?",
+							scope.Quote(ndb.e, rel.AssociationForeignDBNames[idx])),
+							field.Field.Interface())
+					}
+				}
+				return ndb.Find(value)
+			} else if rel.Kind == "has_many" || rel.Kind == "has_one" {
+				for idx, foreignKey := range rel.ForeignDBNames {
+					field, err := scope.FieldByName(sdb.e, sdb.e.Scope.Value, rel.AssociationForeignDBNames[idx])
+					if err == nil {
+						ndb = ndb.Where(fmt.Sprintf("%v = ?",
+							scope.Quote(ndb.e, foreignKey)), field.Field.Interface())
+					}
+
+				}
+
+				if rel.PolymorphicType != "" {
+					ndb = ndb.Where(fmt.Sprintf("%v = ?",
+						scope.Quote(ndb.e, rel.PolymorphicDBName)), rel.PolymorphicValue)
+				}
+				return ndb.Find(value)
+			}
+		} else {
+			pk, err := scope.PrimaryKey(sdb.e, value)
+			if err != nil {
+				return err
+			}
+			sql := fmt.Sprintf("%v = ?",
+				scope.Quote(sdb.e, pk))
+			return ndb.Where(sql, fromField.Field.Interface()).Find(value)
+		}
+		return nil
+
 	}
 	return fmt.Errorf("invalid association %v", foreignKeys)
 }

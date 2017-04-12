@@ -85,8 +85,12 @@ func testPolymorphic(t *testing.T, db *DB) {
 		t.Errorf("expected 2 got %d", count)
 	}
 
-	// // Query
-	// var catToys []Toy
+	// Query
+	var catToys []Toy
+	err = db.Begin().Model(&cat).Related(&catToys, "Toy")
+	if err != nil {
+		t.Error(err)
+	}
 	// if db.Model(&cat).Related(&catToys, "Toy").RecordNotFound() {
 	// 	t.Errorf("Did not find any has one polymorphic association")
 	// } else if len(catToys) != 1 {
