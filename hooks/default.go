@@ -405,6 +405,36 @@ func BeforeUpdate(b *Book, e *engine.Engine) error {
 	if !scope.HasConditions(e, e.Scope.Value) {
 		return errors.New("missing WHERE condition for update")
 	}
+
+	// set timestamps if any
+	h, ok := b.Update.Get(model.HookUpdateTimestamp)
+	if !ok {
+		return fmt.Errorf("missing %s hook", model.HookUpdateTimestamp)
+	}
+	err := h.Exec(b, e)
+	if err != nil {
+		return err
+	}
+
+	// assign update attrs
+	h, ok = b.Update.Get(model.HookAssignUpdatingAttrs)
+	if !ok {
+		return fmt.Errorf("missing %s hook", model.HookAssignUpdatingAttrs)
+	}
+	err = h.Exec(b, e)
+	if err != nil {
+		return err
+	}
+	// save before associations
+	h, ok = b.Update.Get(model.HookSaveBeforeAss)
+	if !ok {
+		return fmt.Errorf("missing %s hook", model.HookSaveBeforeAss)
+	}
+	err = h.Exec(b, e)
+	if err != nil {
+		return err
+	}
+
 	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
 		if bs, ok := b.Save.Get(model.HookBeforeSave); ok {
 			err := bs.Exec(b, e)
@@ -434,6 +464,7 @@ func AfterUpdate(b *Book, e *engine.Engine) error {
 	if !scope.HasConditions(e, e.Scope.Value) {
 		return errors.New("missing WHERE condition for update")
 	}
+
 	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
 		if au, ok := b.Update.Get(model.HookAfterUpdate); ok {
 			err := au.Exec(b, e)
@@ -448,7 +479,11 @@ func AfterUpdate(b *Book, e *engine.Engine) error {
 			}
 		}
 	}
-	return nil
+	h, ok := b.Update.Get(model.HookSaveAfterAss)
+	if !ok {
+		return fmt.Errorf("missing %s hook", model.HookSaveAfterAss)
+	}
+	return h.Exec(b, e)
 }
 
 //UpdateTimestamp sets the value of UpdatedAt field.
@@ -822,19 +857,44 @@ func UpdateExec(b *Book, e *engine.Engine) error {
 //	model.HookUpdateExec
 //which executes the UPDATE sql.
 func Update(b *Book, e *engine.Engine) error {
-	sql, ok := b.Update.Get(model.HookUpdateSQL)
+
+	// run before update hooks
+	h, ok := b.Update.Get(model.BeforeUpdate)
 	if !ok {
-		return errors.New("missing update sql hook")
+		return fmt.Errorf("missing %s hook", model.BeforeUpdate)
 	}
-	err := sql.Exec(b, e)
+	err := h.Exec(b, e)
 	if err != nil {
 		return err
 	}
-	exec, ok := b.Update.Get(model.HookUpdateExec)
+
+	// generate update sql
+	h, ok = b.Update.Get(model.HookUpdateSQL)
 	if !ok {
-		return errors.New("missing update exec hook")
+		return fmt.Errorf("missing %s hook", model.HookUpdateSQL)
 	}
-	return exec.Exec(b, e)
+	err = h.Exec(b, e)
+	if err != nil {
+		return err
+	}
+
+	// execute update sql
+	h, ok = b.Update.Get(model.HookUpdateExec)
+	if !ok {
+		return fmt.Errorf("missing %s hook", model.HookUpdateExec)
+	}
+	err = h.Exec(b, e)
+	if err != nil {
+		return err
+	}
+
+	// execute update sql
+	h, ok = b.Update.Get(model.AfterUpdate)
+	if !ok {
+		return fmt.Errorf("missing %s hook", model.AfterUpdate)
+	}
+
+	return h.Exec(b, e)
 }
 
 // DeleteSQL generatesSQL for deleting records.
