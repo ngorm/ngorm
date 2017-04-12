@@ -119,6 +119,37 @@ func testPolymorphic(t *testing.T, db *DB) {
 	if catToy.Name != cat.Toy.Name {
 		t.Errorf("expected %s got %s", cat.Toy.Name, catToy.Name)
 	}
+
+	a, err = db.Begin().Model(&cat).Association("Toy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Append(&Toy{
+		Name: "dog toy 3",
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	a, err = db.Begin().Model(&dog).Association("Toys")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Append(&Toy{
+		Name: "dog toy 3",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	count, err = a.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 3 {
+		t.Errorf("expected 3 got %d", count)
+	}
+	// toys := []Toy{}
+	// db.Begin().Find(&toys)
+	// pretty.Println(toys)
 	// var dogToys1 []Toy
 	// db.Model(&dog).Association("Toys").Find(&dogToys1)
 	// if !compareToys(dogToys1, []string{"dog toy 1", "dog toy 2"}) {

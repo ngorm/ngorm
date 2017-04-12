@@ -1099,8 +1099,6 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 
 	ndb := db.Begin()
 	ndb.e.Scope.Value = value
-	// pretty.Println(source)
-	// pretty.Println(value)
 	sdb.e.Scope.Set(model.AssociationSource, source)
 
 	foreignKeys = append(foreignKeys, ndb.e.Scope.TypeName()+"Id")
