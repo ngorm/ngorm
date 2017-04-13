@@ -21,12 +21,18 @@ func (a *Association) Find(v interface{}) error {
 	return a.db.Related(v, a.column)
 }
 
-// Append append new associations for many2many, has_many, replace current association for has_one, belongs_to
+// Append append new associations for many2many, has_many, replace current
+// association for has_one, belongs_to
+//
+// This wraps around Association.Save, verbatim  meaning you can have the same
+// effect with Save method.
 func (a *Association) Append(values ...interface{}) error {
 	return a.Save(values...)
 }
 
-// Save save passed values as associations
+// Save save passed values as associations. This expects to have a single value
+// for a has_one, belongs_to relationships. You can pass one or more values for
+// many_to_many relationship.
 func (a *Association) Save(values ...interface{}) error {
 	if len(values) > 0 {
 		e := a.db.e
