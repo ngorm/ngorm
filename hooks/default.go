@@ -4,7 +4,6 @@ package hooks
 import (
 	"bytes"
 	"database/sql"
-	"database/sql/driver"
 	"errors"
 	"fmt"
 	"reflect"
@@ -1123,10 +1122,10 @@ func PreloadBelongsTo(b *Book, e *engine.Engine, field *model.Field, conditions 
 	// find relations
 	query := fmt.Sprintf("%v IN (%v)",
 		scope.ToQueryCondition(e, relation.AssociationForeignDBNames),
-		scope.ToQueryMarks(primaryKeys))
+		util.ToQueryMarks(primaryKeys))
 	values := util.ToQueryValues(primaryKeys)
 
-	results := makeSlice(field.Struct.Type)
+	results := util.MakeSlice(field.Struct.Type)
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
 	pdb.Scope.Value = results
@@ -1151,13 +1150,13 @@ func PreloadBelongsTo(b *Book, e *engine.Engine, field *model.Field, conditions 
 	for i := 0; i < rVal.Len(); i++ {
 		result := rVal.Index(i)
 		if iScopeVal.Kind() == reflect.Slice {
-			value := getValueFromFields(result, relation.AssociationForeignFieldNames)
+			value := util.GetValueFromFields(result, relation.AssociationForeignFieldNames)
 			for j := 0; j < iScopeVal.Len(); j++ {
 				object := iScopeVal.Index(j)
 				if object.Kind() == reflect.Ptr {
 					object = object.Elem()
 				}
-				if equalAsString(getValueFromFields(object, relation.ForeignFieldNames), value) {
+				if util.EqualAsString(util.GetValueFromFields(object, relation.ForeignFieldNames), value) {
 					object.FieldByName(field.Name).Set(result)
 				}
 			}
@@ -1250,7 +1249,7 @@ func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions
 				foreignKeys[idx] = joinTableField.Field.Elem().Interface()
 			}
 		}
-		hashedSourceKeys := toString(foreignKeys)
+		hashedSourceKeys := util.ToString(foreignKeys)
 
 		if isPtr {
 			linkHash[hashedSourceKeys] = append(linkHash[hashedSourceKeys], elem.Addr())
@@ -1281,11 +1280,11 @@ func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions
 			if object.Kind() == reflect.Ptr {
 				object = object.Elem()
 			}
-			key := toString(getValueFromFields(object, foreignFieldNames))
+			key := util.ToString(util.GetValueFromFields(object, foreignFieldNames))
 			fieldsSourceMap[key] = append(fieldsSourceMap[key], object.FieldByName(field.Name))
 		}
 	} else if indirectScopeValue.IsValid() {
-		key := toString(getValueFromFields(indirectScopeValue, foreignFieldNames))
+		key := util.ToString(util.GetValueFromFields(indirectScopeValue, foreignFieldNames))
 		fieldsSourceMap[key] = append(fieldsSourceMap[key], indirectScopeValue.FieldByName(field.Name))
 	}
 	for source, link := range linkHash {
@@ -1345,7 +1344,7 @@ func JoinWith(e *engine.Engine, s, handler *model.JoinTableHandler, source inter
 
 			condString = fmt.Sprintf("%v IN (%v)",
 				scope.ToQueryCondition(e, quotedForeignDBNames),
-				scope.ToQueryMarks(foreignFieldValues))
+				util.ToQueryMarks(foreignFieldValues))
 
 			keys := util.ColumnAsArray(foreignFieldNames, e.Scope.Value)
 			values = append(values, util.ToQueryValues(keys))
@@ -1434,14 +1433,15 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 
 	// find relations
 	query := fmt.Sprintf("%v IN (%v)",
-		scope.ToQueryCondition(e, rel.ForeignDBNames), scope.ToQueryMarks(primaryKeys))
+		scope.ToQueryCondition(e, rel.ForeignDBNames),
+		util.ToQueryMarks(primaryKeys))
 	values := util.ToQueryValues(primaryKeys)
 	if rel.PolymorphicType != "" {
 		query += fmt.Sprintf(" AND %v = ?", scope.Quote(e, rel.PolymorphicDBName))
 		values = append(values, rel.PolymorphicValue)
 	}
 
-	results := makeSlice(field.Struct.Type)
+	results := util.MakeSlice(field.Struct.Type)
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
 	pdb.Scope.Value = results
@@ -1468,12 +1468,12 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 		for j := 0; j < iScopeVal.Len(); j++ {
 			for i := 0; i < rVal.Len(); i++ {
 				result := rVal.Index(i)
-				foreignValues := getValueFromFields(result, rel.ForeignFieldNames)
+				foreignValues := util.GetValueFromFields(result, rel.ForeignFieldNames)
 				iVal := iScopeVal.Index(j)
 				if iVal.Kind() == reflect.Ptr {
 					iVal = iVal.Elem()
 				}
-				if equalAsString(getValueFromFields(iVal, rel.AssociationForeignFieldNames), foreignValues) {
+				if util.EqualAsString(util.GetValueFromFields(iVal, rel.AssociationForeignFieldNames), foreignValues) {
 					iVal.FieldByName(field.Name).Set(result)
 					break
 				}
@@ -1506,7 +1506,8 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 
 	// find relations
 	query := fmt.Sprintf("%v IN (%v)",
-		scope.ToQueryCondition(e, relation.ForeignDBNames), scope.ToQueryMarks(primaryKeys))
+		scope.ToQueryCondition(e, relation.ForeignDBNames),
+		util.ToQueryMarks(primaryKeys))
 	values := util.ToQueryValues(primaryKeys)
 	if relation.PolymorphicType != "" {
 		query += fmt.Sprintf(" AND %v = ?",
@@ -1514,7 +1515,7 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 		values = append(values, relation.PolymorphicValue)
 	}
 
-	results := makeSlice(field.Struct.Type)
+	results := util.MakeSlice(field.Struct.Type)
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
 	pdb.Scope.Value = results
@@ -1540,8 +1541,8 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 		preloadMap := make(map[string][]reflect.Value)
 		for i := 0; i < rVal.Len(); i++ {
 			result := rVal.Index(i)
-			foreignValues := getValueFromFields(result, relation.ForeignFieldNames)
-			preloadMap[toString(foreignValues)] = append(preloadMap[toString(foreignValues)], result)
+			foreignValues := util.GetValueFromFields(result, relation.ForeignFieldNames)
+			preloadMap[util.ToString(foreignValues)] = append(preloadMap[util.ToString(foreignValues)], result)
 		}
 
 		for j := 0; j < iScopeVal.Len(); j++ {
@@ -1549,9 +1550,9 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 			if object.Kind() == reflect.Ptr {
 				object = object.Elem()
 			}
-			objectRealValue := getValueFromFields(object, relation.AssociationForeignFieldNames)
+			objectRealValue := util.GetValueFromFields(object, relation.AssociationForeignFieldNames)
 			f := object.FieldByName(field.Name)
-			if results, ok := preloadMap[toString(objectRealValue)]; ok {
+			if results, ok := preloadMap[util.ToString(objectRealValue)]; ok {
 				f.Set(reflect.Append(f, results...))
 			} else {
 				f.Set(reflect.MakeSlice(f.Type(), 0, 0))
@@ -1564,51 +1565,6 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 		}
 	}
 	return nil
-}
-
-func equalAsString(a interface{}, b interface{}) bool {
-	return toString(a) == toString(b)
-}
-
-func toString(str interface{}) string {
-	if values, ok := str.([]interface{}); ok {
-		var results []string
-		for _, value := range values {
-			results = append(results, toString(value))
-		}
-		return strings.Join(results, "_")
-	} else if bytes, ok := str.([]byte); ok {
-		return string(bytes)
-	} else if reflectValue := reflect.Indirect(reflect.ValueOf(str)); reflectValue.IsValid() {
-		return fmt.Sprintf("%v", reflectValue.Interface())
-	}
-	return ""
-}
-func getValueFromFields(value reflect.Value, fieldNames []string) (results []interface{}) {
-	// If value is a nil pointer, Indirect returns a zero Value!
-	// Therefor we need to check for a zero value,
-	// as FieldByName could panic
-	if indirectValue := reflect.Indirect(value); indirectValue.IsValid() {
-		for _, fieldName := range fieldNames {
-			if fieldValue := indirectValue.FieldByName(fieldName); fieldValue.IsValid() {
-				result := fieldValue.Interface()
-				if r, ok := result.(driver.Valuer); ok {
-					result, _ = r.Value()
-				}
-				results = append(results, result)
-			}
-		}
-	}
-	return
-}
-func makeSlice(elemType reflect.Type) interface{} {
-	if elemType.Kind() == reflect.Slice {
-		elemType = elemType.Elem()
-	}
-	sliceType := reflect.SliceOf(elemType)
-	slice := reflect.New(sliceType)
-	slice.Elem().Set(reflect.MakeSlice(sliceType, 0, 0))
-	return slice.Interface()
 }
 
 // PreloadDBWithConditions returns engine with preload conditions set

@@ -103,7 +103,7 @@ func (a *Association) Count() (int, error) {
 		query = query.Where(
 			fmt.Sprintf("%v IN (%v)",
 				scope.ToQueryCondition(a.db.e, rel.ForeignDBNames),
-				scope.ToQueryMarks(primaryKeys)),
+				util.ToQueryMarks(primaryKeys)),
 			util.ToQueryValues(primaryKeys)...,
 		)
 	} else if rel.Kind == "belongs_to" {
@@ -111,7 +111,7 @@ func (a *Association) Count() (int, error) {
 		query = query.Where(
 			fmt.Sprintf("%v IN (%v)",
 				scope.ToQueryCondition(a.db.e, rel.AssociationForeignDBNames),
-				scope.ToQueryMarks(primaryKeys)),
+				util.ToQueryMarks(primaryKeys)),
 			util.ToQueryValues(primaryKeys)...,
 		)
 	}

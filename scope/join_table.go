@@ -140,7 +140,7 @@ func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interfa
 
 			condString = fmt.Sprintf("%v IN (%v)",
 				ToQueryCondition(ne, quotedForeignDBNames),
-				ToQueryMarks(foreignFieldValues))
+				util.ToQueryMarks(foreignFieldValues))
 
 			keys := util.ColumnAsArray(foreignFieldNames, ne.Scope.Value)
 			values = append(values, util.ToQueryValues(keys))

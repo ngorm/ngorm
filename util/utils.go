@@ -108,7 +108,7 @@ func indirect(reflectValue reflect.Value) reflect.Value {
 	return reflectValue
 }
 
-func toQueryMarks(primaryValues [][]interface{}) string {
+func ToQueryMarks(primaryValues [][]interface{}) string {
 	var results []string
 
 	for _, primaryValue := range primaryValues {
@@ -126,46 +126,20 @@ func toQueryMarks(primaryValues [][]interface{}) string {
 	return strings.Join(results, ",")
 }
 
-func toQueryValues(values [][]interface{}) (results []interface{}) {
-	for _, value := range values {
-		for _, v := range value {
-			results = append(results, v)
-		}
-	}
-	return
-}
-
 //IsBlank returns true if the value represent a zero value of the specified value ype.
 func IsBlank(value reflect.Value) bool {
 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 }
 
-func toSearchableMap(attrs ...interface{}) (result interface{}) {
-	if len(attrs) > 1 {
-		if str, ok := attrs[0].(string); ok {
-			result = map[string]interface{}{str: attrs[1]}
-		}
-	} else if len(attrs) == 1 {
-		if attr, ok := attrs[0].(map[string]interface{}); ok {
-			result = attr
-		}
-
-		if attr, ok := attrs[0].(interface{}); ok {
-			result = attr
-		}
-	}
-	return
+func EqualAsString(a interface{}, b interface{}) bool {
+	return ToString(a) == ToString(b)
 }
 
-func equalAsString(a interface{}, b interface{}) bool {
-	return toString(a) == toString(b)
-}
-
-func toString(str interface{}) string {
+func ToString(str interface{}) string {
 	if values, ok := str.([]interface{}); ok {
 		var results []string
 		for _, value := range values {
-			results = append(results, toString(value))
+			results = append(results, ToString(value))
 		}
 		return strings.Join(results, "_")
 	} else if bytes, ok := str.([]byte); ok {
@@ -176,7 +150,7 @@ func toString(str interface{}) string {
 	return ""
 }
 
-func makeSlice(elemType reflect.Type) interface{} {
+func MakeSlice(elemType reflect.Type) interface{} {
 	if elemType.Kind() == reflect.Slice {
 		elemType = elemType.Elem()
 	}
@@ -186,17 +160,8 @@ func makeSlice(elemType reflect.Type) interface{} {
 	return slice.Interface()
 }
 
-func strInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
-// getValueFromFields return given fields's value
-func getValueFromFields(value reflect.Value, fieldNames []string) (results []interface{}) {
+// GetValueFromFields return given fields's value
+func GetValueFromFields(value reflect.Value, fieldNames []string) (results []interface{}) {
 	// If value is a nil pointer, Indirect returns a zero Value!
 	// Therefor we need to check for a zero value,
 	// as FieldByName could panic
