@@ -15,6 +15,7 @@
             "taskName": "test",
             "args": [
                 "-v",
+                "-race",
                 "./..."
             ],
             "isTestCommand": true
