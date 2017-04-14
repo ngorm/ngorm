@@ -1129,7 +1129,7 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 				return ndb.Find(value)
 			} else if rel.Kind == "belongs_to" {
 				for idx, foreignKey := range rel.ForeignDBNames {
-					if field, ok := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey); ok != nil {
+					if field, ok := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey); ok == nil {
 						ndb = ndb.Where(fmt.Sprintf("%v = ?",
 							scope.Quote(ndb.e, rel.AssociationForeignDBNames[idx])),
 							field.Field.Interface())

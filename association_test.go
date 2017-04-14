@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/ngorm/ngorm/fixture"
 )
 
 type Cat struct {
@@ -323,6 +325,101 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 	}
 
 	a, err = db.Begin().Model(&hamster).Association("PreferredToy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	count, err = a.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Errorf("expected %d got %d", 1, count)
+	}
+}
+
+func TestAssociationBelongsTo(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAssociationBelongsTo,
+			&fixture.Post{}, &fixture.Comment{}, &fixture.Category{},
+		)
+	}
+}
+
+func testAssociationBelongsTo(t *testing.T, db *DB) {
+	_, err := db.Automigrate(
+		&fixture.Post{}, &fixture.Comment{}, fixture.Category{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	post := fixture.Post{
+		Title:        "post belongs to",
+		Body:         "body belongs to",
+		Category:     fixture.Category{Name: "Category 1"},
+		MainCategory: fixture.Category{Name: "Main Category 1"},
+	}
+	err = db.Begin().Save(&post)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if post.Category.ID == 0 || post.MainCategory.ID == 0 {
+		t.Errorf("Category's primary key should be updated")
+	}
+
+	if post.CategoryID.Int64 == 0 || post.MainCategoryID == 0 {
+		t.Errorf("post's foreign key should be updated")
+	}
+
+	// Query
+	var category1 fixture.Category
+	a, err := db.Begin().Model(&post).Association("Category")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Find(&category1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if category1.Name != post.Category.Name {
+		t.Errorf("expected %s got %s", post.Category.Name, category1.Name)
+	}
+
+	var mainCategory1 fixture.Category
+	a, err = db.Begin().Model(&post).Association("MainCategory")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Find(&mainCategory1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mainCategory1.Name != post.MainCategory.Name {
+		t.Errorf("expected %s got %s", post.MainCategory.Name, mainCategory1.Name)
+	}
+
+	var category11 fixture.Category
+	err = db.Begin().Model(&post).Related(&category11)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if category11.Name != post.Category.Name {
+		t.Errorf("expected %s got %s", post.Category.Name, category11.Name)
+	}
+
+	a, err = db.Begin().Model(&post).Association("Category")
+	if err != nil {
+		t.Fatal(err)
+	}
+	count, err := a.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Errorf("expected %d got %d", 1, count)
+	}
+
+	a, err = db.Begin().Model(&post).Association("MainCategory")
 	if err != nil {
 		t.Fatal(err)
 	}
