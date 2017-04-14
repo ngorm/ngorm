@@ -42,7 +42,7 @@ Database support
 - Introduction
   - [Synopsis](#synopsis)
   - [Installation](#installation)
-  - [Connecting to a database](##connecting-to-a-database)
+  - [Connecting to a database](#connecting-to-a-database)
 
 - API
   - AddForeignKey
