@@ -40,9 +40,9 @@ Database support
 
 # Table of contents
 - Introduction
-  - Synopsis
-  - Installation
-  - Connecting to a database
+  - [Synopsis](#synopsis)
+  - [Installation](#installation)
+  - [Connecting to a database](##connecting-to-a-database)
 
 - API
   - AddForeignKey
