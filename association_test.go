@@ -258,88 +258,79 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 		t.Errorf("Should find has one polymorphic association")
 	}
 
-	// // Append
-	// db.Model(&hamster).Association("PreferredToy").Append(&Toy{
-	// 	Name: "bike 2",
-	// })
-	// db.Model(&hamster).Association("OtherToy").Append(&Toy{
-	// 	Name: "treadmill 2",
-	// })
+	// Append
+	a, err = db.Begin().Model(&hamster).Association("PreferredToy")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// hamsterToy = Toy{}
-	// db.Model(&hamster).Association("PreferredToy").Find(&hamsterToy)
-	// if hamsterToy.Name != "bike 2" {
-	// 	t.Errorf("Should update has one polymorphic association with Append")
-	// }
+	err = a.Append(&Toy{
+		Name: "bike 2",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// hamsterToy = Toy{}
-	// db.Model(&hamster).Association("OtherToy").Find(&hamsterToy)
-	// if hamsterToy.Name != "treadmill 2" {
-	// 	t.Errorf("Should update has one polymorphic association with Append")
-	// }
+	a, err = db.Begin().Model(&hamster).Association("OtherToy")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// if db.Model(&hamster2).Association("PreferredToy").Count() != 1 {
-	// 	t.Errorf("Hamster's toys count should be 1 after Append")
-	// }
+	err = a.Append(&Toy{
+		Name: "treadmill 2",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// if db.Model(&hamster2).Association("OtherToy").Count() != 1 {
-	// 	t.Errorf("Hamster's toys count should be 1 after Append")
-	// }
+	hamsterToy = Toy{}
+	a, err = db.Begin().Model(&hamster).Association("PreferredToy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Find(&hamsterToy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hamsterToy.Name != "bike 2" {
+		t.Errorf("Should update has one polymorphic association with Append")
+	}
 
-	// // Replace
-	// db.Model(&hamster).Association("PreferredToy").Replace(&Toy{
-	// 	Name: "bike 3",
-	// })
-	// db.Model(&hamster).Association("OtherToy").Replace(&Toy{
-	// 	Name: "treadmill 3",
-	// })
+	hamsterToy = Toy{}
+	a, err = db.Begin().Model(&hamster).Association("OtherToy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Find(&hamsterToy)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// hamsterToy = Toy{}
-	// db.Model(&hamster).Association("PreferredToy").Find(&hamsterToy)
-	// if hamsterToy.Name != "bike 3" {
-	// 	t.Errorf("Should update has one polymorphic association with Replace")
-	// }
+	if hamsterToy.Name != "treadmill 2" {
+		t.Errorf("Should update has one polymorphic association with Append")
+	}
 
-	// hamsterToy = Toy{}
-	// db.Model(&hamster).Association("OtherToy").Find(&hamsterToy)
-	// if hamsterToy.Name != "treadmill 3" {
-	// 	t.Errorf("Should update has one polymorphic association with Replace")
-	// }
+	a, err = db.Begin().Model(&hamster).Association("OtherToy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	count, err = a.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Errorf("expected %d got %d", 1, count)
+	}
 
-	// if db.Model(&hamster2).Association("PreferredToy").Count() != 1 {
-	// 	t.Errorf("hamster's toys count should be 1 after Replace")
-	// }
-
-	// if db.Model(&hamster2).Association("OtherToy").Count() != 1 {
-	// 	t.Errorf("hamster's toys count should be 1 after Replace")
-	// }
-
-	// // Clear
-	// db.Model(&hamster).Association("PreferredToy").Append(&Toy{
-	// 	Name: "bike 2",
-	// })
-	// db.Model(&hamster).Association("OtherToy").Append(&Toy{
-	// 	Name: "treadmill 2",
-	// })
-
-	// if db.Model(&hamster).Association("PreferredToy").Count() != 1 {
-	// 	t.Errorf("Hamster's toys should be added with Append")
-	// }
-	// if db.Model(&hamster).Association("OtherToy").Count() != 1 {
-	// 	t.Errorf("Hamster's toys should be added with Append")
-	// }
-
-	// db.Model(&hamster).Association("PreferredToy").Clear()
-
-	// if db.Model(&hamster2).Association("PreferredToy").Count() != 0 {
-	// 	t.Errorf("Hamster's preferred toy should be cleared with Clear")
-	// }
-	// if db.Model(&hamster2).Association("OtherToy").Count() != 1 {
-	// 	t.Errorf("Hamster's other toy should be still available")
-	// }
-
-	// db.Model(&hamster).Association("OtherToy").Clear()
-	// if db.Model(&hamster).Association("OtherToy").Count() != 0 {
-	// 	t.Errorf("Hamster's other toy should be cleared with Clear")
-	// }
+	a, err = db.Begin().Model(&hamster).Association("PreferredToy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	count, err = a.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Errorf("expected %d got %d", 1, count)
+	}
 }

@@ -62,18 +62,19 @@ func (a *Association) Save(values ...interface{}) error {
 					fEv.Set(fv)
 				}
 			}
-		} else {
-			v = reflect.MakeSlice(field.Struct.Type, 0, 0)
-			if v.Kind() == reflect.Ptr {
-				v = v.Elem()
+			field.Field.Set(v)
+			return a.db.Begin().Save(v.Interface())
+		}
+		v = reflect.MakeSlice(field.Struct.Type, 0, 0)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		for _, value := range values {
+			fv := reflect.ValueOf(value)
+			if fv.Kind() == reflect.Ptr {
+				fv = fv.Elem()
 			}
-			for _, value := range values {
-				fv := reflect.ValueOf(value)
-				if fv.Kind() == reflect.Ptr {
-					fv = fv.Elem()
-				}
-				v = reflect.Append(v, fv)
-			}
+			v = reflect.Append(v, fv)
 		}
 		field.Field.Set(v)
 		return a.db.Begin().Save(e.Scope.Value)
