@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/ngorm/ngorm/fixture"
+	"github.com/ngorm/ngorm/model"
+	"github.com/ngorm/ngorm/scope"
 )
 
 type Cat struct {
@@ -429,5 +431,73 @@ func testAssociationBelongsTo(t *testing.T, db *DB) {
 	}
 	if count != 1 {
 		t.Errorf("expected %d got %d", 1, count)
+	}
+}
+
+func TestAssociationBelongsToOverideFK(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAssociationBelongsToOverideFK)
+	}
+}
+
+func testAssociationBelongsToOverideFK(t *testing.T, db *DB) {
+	type Profile struct {
+		model.Model
+		Name string
+	}
+	type User struct {
+		model.Model
+		Profile      Profile `gorm:"ForeignKey:ProfileRefer"`
+		ProfileRefer int64
+	}
+	e := db.NewEngine()
+	f, err := scope.FieldByName(e, &User{}, "Profile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.Relationship.Kind != "belongs_to" {
+		t.Errorf("expected belongs_to got %s", f.Relationship.Kind)
+	}
+	fk := []string{"ProfileRefer"}
+	if !reflect.DeepEqual(f.Relationship.ForeignFieldNames, fk) {
+		t.Errorf("expected %v got %v", fk, f.Relationship.ForeignFieldNames)
+	}
+	fn := []string{"ID"}
+	if !reflect.DeepEqual(f.Relationship.AssociationForeignFieldNames, fn) {
+		t.Errorf("expected %v got %v", fn, f.Relationship.AssociationForeignFieldNames)
+	}
+}
+func TestAssociationBelongsToOverideFK2(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAssociationBelongsToOverideFK2)
+	}
+}
+
+func testAssociationBelongsToOverideFK2(t *testing.T, db *DB) {
+	type Profile struct {
+		model.Model
+		Refer string
+		Name  string
+	}
+	type User struct {
+		model.Model
+		Profile   Profile `gorm:"ForeignKey:ProfileID;AssociationForeignKey:Refer"`
+		ProfileID int64
+	}
+	e := db.NewEngine()
+	f, err := scope.FieldByName(e, &User{}, "Profile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.Relationship.Kind != "belongs_to" {
+		t.Errorf("expected belongs_to got %s", f.Relationship.Kind)
+	}
+	fk := []string{"ProfileID"}
+	if !reflect.DeepEqual(f.Relationship.ForeignFieldNames, fk) {
+		t.Errorf("expected %v got %v", fk, f.Relationship.ForeignFieldNames)
+	}
+	fn := []string{"Refer"}
+	if !reflect.DeepEqual(f.Relationship.AssociationForeignFieldNames, fn) {
+		t.Errorf("expected %v got %v", fn, f.Relationship.AssociationForeignFieldNames)
 	}
 }
