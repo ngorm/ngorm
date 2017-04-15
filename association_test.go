@@ -600,3 +600,39 @@ func testAssociationHasOne(t *testing.T, db *DB) {
 		t.Errorf("CreditCard should be updated with Append")
 	}
 }
+
+func TestAssociationHasOneOverideFK(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAssociationHasOneOverideFK)
+	}
+}
+
+func testAssociationHasOneOverideFK(t *testing.T, db *DB) {
+	type Profile struct {
+		model.Model
+		Name      string
+		UserRefer int64
+	}
+
+	type User struct {
+		model.Model
+		Profile Profile `gorm:"ForeignKey:UserRefer"`
+	}
+	f, err := scope.FieldByName(db.NewEngine(), &User{}, "Profile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rel := f.Relationship
+	if rel.Kind != "has_one" {
+		t.Errorf("expected has_one got %s", rel.Kind)
+	}
+	e := []string{"UserRefer"}
+	if !reflect.DeepEqual(rel.ForeignFieldNames, e) {
+		t.Errorf("expected %v got %v", e, rel.ForeignFieldNames)
+	}
+
+	e = []string{"ID"}
+	if !reflect.DeepEqual(rel.AssociationForeignFieldNames, e) {
+		t.Errorf("expected %v got %v", e, rel.AssociationForeignFieldNames)
+	}
+}
