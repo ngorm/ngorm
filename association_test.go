@@ -590,4 +590,13 @@ func testAssociationHasOne(t *testing.T, db *DB) {
 	if count != 1 {
 		t.Errorf("expected %d got %d", 1, count)
 	}
+
+	var creditcard21 fixture.CreditCard
+	err = db.Begin().Model(&user).Related(&creditcard21)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if creditcard21.Number != "411111111112" {
+		t.Errorf("CreditCard should be updated with Append")
+	}
 }
