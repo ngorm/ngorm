@@ -566,31 +566,28 @@ func testAssociationHasOne(t *testing.T, db *DB) {
 		t.Errorf("expected %d got %d", 1, count)
 	}
 	// Append
-	// var creditcard2 = fixture.CreditCard{
-	// 	Number: "411111111112",
-	// }
-	// a, err = db.Begin().Model(&user).Association("CreditCard")
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	var creditcard2 = fixture.CreditCard{
+		Number: "411111111112",
+	}
+	a, err = db.Begin().Model(&user).Association("CreditCard")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// err = a.Append(&creditcard2)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	err = a.Append(&creditcard2)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// if creditcard2.ID == 0 {
-	// 	t.Errorf("Creditcard should has ID when created with Append")
-	// }
+	if creditcard2.ID == 0 {
+		t.Errorf("Creditcard should has ID when created with Append")
+	}
 
-	// var creditcard21 CreditCard
-	// DB.Model(&user).Related(&creditcard21)
-	// if creditcard21.Number != "411111111112" {
-	// 	t.Errorf("CreditCard should be updated with Append")
-	// }
-
-	// if DB.Model(&user).Association("CreditCard").Count() != 1 {
-	// 	t.Errorf("User's credit card count should be 1")
-	// }
-
+	count, err = a.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Errorf("expected %d got %d", 1, count)
+	}
 }

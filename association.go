@@ -64,6 +64,9 @@ func (a *Association) Save(values ...interface{}) error {
 				}
 			}
 			field.Field.Set(v)
+			if ov.CanSet() {
+				ov.Set(v)
+			}
 			return a.db.Begin().Save(vp.Interface())
 		}
 		v = reflect.MakeSlice(field.Struct.Type, 0, 0)
