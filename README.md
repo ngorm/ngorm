@@ -172,7 +172,7 @@ ngorm support automatic migrations of models. ngorm reuses the gorm logic for lo
 	type User struct {
 		model.Model
 		Profile   Profile
-		ProfileID int
+		ProfileID int64
 	}
 
 	db, err := Open("ql-mem", "test.db")
@@ -180,14 +180,22 @@ ngorm support automatic migrations of models. ngorm reuses the gorm logic for lo
 		log.Fatal(err)
 	}
 	defer func() { _ = db.Close() }()
+
+	// you can inspect expected generated query
 	s, err := db.AutomigrateSQL(&User{}, &Profile{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(s.Q)
+
+	// Or you can execute migrations like so
+	_, err = db.Begin().Automigrate(&User{}, &Profile{})
+	if err != nil {
+		log.Fatal(err)
+	}
 	//Output:
 	// BEGIN TRANSACTION;
-	// 	CREATE TABLE users (id int64,created_at time,updated_at time,deleted_at time,profile_id int ) ;
+	// 	CREATE TABLE users (id int64,created_at time,updated_at time,deleted_at time,profile_id int64 ) ;
 	// 	CREATE INDEX idx_users_deleted_at ON users(deleted_at);
 	// 	CREATE TABLE profiles (id int64,created_at time,updated_at time,deleted_at time,name string ) ;
 	// 	CREATE INDEX idx_profiles_deleted_at ON profiles(deleted_at);
