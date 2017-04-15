@@ -43,6 +43,7 @@ Database support
   - [Synopsis](#synopsis)
   - [Installation](#installation)
   - [Connecting to a database](#connecting-to-a-database)
+  - [Migration] (#migrations)
 
 - API
   - AddForeignKey
