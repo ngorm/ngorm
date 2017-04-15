@@ -501,3 +501,96 @@ func testAssociationBelongsToOverideFK2(t *testing.T, db *DB) {
 		t.Errorf("expected %v got %v", fn, f.Relationship.AssociationForeignFieldNames)
 	}
 }
+
+func TestAssociationHasOne(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAssociationHasOne,
+			&fixture.User{}, &fixture.CreditCard{},
+		)
+	}
+}
+
+func testAssociationHasOne(t *testing.T, db *DB) {
+	_, err := db.Automigrate(
+		&fixture.User{}, &fixture.CreditCard{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := fixture.User{
+		Name:       "has one",
+		CreditCard: fixture.CreditCard{Number: "411111111111"},
+	}
+	err = db.Begin().Save(&user)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if user.CreditCard.UserID.Int64 == 0 {
+		t.Errorf("CreditCard's foreign key should be updated")
+	}
+
+	// Query
+	var creditCard1 fixture.CreditCard
+	err = db.Begin().Model(&user).Related(&creditCard1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if creditCard1.Number != "411111111111" {
+		t.Errorf("Query has one relations with Related")
+	}
+
+	var creditCard11 fixture.CreditCard
+	a, err := db.Begin().Model(&user).Association("CreditCard")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Find(&creditCard11)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if creditCard11.Number != "411111111111" {
+		t.Errorf("Query has one relations with Related")
+	}
+
+	a, err = db.Begin().Model(&user).Association("CreditCard")
+	if err != nil {
+		t.Fatal(err)
+	}
+	count, err := a.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Errorf("expected %d got %d", 1, count)
+	}
+	// Append
+	// var creditcard2 = fixture.CreditCard{
+	// 	Number: "411111111112",
+	// }
+	// a, err = db.Begin().Model(&user).Association("CreditCard")
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+
+	// err = a.Append(&creditcard2)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+
+	// if creditcard2.ID == 0 {
+	// 	t.Errorf("Creditcard should has ID when created with Append")
+	// }
+
+	// var creditcard21 CreditCard
+	// DB.Model(&user).Related(&creditcard21)
+	// if creditcard21.Number != "411111111112" {
+	// 	t.Errorf("CreditCard should be updated with Append")
+	// }
+
+	// if DB.Model(&user).Association("CreditCard").Count() != 1 {
+	// 	t.Errorf("User's credit card count should be 1")
+	// }
+
+}

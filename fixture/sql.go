@@ -57,7 +57,7 @@ BEGIN TRANSACTION;
 	CREATE TABLE languages (id int64,created_at time,updated_at time,deleted_at time,name string ) ;
 	CREATE INDEX idx_languages_deleted_at ON languages(deleted_at);
 	CREATE TABLE companies (id int64,name string ) ;
-	CREATE TABLE credit_cards (id int8,number string,user_id int64,created_at time NOT NULL,updated_at time,deleted_at time ) ;
+	CREATE TABLE credit_cards (id int64,number string,user_id int64,created_at time NOT NULL,updated_at time,deleted_at time ) ;
 	CREATE TABLE addresses (id int,address1 string,address2 string,post string,created_at time,updated_at time,deleted_at time ) ;
 COMMIT;`
 	o[AutoMigrate] = s
@@ -125,7 +125,7 @@ COMMIT;`
 	CREATE TABLE "languages" ("id" bigserial,"created_at" timestamp with time zone,"updated_at" timestamp with time zone,"deleted_at" timestamp with time zone,"name" text ) ;
 	CREATE INDEX idx_languages_deleted_at ON "languages"(deleted_at);
 	CREATE TABLE "companies" ("id" bigserial,"name" text ) ;
-	CREATE TABLE "credit_cards" ("id" serial,"number" text,"user_id" bigint,"created_at" timestamp with time zone NOT NULL,"updated_at" timestamp with time zone,"deleted_at" timestamp with time zone ) ;
+	CREATE TABLE "credit_cards" ("id" bigserial,"number" text,"user_id" bigint,"created_at" timestamp with time zone NOT NULL,"updated_at" timestamp with time zone,"deleted_at" timestamp with time zone ) ;
 	CREATE TABLE "addresses" ("id" serial,"address1" text,"address2" text,"post" text,"created_at" timestamp with time zone,"updated_at" timestamp with time zone,"deleted_at" timestamp with time zone ) ;
 `
 	o[AutoMigrate] = s

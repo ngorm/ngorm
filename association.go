@@ -48,6 +48,7 @@ func (a *Association) Save(values ...interface{}) error {
 			if err != nil {
 				return err
 			}
+			vp := v
 			v = v.Elem()
 			ov := reflect.ValueOf(values[0])
 			if ov.Kind() == reflect.Ptr {
@@ -63,7 +64,7 @@ func (a *Association) Save(values ...interface{}) error {
 				}
 			}
 			field.Field.Set(v)
-			return a.db.Begin().Save(v.Interface())
+			return a.db.Begin().Save(vp.Interface())
 		}
 		v = reflect.MakeSlice(field.Struct.Type, 0, 0)
 		if v.Kind() == reflect.Ptr {

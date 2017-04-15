@@ -1101,24 +1101,28 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 	ndb.e.Scope.Value = value
 	sdb.e.Scope.Set(model.AssociationSource, source)
 
-	foreignKeys = append(foreignKeys, ndb.e.Scope.TypeName()+"Id")
-	foreignKeys = append(foreignKeys, sdb.e.Scope.TypeName()+"Id")
+	foreignKeys = append(foreignKeys, ndb.e.Scope.TypeName()+"ID")
+	foreignKeys = append(foreignKeys, sdb.e.Scope.TypeName()+"ID")
 
 	for _, foreignKey := range foreignKeys {
 		fromField, err := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey)
 		if err != nil {
 			toField, err := scope.FieldByName(ndb.e, value, foreignKey)
 			if err != nil {
-				return err
+				continue
 			}
-			pk, err := scope.PrimaryKey(sdb.e, value)
+			var pfv interface{}
+			pk, err := scope.PrimaryField(sdb.e, source)
 			if err != nil {
-				return err
+				pfv = 0
+			} else {
+				pfv = pk.Field.Interface()
 			}
 			sql := fmt.Sprintf("%v = ?",
 				scope.Quote(ndb.e, toField.DBName))
-			return ndb.Where(sql, pk).Find(value)
+			return ndb.Where(sql, pfv).Find(value)
 		}
+
 		if rel := fromField.Relationship; rel != nil {
 			if rel.Kind == "many_to_many" {
 				h := rel.JoinTableHandler

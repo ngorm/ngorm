@@ -141,7 +141,7 @@ type Short struct {
 
 //CreditCard fixture
 type CreditCard struct {
-	ID        int8
+	ID        int64
 	Number    string
 	UserID    sql.NullInt64
 	CreatedAt time.Time `sql:"not null"`
