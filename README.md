@@ -207,739 +207,94 @@ ngorm support automatic migrations of models. ngorm reuses the gorm logic for lo
 
 ngorm api borrows heavily from gorm. 
 
-## `DB.AddForeignKey`
+##  AddForeignKey
 
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
+##  AddIndex
 
-> Generates 
+##  AddUniqueIndex
 
-```sql
--- ql has no support for foreign keys
-```
+##  Assign
 
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
+##  Association
 
+##  Attrs
 
-## `DB.AddIndex`
+##  Automigrate
 
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
+##  CommonDB
 
-> Generates 
+##  Count
 
-```sql
--- ql has no support for foreign keys
-```
+##  CreateTable
 
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
+##  Delete
 
-## `DB.AddUniqueIndex`
+##  Dialect
 
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
+##  DropColumn
 
-> Generates 
+##  DropTable
 
-```sql
--- ql has no support for foreign keys
-```
+##  DropTableIfExests
 
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-## `DB.Assign`
+##  Find
 
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
+##  First
 
-> Generates 
+##  FirstOrCreate
 
-```sql
--- ql has no support for foreign keys
-```
+##  FirstOrInit
 
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
+##  Group
 
-## `DB.Association`
+##  HasTable
 
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
+##  Having
 
-> Generates 
+##  Set
 
-```sql
--- ql has no support for foreign keys
-```
+##  Joins
 
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
+##  Last
 
-## `DB.Attrs`
+##  Limit
 
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
+##  Model
 
-> Generates 
+##  ModifyColumn
 
-```sql
--- ql has no support for foreign keys
-```
+##  Not
 
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
+##  Offset
 
-## `DB.Automigrate`
+##  Omit
 
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
+##  Or
 
-> Generates 
+##  Order
 
-```sql
--- ql has no support for foreign keys
-```
+##  Pluck
 
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
+##  Preload
 
-## `DB.CommonDB`
+##  Related
 
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
+##  RemoveIndex
 
-> Generates 
+##  Save
 
-```sql
--- ql has no support for foreign keys
-```
+##  Select
 
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
+##  SingulatTable
 
-## `DB.Count`
+##  Table
 
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
+##  Update
 
-> Generates 
+##  UpdateColumn
 
-```sql
--- ql has no support for foreign keys
-```
+##  UpdateColumns
 
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
+##  Updates
 
-## `DB.CreateTable`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Delete`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Dialect`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.DropColumn`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.DropTable`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.DropTableIfExests`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Find`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.First`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.FirstOrCreate`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.FirstOrInit`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Group`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.HasTable`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Having`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Set`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Joins`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Last`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Limit`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Model`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-##  `DB.ModifyColumn`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Not`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Offset`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Omit`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Or`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Order`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-
-## `DB.Pluck`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Preload`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-##`DB.Related`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.RemoveIndex`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Save`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Select`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.SingulatTable`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Table`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Update`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.UpdateColumn`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.UpdateColumns`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Updates`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
-
-## `DB.Where`
-
-```go
- db.Model(User{}).AddForeignKeySQL("city_id", "cities(id)", "RESTRICT", "RESTRICT")
-```
-
-> Generates 
-
-```sql
--- ql has no support for foreign keys
-```
-
-```sql
-ALTER TABLE "users" ADD CONSTRAINT "users_city_id_cities_id_foreign" FOREIGN KEY ("city_id") REFERENCES cities(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
-```
+##  Where
