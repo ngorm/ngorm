@@ -160,6 +160,39 @@ The returned `ngorm.DB` instance is safe. It is a good idea to have only one
 instance of this object throughout your application life cycle. Make it a global
 or pass it in context.
 
+## Migrations
+ngorm support automatic migrations of models. ngorm reuses the gorm logic for loading models so all the valid gorm models are also valid ngorm model.
+
+```go
+	type Profile struct {
+		model.Model
+		Name string
+	}
+	type User struct {
+		model.Model
+		Profile   Profile
+		ProfileID int
+	}
+
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	s, err := db.AutomigrateSQL(&User{}, &Profile{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(s.Q)
+	//Output:
+	// BEGIN TRANSACTION;
+	// 	CREATE TABLE users (id int64,created_at time,updated_at time,deleted_at time,profile_id int ) ;
+	// 	CREATE INDEX idx_users_deleted_at ON users(deleted_at);
+	// 	CREATE TABLE profiles (id int64,created_at time,updated_at time,deleted_at time,name string ) ;
+	// 	CREATE INDEX idx_profiles_deleted_at ON profiles(deleted_at);
+	// COMMIT;
+  ```
+
 
 # API
 

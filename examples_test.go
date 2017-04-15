@@ -193,6 +193,35 @@ func Example_belongsTo() {
 
 }
 
+func Example_migration() {
+	type Profile struct {
+		model.Model
+		Name string
+	}
+	type User struct {
+		model.Model
+		Profile   Profile
+		ProfileID int
+	}
+
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	s, err := db.AutomigrateSQL(&User{}, &Profile{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(s.Q)
+	//Output:
+	// BEGIN TRANSACTION;
+	// 	CREATE TABLE users (id int64,created_at time,updated_at time,deleted_at time,profile_id int ) ;
+	// 	CREATE INDEX idx_users_deleted_at ON users(deleted_at);
+	// 	CREATE TABLE profiles (id int64,created_at time,updated_at time,deleted_at time,name string ) ;
+	// 	CREATE INDEX idx_profiles_deleted_at ON profiles(deleted_at);
+	// COMMIT;
+}
 func ExampleDB_SaveSQL() {
 	db, err := Open("ql-mem", "test.db")
 	if err != nil {
