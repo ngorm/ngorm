@@ -24,9 +24,9 @@ func (field *Field) Set(value interface{}) (err error) {
 		return errmsg.ErrInvalidFieldValue
 	}
 
-	// if !field.Field.CanAddr() {
-	// 	return errmsg.ErrUnaddressable
-	// }
+	if !field.Field.CanAddr() {
+		return errmsg.ErrUnaddressable
+	}
 
 	reflectValue, ok := value.(reflect.Value)
 	if !ok {
