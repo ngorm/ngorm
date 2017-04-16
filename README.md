@@ -239,6 +239,49 @@ ngorm api borrows heavily from gorm.
 
 ##  Find
 
+Find is uded for looking up things in the database. You can look for one item or a list of items. This works well will the other query building API calls. Something to no note is this is the last call after chaining other API calls. So, you can have something similar to `db.Where(...).Find()` etc.
+
+This is an example of looking up for all users.
+
+```go
+type User struct {
+		ID   int64
+		Name string
+	}
+
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&User{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	v := []string{"gernest", "kemi", "helen"}
+	for _, n := range v {
+		err = db.Begin().Save(&User{Name: n})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	users := []User{}
+	err = db.Begin().Find(&users)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, u := range users {
+		fmt.Println(u.Name)
+	}
+
+	//Output:
+	// helen
+	// kemi
+	// gernest
+```
+
+
 ##  First
 
 ##  FirstOrCreate
