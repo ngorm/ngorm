@@ -285,3 +285,41 @@ func ExampleDB_UpdateSQL() {
 	//$1=hello
 	//$2=10
 }
+
+func ExampleDB_Find() {
+	type User struct {
+		ID   int64
+		Name string
+	}
+
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	_, err = db.Automigrate(&User{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	v := []string{"gernest", "kemi", "helen"}
+	for _, n := range v {
+		err = db.Begin().Save(&User{Name: n})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	users := []User{}
+	err = db.Begin().Find(&users)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, u := range users {
+		fmt.Println(u.Name)
+	}
+
+	//Output:
+	// helen
+	// kemi
+	// gernest
+}
