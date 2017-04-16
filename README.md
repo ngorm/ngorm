@@ -244,7 +244,7 @@ Find is uded for looking up things in the database. You can look for one item or
 This is an example of looking up for all users.
 
 ```go
-type User struct {
+	type User struct {
 		ID   int64
 		Name string
 	}
