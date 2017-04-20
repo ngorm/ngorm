@@ -56,6 +56,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kr/pretty"
 	"github.com/ngorm/ngorm/builder"
 	"github.com/ngorm/ngorm/dialects"
 	"github.com/ngorm/ngorm/engine"
@@ -337,26 +338,13 @@ func (db *DB) Close() error {
 // You can hijack the execution of the generated SQL by overriding
 // model.HookCreateExec hook.
 func (db *DB) Create(value interface{}) error {
-	sql, err := db.CreateSQL(value)
-	if err != nil {
-		return err
-	}
-	c, ok := db.hooks.Create.Get(model.HookCreateExec)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.HookCreateExec)
-	}
 	e := db.NewEngine()
 	e.Scope.Value = value
-	e.Scope.SQL = sql.Q
-	e.Scope.SQLVars = sql.Args
-	err = c.Exec(db.hooks, e)
-	if err != nil {
-		return err
+	h, ok := db.hooks.Create.Get(model.Create)
+	if !ok {
+		return fmt.Errorf("ngorm: missing %s hook", model.Create)
 	}
-	if ac, ok := db.hooks.Create.Get(model.AfterCreate); ok {
-		return ac.Exec(db.hooks, e)
-	}
-	return nil
+	return h.Exec(db.Hooks(), e)
 }
 
 //CreateSQL generates SQl query for creating a new record/records for value. This
@@ -1074,6 +1062,7 @@ func (db *DB) Association(column string) (*Association, error) {
 		return nil, err
 	}
 	if p.IsBlank {
+		pretty.Println(db.e.Scope.Value)
 		return nil, errors.New("primary field can not be blank")
 	}
 	field, err := scope.FieldByName(db.e, db.e.Scope.Value, column)

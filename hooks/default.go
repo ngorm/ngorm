@@ -173,6 +173,38 @@ func BeforeCreate(b *Book, e *engine.Engine) error {
 
 //Create the hook executed to create a new record.
 func Create(b *Book, e *engine.Engine) error {
+	h, ok := b.Create.Get(model.BeforeCreate)
+	if !ok {
+		return fmt.Errorf("ngorm: missing %s hook", model.BeforeCreate)
+	}
+	err := h.Exec(b, e)
+	if err != nil {
+		return err
+	}
+	h, ok = b.Create.Get(model.HookCreateSQL)
+	if !ok {
+		return fmt.Errorf("ngorm: missing %s hook ", model.HookCreateSQL)
+	}
+	err = h.Exec(b, e)
+	if err != nil {
+		return err
+	}
+	h, ok = b.Create.Get(model.HookCreateExec)
+	if !ok {
+		return fmt.Errorf("ngorm: missing %s hook", model.HookCreateExec)
+	}
+	err = h.Exec(b, e)
+	if err != nil {
+		return err
+	}
+	h, ok = b.Create.Get(model.AfterCreate)
+	if !ok {
+		return fmt.Errorf("ngorm: missing %s hook", model.AfterCreate)
+	}
+	return h.Exec(b, e)
+}
+
+func create(b *Book, e *engine.Engine) error {
 	var (
 		cols, placeholders []string
 
@@ -724,11 +756,9 @@ func CreateSQL(b *Book, e *engine.Engine) error {
 			return err
 		}
 	}
-	if c, ok := b.Create.Get(model.Create); ok {
-		err := c.Exec(b, e)
-		if err != nil {
-			return err
-		}
+	err := create(b, e)
+	if err != nil {
+		return err
 	}
 	var buf bytes.Buffer
 	if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {

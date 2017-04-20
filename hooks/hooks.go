@@ -81,7 +81,7 @@ func DefaultBook() *Book {
 
 	// Create hooks
 	b.Create.Set(HookFunc(model.Create, Create))
-	b.Create.Set(HookFunc(model.HookBeforeCreate, BeforeCreate))
+	b.Create.Set(HookFunc(model.BeforeCreate, BeforeCreate))
 	b.Create.Set(HookFunc(model.HookCreateExec, CreateExec))
 	b.Create.Set(HookFunc(model.HookCreateSQL, CreateSQL))
 	b.Create.Set(HookFunc(model.HookSaveBeforeAss, SaveBeforeAssociation))
