@@ -107,6 +107,10 @@ func runWrapBenchDB(t *testing.B, d testDB, f func(*testing.B, *DB), tables ...i
 	if err != nil {
 		t.Fatal(err)
 	}
+	_, err = db.Automigrate(tables...)
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Run(db.Dialect().GetName(), func(ts *testing.B) {
 		f(ts, db)
 	})
