@@ -102,6 +102,20 @@ func runWrapDB(t *testing.T, d testDB, f func(*testing.T, *DB), tables ...interf
 	}
 }
 
+func runWrapBenchDB(t *testing.B, d testDB, f func(*testing.B, *DB), tables ...interface{}) {
+	db, err := d.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run(db.Dialect().GetName(), func(ts *testing.B) {
+		f(ts, db)
+	})
+	err = d.Clear(tables...)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestMain(m *testing.M) {
 	err := initialize()
 	if err != nil {

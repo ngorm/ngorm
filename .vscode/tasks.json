@@ -2,8 +2,6 @@
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "0.1.0",
-    "command": "go",
-    "isShellCommand": true,
     "showOutput": "always",
     "options": {
         "env": {
@@ -13,11 +11,34 @@
     "tasks": [
         {
             "taskName": "test",
+            "command": "go",
             "args": [
+                "test",
                 "-v",
                 "./..."
             ],
-            "isTestCommand": true
+            "isTestCommand": true,
+            "echoCommand": true,
+            "options": {
+                "env": {
+                    "NGORM_PG_CONN": "postgres://postgres@localhost:5432/ngorm?sslmode=disable"
+                }
+            }
+        },
+        {
+            "taskName": "bench",
+            "command": "go",
+            "args": [
+                "test",
+                "-bench=.",
+                "-run=none"
+            ],
+            "echoCommand": true,
+            "options": {
+                "env": {
+                    "NGORM_PG_CONN": "postgres://postgres@localhost:5432/ngorm?sslmode=disable"
+                }
+            }
         }
     ]
 }
