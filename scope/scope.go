@@ -232,7 +232,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 		}
 	}
 
-	e.StructMap.Set(refType, &m)
+	e.StructMap.Set(&m)
 	return &m, nil
 }
 

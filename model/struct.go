@@ -171,27 +171,32 @@ func ParseTagSetting(tags reflect.StructTag) map[string]string {
 
 //SafeStructsMap provide safe storage and accessing of *Struct.
 type SafeStructsMap struct {
-	m map[reflect.Type]*Struct
-	l *sync.RWMutex
+	v  []*Struct
+	mu sync.RWMutex
 }
 
-//Set stores value with the given key.
-func (s *SafeStructsMap) Set(key reflect.Type, value *Struct) {
-	s.l.Lock()
-	defer s.l.Unlock()
-	s.m[key] = value
+//Set safely stores value
+func (s *SafeStructsMap) Set(value *Struct) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.v = append(s.v, value)
 }
 
 //Get retrieves the value stored with the given key.
 func (s *SafeStructsMap) Get(key reflect.Type) *Struct {
-	s.l.RLock()
-	defer s.l.RUnlock()
-	return s.m[key]
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, v := range s.v {
+		if v.ModelType == key {
+			return v
+		}
+	}
+	return nil
 }
 
 //NewStructsMap returns a safe map for storing *Struct objects.
 func NewStructsMap() *SafeStructsMap {
-	return &SafeStructsMap{l: new(sync.RWMutex), m: make(map[reflect.Type]*Struct)}
+	return &SafeStructsMap{}
 }
 
 //Scope is the scope level of SQL building.
