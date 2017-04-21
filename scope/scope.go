@@ -703,11 +703,10 @@ func QuotedTableName(e *engine.Engine, value interface{}) string {
 // the positional binding of the *model.Expr.Arg item.
 func AddToVars(e *engine.Engine, value interface{}) string {
 	if expr, ok := value.(*model.Expr); ok {
-		exp := expr.Q
 		for _, arg := range expr.Args {
-			exp = strings.Replace(exp, "?", AddToVars(e, arg), 1)
+			expr.Q = strings.Replace(expr.Q, "?", AddToVars(e, arg), 1)
 		}
-		return exp
+		return expr.Q
 	}
 
 	e.Scope.SQLVars = append(e.Scope.SQLVars, value)
