@@ -66,9 +66,30 @@ func Where(e *engine.Engine, modelValue interface{}, clause map[string]interface
 		} else if value != "" {
 			str = fmt.Sprintf("(%v)", value)
 		}
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, sql.NullInt64:
+	case int,
+		int8,
+		int16,
+		int32,
+		int64,
+		uint,
+		uint8,
+		uint16,
+		uint32,
+		uint64,
+		sql.NullInt64:
 		return PrimaryCondition(e, modelValue, scope.AddToVars(e, value))
-	case []int, []int8, []int16, []int32, []int64, []uint, []uint8, []uint16, []uint32, []uint64, []string, []interface{}:
+	case []int,
+		[]int8,
+		[]int16,
+		[]int32,
+		[]int64,
+		[]uint,
+		[]uint8,
+		[]uint16,
+		[]uint32,
+		[]uint64,
+		[]string,
+		[]interface{}:
 		pk, err := scope.PrimaryKey(e, modelValue)
 		if err != nil {
 			return "", err
