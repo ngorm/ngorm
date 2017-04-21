@@ -694,4 +694,9 @@ func testAssociationHasMany(t *testing.T, db *DB) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	for _, comment := range post.Comments {
+		if comment.PostID == 0 {
+			t.Errorf("comment's PostID should be updated")
+		}
+	}
 }
