@@ -673,3 +673,25 @@ func testAssociationHasOneOverideFK2(t *testing.T, db *DB) {
 		t.Errorf("expected %v got %v", e, rel.AssociationForeignFieldNames)
 	}
 }
+
+func TestAssociationHasMany(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAssociationHasMany, &fixture.Post{}, &fixture.Comment{})
+	}
+}
+
+func testAssociationHasMany(t *testing.T, db *DB) {
+	_, err := db.Automigrate(&fixture.Post{}, &fixture.Comment{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	post := fixture.Post{
+		Title:    "post has many",
+		Body:     "body has many",
+		Comments: []*fixture.Comment{{Content: "Comment 1"}, {Content: "Comment 2"}},
+	}
+	err = db.Begin().Save(&post)
+	if err != nil {
+		t.Fatal(err)
+	}
+}

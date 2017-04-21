@@ -285,7 +285,6 @@ type Comment struct {
 	model.Model
 	PostID  int64
 	Content string
-	Post    Post
 }
 
 //NullValue fixture

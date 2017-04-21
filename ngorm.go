@@ -56,7 +56,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kr/pretty"
 	"github.com/ngorm/ngorm/builder"
 	"github.com/ngorm/ngorm/dialects"
 	"github.com/ngorm/ngorm/engine"
@@ -1062,7 +1061,6 @@ func (db *DB) Association(column string) (*Association, error) {
 		return nil, err
 	}
 	if p.IsBlank {
-		pretty.Println(db.e.Scope.Value)
 		return nil, errors.New("primary field can not be blank")
 	}
 	field, err := scope.FieldByName(db.e, db.e.Scope.Value, column)

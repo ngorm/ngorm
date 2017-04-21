@@ -616,7 +616,14 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 				case reflect.Slice:
 					for i := 0; i < value.Len(); i++ {
 						ne := e.Clone()
-						elem := value.Index(i).Addr().Interface()
+						vi := value.Index(i)
+						var elem interface{}
+						if vi.Kind() == reflect.Ptr {
+							elem = vi.Interface()
+						} else {
+							elem = vi.Addr().Interface()
+						}
+						// elem := value.Index(i).Addr().Interface()
 						ne.Scope.Value = elem
 						if rel.JoinTableHandler == nil && len(rel.ForeignFieldNames) != 0 {
 							for idx, fieldName := range rel.ForeignFieldNames {

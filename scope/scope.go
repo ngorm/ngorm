@@ -95,14 +95,8 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 	}
 
 	refType := reflect.ValueOf(value).Type()
-	if refType.Kind() == reflect.Ptr {
+	for refType.Kind() == reflect.Slice || refType.Kind() == reflect.Ptr {
 		refType = refType.Elem()
-	}
-	if refType.Kind() == reflect.Slice {
-		refType = refType.Elem()
-		if refType.Kind() == reflect.Ptr {
-			refType = refType.Elem()
-		}
 	}
 
 	// Scope value need to be a struct
@@ -220,7 +214,6 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 			} else {
 				field.DBName = util.ToDBName(fStruct.Name)
 			}
-
 			m.StructFields = append(m.StructFields, field)
 		}
 	}
@@ -417,6 +410,7 @@ func buildRelationStruct(e *engine.Engine, modelValue interface{}, refType refle
 		tagForeignKeys            []string
 		tagAssociationForeignKeys []string
 	)
+
 	ms, err := GetModelStruct(e, toScope)
 	if err != nil {
 		return err
