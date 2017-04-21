@@ -339,11 +339,7 @@ func (db *DB) Close() error {
 func (db *DB) Create(value interface{}) error {
 	e := db.NewEngine()
 	e.Scope.Value = value
-	h, ok := db.hooks.Create.Get(model.Create)
-	if !ok {
-		return fmt.Errorf("ngorm: missing %s hook", model.Create)
-	}
-	return h.Exec(db.Hooks(), e)
+	return db.Hooks().MustExec(hooks.CreateHook, model.Create, e)
 }
 
 //CreateSQL generates SQl query for creating a new record/records for value. This
@@ -412,14 +408,11 @@ func (db *DB) SQLCommon() model.SQLCommon {
 func (db *DB) SaveSQL(value interface{}) (*model.Expr, error) {
 	e := db.NewEngine()
 	e.Scope.Value = value
-	if u, ok := db.hooks.Update.Get(model.HookUpdateSQL); ok {
-		err := u.Exec(db.hooks, e)
-		if err != nil {
-			return nil, err
-		}
-		return &model.Expr{Q: e.Scope.SQL, Args: e.Scope.SQLVars}, nil
+	err := db.Hooks().MustExec(hooks.UpdateHook, model.HookUpdateSQL, e)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("missing update sql hook")
+	return &model.Expr{Q: e.Scope.SQL, Args: e.Scope.SQLVars}, nil
 }
 
 // Save update value in database, if the value doesn't have primary key, will insert it
@@ -430,11 +423,7 @@ func (db *DB) Save(value interface{}) error {
 	if field == nil || field.IsBlank {
 		return db.Create(value)
 	}
-	u, ok := db.hooks.Update.Get(model.Update)
-	if !ok {
-		return errors.New("missing update hook")
-	}
-	return u.Exec(db.hooks, e)
+	return db.Hooks().MustExec(hooks.UpdateHook, model.Update, e)
 }
 
 //Model sets value as the database model. This model will be used for future
@@ -463,11 +452,7 @@ func (db *DB) Updates(values interface{}, ignoreProtectedAttrs ...bool) error {
 	}
 	db.e.Scope.Set(model.IgnoreProtectedAttrs, ignore)
 	db.e.Scope.Set(model.UpdateInterface, values)
-	u, ok := db.hooks.Update.Get(model.Update)
-	if !ok {
-		return errors.New("missing update hook")
-	}
-	return u.Exec(db.hooks, db.e)
+	return db.Hooks().MustExec(hooks.UpdateHook, model.Update, db.e)
 }
 
 //UpdateSQL generates SQL that will be executed when you use db.Update
@@ -486,11 +471,7 @@ func (db *DB) UpdatesSQL(values interface{}, ignoreProtectedAttrs ...bool) (*mod
 	}
 	db.e.Scope.Set(model.IgnoreProtectedAttrs, ignore)
 	db.e.Scope.Set(model.UpdateInterface, values)
-	u, ok := db.hooks.Update.Get(model.HookUpdateSQL)
-	if !ok {
-		return nil, errors.New("missing update sql  hook")
-	}
-	err := u.Exec(db.hooks, db.e)
+	err := db.Hooks().MustExec(hooks.UpdateHook, model.HookUpdateSQL, db.e)
 	if err != nil {
 		return nil, err
 	}
@@ -544,11 +525,7 @@ func (db *DB) First(out interface{}, where ...interface{}) error {
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
 	db.e.Scope.Value = out
-	q, ok := db.hooks.Query.Get(model.Query)
-	if !ok {
-		return errors.New("missing query hook")
-	}
-	return q.Exec(db.hooks, db.e)
+	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
 }
 
 //FirstSQL returns SQL query for retrieving the first record ordering by primary
@@ -558,11 +535,7 @@ func (db *DB) FirstSQL(out interface{}, where ...interface{}) (*model.Expr, erro
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
 	db.e.Scope.Value = out
-	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
-	if !ok {
-		return nil, errors.New("missing  query sql hook")
-	}
-	err := sql.Exec(db.hooks, db.e)
+	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
 	if err != nil {
 		return nil, err
 	}
@@ -575,11 +548,7 @@ func (db *DB) Last(out interface{}, where ...interface{}) error {
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
 	db.e.Scope.Value = out
-	q, ok := db.hooks.Query.Get(model.Query)
-	if !ok {
-		return errors.New("missing query hook")
-	}
-	return q.Exec(db.hooks, db.e)
+	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
 }
 
 //LastSQL returns SQL query for retrieving the last record ordering by primary
@@ -589,11 +558,7 @@ func (db *DB) LastSQL(out interface{}, where ...interface{}) (*model.Expr, error
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
 	db.e.Scope.Value = out
-	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
-	if !ok {
-		return nil, errors.New("missing  query sql hook")
-	}
-	err := sql.Exec(db.hooks, db.e)
+	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
 	if err != nil {
 		return nil, err
 	}
@@ -621,11 +586,7 @@ func (db *DB) FindSQL(out interface{}, where ...interface{}) (*model.Expr, error
 	}
 	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
-	sql, ok := db.hooks.Query.Get(model.HookQuerySQL)
-	if !ok {
-		return nil, errors.New("missing  query sql hook")
-	}
-	err := sql.Exec(db.hooks, db.e)
+	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
 	if err != nil {
 		return nil, err
 	}
@@ -639,11 +600,7 @@ func (db *DB) Find(out interface{}, where ...interface{}) error {
 	}
 	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
-	q, ok := db.hooks.Query.Get(model.Query)
-	if !ok {
-		return errors.New("missing query hook")
-	}
-	return q.Exec(db.hooks, db.e)
+	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
 }
 
 // Attrs initialize struct with argument if record not found
@@ -883,11 +840,7 @@ func (db *DB) Delete(value interface{}, where ...interface{}) error {
 	e := db.NewEngine()
 	e.Scope.Value = value
 	search.Inline(e, where...)
-	d, ok := db.hooks.Delete.Get(model.Delete)
-	if !ok {
-		return errors.New("missing delete hook")
-	}
-	return d.Exec(db.hooks, e)
+	return db.Hooks().MustExec(hooks.DeleteHook, model.Delete, e)
 }
 
 // DeleteSQL  generates SQL to delete value match given conditions, if the value has primary key,
@@ -896,11 +849,7 @@ func (db *DB) DeleteSQL(value interface{}, where ...interface{}) (*model.Expr, e
 	e := db.NewEngine()
 	e.Scope.Value = value
 	search.Inline(e, where...)
-	d, ok := db.hooks.Delete.Get(model.DeleteSQL)
-	if !ok {
-		return nil, errors.New("missing delete sql hook")
-	}
-	err := d.Exec(db.hooks, e)
+	err := db.Hooks().MustExec(hooks.DeleteHook, model.DeleteSQL, e)
 	if err != nil {
 		return nil, err
 	}
@@ -920,11 +869,7 @@ func (db *DB) UpdateColumns(values interface{}) error {
 	db.e.Scope.Set(model.UpdateColumn, true)
 	db.e.Scope.Set(model.SaveAssociations, false)
 	db.e.Scope.Set(model.UpdateInterface, values)
-	u, ok := db.hooks.Update.Get(model.Update)
-	if !ok {
-		return errors.New("missing update hook")
-	}
-	return u.Exec(db.Hooks(), db.e)
+	return db.Hooks().MustExec(hooks.UpdateHook, model.Update, db.e)
 }
 
 // AddUniqueIndex add unique index for columns with given name
