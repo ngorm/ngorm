@@ -405,7 +405,11 @@ func OrderSQL(e *engine.Engine, modelValue interface{}) string {
 	if len(e.Search.Orders) == 0 || e.Search.IgnoreOrderQuery {
 		return ""
 	}
-
+	buf := util.B.Get()
+	defer func() {
+		buf.Reset()
+		util.B.Put(buf)
+	}()
 	var orders []string
 	for _, order := range e.Search.Orders {
 		if str, ok := order.(string); ok {
@@ -421,7 +425,9 @@ func OrderSQL(e *engine.Engine, modelValue interface{}) string {
 			orders = append(orders, exp)
 		}
 	}
-	return " ORDER BY " + strings.Join(orders, ",")
+	buf.WriteString(" ORDER BY ")
+	buf.WriteString(strings.Join(orders, ","))
+	return buf.String()
 }
 
 //LimitAndOffsetSQL generates SQL for LIMIT and OFFSET. This relies on the
@@ -524,7 +530,11 @@ func AddIndex(e *engine.Engine, unique bool, indexName string, column ...string)
 		}
 		columns = append(columns, name)
 	}
-
+	buf := util.B.Get()
+	defer func() {
+		buf.Reset()
+		util.B.Put(buf)
+	}()
 	sqlCreate := "CREATE INDEX"
 	if unique {
 		sqlCreate = "CREATE UNIQUE INDEX"
@@ -534,10 +544,11 @@ func AddIndex(e *engine.Engine, unique bool, indexName string, column ...string)
 		return err
 	}
 
-	e.Scope.SQL = fmt.Sprintf("%s %v ON %v(%v) %v",
+	fmt.Fprintf(buf, "%s %v ON %v(%v) %v",
 		sqlCreate, indexName,
 		scope.QuotedTableName(e, e.Scope.Value),
 		strings.Join(columns, ", "), w,
 	)
+	e.Scope.SQL = buf.String()
 	return nil
 }
