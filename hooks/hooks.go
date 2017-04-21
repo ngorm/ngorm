@@ -37,26 +37,27 @@ type Hook interface {
 //group of related hooks.
 type Hooks struct {
 	typ HookType
-	h   map[string]Hook
+	v   []Hook
 	mu  sync.RWMutex
 }
 
 //Set saves the hook.
 func (h *Hooks) Set(hk Hook) {
 	h.mu.Lock()
-	h.h[hk.Name()] = hk
+	h.v = append(h.v, hk)
 	h.mu.Unlock()
 }
 
 //Get returns a saved hook.
 func (h *Hooks) Get(name string) (Hook, bool) {
 	h.mu.RLock()
-	hk, ok := h.h[name]
-	defer h.mu.RUnlock()
-	if !ok {
-		return defaultHook(h.typ, name)
+	for _, v := range h.v {
+		if v.Name() == name {
+			return v, true
+		}
 	}
-	return hk, ok
+	defer h.mu.RUnlock()
+	return defaultHook(h.typ, name)
 }
 
 func (b *Book) Exec(typ HookType, key string, e *engine.Engine) error {
@@ -270,7 +271,7 @@ func defaultDeleteHooks(key string) (Hook, bool) {
 
 //NewHooks retruns an initialized Hooks instance.
 func NewHooks(typ HookType) *Hooks {
-	return &Hooks{typ: typ, h: make(map[string]Hook)}
+	return &Hooks{typ: typ}
 }
 
 type simpleHook struct {
