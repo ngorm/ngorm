@@ -11,7 +11,14 @@ import (
 	"sync"
 
 	"github.com/ngorm/ngorm/errmsg"
+	"github.com/oxtoacart/bpool"
 )
+
+var B *bpool.BufferPool
+
+func init() {
+	B = bpool.NewBufferPool(1000)
+}
 
 // Copied from golint
 var commonInitialisms = []string{"API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON", "LHS", "QPS", "RAM", "RHS", "RPC", "SLA", "SMTP", "SSH", "TLS", "TTL", "UI", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XSRF", "XSS"}

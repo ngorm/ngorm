@@ -18,6 +18,7 @@ import (
 	"github.com/ngorm/ngorm/model"
 	"github.com/ngorm/ngorm/regexes"
 	"github.com/ngorm/ngorm/scope"
+	"github.com/ngorm/ngorm/util"
 )
 
 //Where builds the sql where condition. The clause is a map
@@ -167,9 +168,10 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) 
 	)
 
 	if !e.Search.Unscoped && scope.HasColumn(e, modelValue, "deleted_at") {
-		sql := fmt.Sprintf("%v deleted_at IS NULL",
-			e.Dialect.QueryFieldName(quotedTableName))
-		primaryConditions = append(primaryConditions, sql)
+		primaryConditions = append(primaryConditions,
+			fmt.Sprintf("%v deleted_at IS NULL",
+				e.Dialect.QueryFieldName(quotedTableName)),
+		)
 	}
 
 	f, err := scope.PrimaryField(e, modelValue)
@@ -182,10 +184,11 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) 
 			return "", err
 		}
 		for _, field := range pfs {
-			sql := fmt.Sprintf("%v%v = %v",
-				e.Dialect.QueryFieldName(quotedTableName),
-				scope.Quote(e, field.DBName), scope.AddToVars(e, field.Field.Interface()))
-			primaryConditions = append(primaryConditions, sql)
+			primaryConditions = append(primaryConditions,
+				fmt.Sprintf("%v%v = %v",
+					e.Dialect.QueryFieldName(quotedTableName),
+					scope.Quote(e, field.DBName), scope.AddToVars(e, field.Field.Interface())),
+			)
 		}
 	}
 
@@ -223,14 +226,24 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) 
 		combinedSQL = orSQL
 	}
 
+	buf := util.B.Get()
+	defer func() {
+		buf.Reset()
+		util.B.Put(buf)
+	}()
 	if len(primaryConditions) > 0 {
-		sql = "WHERE " + strings.Join(primaryConditions, " AND ")
+		buf.WriteString("WHERE ")
+		buf.WriteString(strings.Join(primaryConditions, " AND "))
 		if len(combinedSQL) > 0 {
-			sql = sql + " AND (" + combinedSQL + ")"
+			buf.WriteString(" AND (")
+			buf.WriteString(combinedSQL)
+			buf.WriteString(")")
 		}
 	} else if len(combinedSQL) > 0 {
-		sql = "WHERE " + combinedSQL
+		buf.WriteString("WHERE ")
+		buf.WriteString(combinedSQL)
 	}
+	sql = buf.String()
 	return
 }
 
