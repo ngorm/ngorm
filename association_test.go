@@ -699,4 +699,43 @@ func testAssociationHasMany(t *testing.T, db *DB) {
 			t.Errorf("comment's PostID should be updated")
 		}
 	}
+	var compareComments = func(comments []fixture.Comment, contents []string) bool {
+		var commentContents []string
+		for _, comment := range comments {
+			commentContents = append(commentContents, comment.Content)
+		}
+		sort.Strings(commentContents)
+		sort.Strings(contents)
+		return reflect.DeepEqual(commentContents, contents)
+	}
+
+	// Query
+	err = db.Begin().First(&fixture.Comment{}, "content = ?", "Comment 1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var comments1 []fixture.Comment
+	// DB.Model(&post).Association("Comments").Find(&comments1)
+	// if !compareComments(comments1, []string{"Comment 1", "Comment 2"}) {
+	// 	t.Errorf("Query has many relations with Association")
+	// }
+
+	a, err := db.Begin().Model(&post).Association("Comments")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Find(&comments1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !compareComments(comments1, []string{"Comment 1", "Comment 2"}) {
+		t.Errorf("Query has many relations with Association")
+	}
+
+	var comments11 []fixture.Comment
+	db.Begin().Model(&post).Related(&comments11)
+	if !compareComments(comments11, []string{"Comment 1", "Comment 2"}) {
+		t.Errorf("Query has many relations with Related")
+	}
 }
