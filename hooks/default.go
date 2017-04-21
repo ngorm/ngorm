@@ -28,27 +28,15 @@ import (
 // If all is well HookAfterQuery is executed, if this hook is not registered
 // then no error is returned.
 func Query(b *Book, e *engine.Engine) error {
-	sql, ok := b.Query.Get(model.HookQuerySQL)
-	if !ok {
-		return fmt.Errorf("hooks: missing %s hook ", model.HookQuerySQL)
-	}
-	err := sql.Exec(b, e)
+	err := b.MustExec(QueryHook, model.HookQuerySQL, e)
 	if err != nil {
 		return err
 	}
-	exec, ok := b.Query.Get(model.HookQueryExec)
-	if !ok {
-		return fmt.Errorf("hooks: missing %s hook ", model.HookQueryExec)
-	}
-	err = exec.Exec(b, e)
+	err = b.MustExec(QueryHook, model.HookQueryExec, e)
 	if err != nil {
 		return err
 	}
-	exec, ok = b.Query.Get(model.HookAfterQuery)
-	if !ok {
-		return nil
-	}
-	return exec.Exec(b, e)
+	return b.Exec(QueryHook, model.HookAfterQuery, e)
 }
 
 //QueryExec  executes SQL queries and scans the result to the pointer object
@@ -145,63 +133,33 @@ func AfterQuery(b *Book, e *engine.Engine) error {
 			return err
 		}
 	}
-	af, ok := b.Query.Get(model.HookAfterFindQuery)
-	if ok {
-		return af.Exec(b, e)
-	}
-	return nil
+	return b.Exec(QueryHook, model.HookAfterFindQuery, e)
 }
 
 //BeforeCreate a callback executed before crating anew record.
 func BeforeCreate(b *Book, e *engine.Engine) error {
-	bs, ok := b.Create.Get(model.HookBeforeSave)
-	if ok {
-		err := bs.Exec(b, e)
-		if err != nil {
-			return err
-		}
+	err := b.Exec(CreateHook, model.HookBeforeSave, e)
+	if err != nil {
+		return err
 	}
-	bc, ok := b.Create.Get(model.HookBeforeCreate)
-	if ok {
-		err := bc.Exec(b, e)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return b.Exec(CreateHook, model.HookBeforeCreate, e)
 }
 
 //Create the hook executed to create a new record.
 func Create(b *Book, e *engine.Engine) error {
-	h, ok := b.Create.Get(model.BeforeCreate)
-	if !ok {
-		return fmt.Errorf("ngorm: missing %s hook", model.BeforeCreate)
-	}
-	err := h.Exec(b, e)
+	err := b.MustExec(CreateHook, model.BeforeCreate, e)
 	if err != nil {
 		return err
 	}
-	h, ok = b.Create.Get(model.HookCreateSQL)
-	if !ok {
-		return fmt.Errorf("ngorm: missing %s hook ", model.HookCreateSQL)
-	}
-	err = h.Exec(b, e)
+	err = b.Exec(CreateHook, model.HookCreateSQL, e)
 	if err != nil {
 		return err
 	}
-	h, ok = b.Create.Get(model.HookCreateExec)
-	if !ok {
-		return fmt.Errorf("ngorm: missing %s hook", model.HookCreateExec)
-	}
-	err = h.Exec(b, e)
+	err = b.MustExec(CreateHook, model.HookCreateExec, e)
 	if err != nil {
 		return err
 	}
-	h, ok = b.Create.Get(model.AfterCreate)
-	if !ok {
-		return fmt.Errorf("ngorm: missing %s hook", model.AfterCreate)
-	}
-	return h.Exec(b, e)
+	return b.MustExec(CreateHook, model.AfterCreate, e)
 }
 
 func create(b *Book, e *engine.Engine) error {
@@ -360,11 +318,7 @@ func AfterCreate(b *Book, e *engine.Engine) error {
 	if dialects.IsQL(e.Dialect) {
 		QLAfterCreate(b, e)
 	}
-	s, ok := b.Update.Get(model.HookSaveAfterAss)
-	if !ok {
-		return fmt.Errorf("missing hook %s", model.HookSaveAfterAss)
-	}
-	return s.Exec(b, e)
+	return b.MustExec(UpdateHook, model.HookSaveAfterAss, e)
 }
 
 //QLAfterCreate hook executed after a new record has been created. This is for
@@ -374,23 +328,16 @@ func QLAfterCreate(b *Book, e *engine.Engine) error {
 	ne.Scope.Set(model.IgnoreProtectedAttrs, true)
 	ne.Scope.Set(model.UpdateInterface, util.ToSearchableMap(e.Scope.Value))
 	ne.Scope.Value = e.Scope.Value
-	u, ok := b.Update.Get(model.HookUpdateSQL)
-	err := u.Exec(b, ne)
+
+	err := b.MustExec(UpdateHook, model.HookUpdateSQL, ne)
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return errors.New("missing update sql hook")
 	}
 	err = fixWhere(ne.Scope)
 	if err != nil {
 		return err
 	}
-	exec, ok := b.Update.Get(model.HookUpdateExec)
-	if !ok {
-		return errors.New("missing update exec hook")
-	}
-	return exec.Exec(b, ne)
+	return b.MustExec(UpdateHook, model.HookUpdateExec, ne)
 }
 
 func fixWhere(s *model.Scope) error {
@@ -438,46 +385,31 @@ func BeforeUpdate(b *Book, e *engine.Engine) error {
 	}
 
 	// set timestamps if any
-	h, ok := b.Update.Get(model.HookUpdateTimestamp)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.HookUpdateTimestamp)
-	}
-	err := h.Exec(b, e)
+	err := b.MustExec(UpdateHook, model.HookUpdateTimestamp, e)
 	if err != nil {
 		return err
 	}
 
 	// assign update attrs
-	h, ok = b.Update.Get(model.HookAssignUpdatingAttrs)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.HookAssignUpdatingAttrs)
-	}
-	err = h.Exec(b, e)
+	err = b.MustExec(UpdateHook, model.HookAssignUpdatingAttrs, e)
 	if err != nil {
 		return err
 	}
+
 	// save before associations
-	h, ok = b.Update.Get(model.HookSaveBeforeAss)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.HookSaveBeforeAss)
-	}
-	err = h.Exec(b, e)
+	err = b.MustExec(UpdateHook, model.HookSaveBeforeAss, e)
 	if err != nil {
 		return err
 	}
 
 	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
-		if bs, ok := b.Save.Get(model.HookBeforeSave); ok {
-			err := bs.Exec(b, e)
-			if err != nil {
-				return err
-			}
+		err = b.Exec(SaveHook, model.HookBeforeSave, e)
+		if err != nil {
+			return err
 		}
-		if bu, ok := b.Update.Get(model.HookBeforeUpdate); ok {
-			err := bu.Exec(b, e)
-			if err != nil {
-				return err
-			}
+		err = b.Exec(UpdateHook, model.HookBeforeUpdate, e)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -497,24 +429,16 @@ func AfterUpdate(b *Book, e *engine.Engine) error {
 	}
 
 	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
-		if au, ok := b.Update.Get(model.HookAfterUpdate); ok {
-			err := au.Exec(b, e)
-			if err != nil {
-				return err
-			}
+		err := b.Exec(UpdateHook, model.HookAfterUpdate, e)
+		if err != nil {
+			return err
 		}
-		if as, ok := b.Save.Get(model.HookAfterSave); ok {
-			err := as.Exec(b, e)
-			if err != nil {
-				return err
-			}
+		err = b.Exec(SaveHook, model.HookAfterSave, e)
+		if err != nil {
+			return err
 		}
 	}
-	h, ok := b.Update.Get(model.HookSaveAfterAss)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.HookSaveAfterAss)
-	}
-	return h.Exec(b, e)
+	return b.MustExec(UpdateHook, model.HookSaveAfterAss, e)
 }
 
 //UpdateTimestamp sets the value of UpdatedAt field.
@@ -555,21 +479,13 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 			// We have two hooks to use here, one model.HookCreateSQL which will
 			// build sql for creating the new record and model.HookCreateExec
 			// which will execute the generates SQL.
-			c, ok := b.Create.Get(model.HookCreateSQL)
-			if !ok {
-				return fmt.Errorf("missing %s hook", model.HookCreateSQL)
-			}
 			ne := e.Clone()
 			ne.Scope.Value = fieldValue
-			err = c.Exec(b, ne)
+			err = b.MustExec(CreateHook, model.HookCreateSQL, ne)
 			if err != nil {
 				return err
 			}
-			ce, ok := b.Create.Get(model.HookCreateExec)
-			if !ok {
-				return fmt.Errorf("missing %s hook", model.HookCreateExec)
-			}
-			err = ce.Exec(b, ne)
+			err = b.MustExec(CreateHook, model.HookCreateExec, ne)
 			if err != nil {
 				return err
 			}
@@ -644,19 +560,11 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 								return err
 							}
 						}
-						c, ok := b.Create.Get(model.HookCreateSQL)
-						if !ok {
-							return errors.New("missing create sql hook")
-						}
-						err = c.Exec(b, ne)
+						err = b.MustExec(CreateHook, model.HookCreateSQL, ne)
 						if err != nil {
 							return err
 						}
-						ce, ok := b.Create.Get(model.HookCreateExec)
-						if !ok {
-							return errors.New("missing create exec hook")
-						}
-						err = ce.Exec(b, ne)
+						err = b.MustExec(CreateHook, model.HookCreateExec, ne)
 						if err != nil {
 							return err
 						}
@@ -714,19 +622,11 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 							}
 						}
 					}
-					c, ok := b.Create.Get(model.HookCreateSQL)
-					if !ok {
-						return errors.New("missing create sql hook")
-					}
-					err = c.Exec(b, ne)
+					err = b.MustExec(CreateHook, model.HookCreateSQL, ne)
 					if err != nil {
 						return err
 					}
-					ce, ok := b.Create.Get(model.HookCreateExec)
-					if !ok {
-						return errors.New("missing create exec hook")
-					}
-					err = ce.Exec(b, ne)
+					err = b.MustExec(CreateHook, model.HookCreateExec, ne)
 					if err != nil {
 						return err
 					}
@@ -742,28 +642,21 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 
 //CreateSQL generates SQL for creating new record
 func CreateSQL(b *Book, e *engine.Engine) error {
-	if bc, ok := b.Create.Get(model.BeforeCreate); ok {
-		err := bc.Exec(b, e)
-		if err != nil {
-			return err
-		}
+	err := b.Exec(CreateHook, model.BeforeCreate, e)
+	if err != nil {
+		return err
 	}
-
 	if scope.ShouldSaveAssociation(e) {
-		if ba, ok := b.Create.Get(model.HookSaveBeforeAss); ok {
-			err := ba.Exec(b, e)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	if ts, ok := b.Create.Get(model.HookUpdateTimestamp); ok {
-		err := ts.Exec(b, e)
+		err = b.MustExec(CreateHook, model.HookSaveBeforeAss, e)
 		if err != nil {
 			return err
 		}
 	}
-	err := create(b, e)
+	err = b.Exec(CreateHook, model.HookUpdateTimestamp, e)
+	if err != nil {
+		return err
+	}
+	err = create(b, e)
 	if err != nil {
 		return err
 	}
@@ -787,13 +680,10 @@ func CreateSQL(b *Book, e *engine.Engine) error {
 //UpdateSQL builds query for updating records.
 func UpdateSQL(b *Book, e *engine.Engine) error {
 	var sqls []string
-	if up, ok := b.Update.Get(model.HookAssignUpdatingAttrs); ok {
-		err := up.Exec(b, e)
-		if err != nil {
-			return err
-		}
+	err := b.Exec(UpdateHook, model.HookAssignUpdatingAttrs, e)
+	if err != nil {
+		return err
 	}
-
 	if updateAttrs, ok := e.Scope.Get(model.UpdateAttrs); ok {
 		for column, value := range updateAttrs.(map[string]interface{}) {
 			sqls = append(sqls, fmt.Sprintf("%v = %v",
@@ -895,42 +785,25 @@ func UpdateExec(b *Book, e *engine.Engine) error {
 func Update(b *Book, e *engine.Engine) error {
 
 	// run before update hooks
-	h, ok := b.Update.Get(model.BeforeUpdate)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.BeforeUpdate)
-	}
-	err := h.Exec(b, e)
+	err := b.MustExec(UpdateHook, model.BeforeUpdate, e)
 	if err != nil {
 		return err
 	}
 
 	// generate update sql
-	h, ok = b.Update.Get(model.HookUpdateSQL)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.HookUpdateSQL)
-	}
-	err = h.Exec(b, e)
+	err = b.MustExec(UpdateHook, model.HookUpdateSQL, e)
 	if err != nil {
 		return err
 	}
 
 	// execute update sql
-	h, ok = b.Update.Get(model.HookUpdateExec)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.HookUpdateExec)
-	}
-	err = h.Exec(b, e)
+	err = b.MustExec(UpdateHook, model.HookUpdateExec, e)
 	if err != nil {
 		return err
 	}
 
 	// execute update sql
-	h, ok = b.Update.Get(model.AfterUpdate)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.AfterUpdate)
-	}
-
-	return h.Exec(b, e)
+	return b.MustExec(UpdateHook, model.AfterUpdate, e)
 }
 
 // DeleteSQL generatesSQL for deleting records.
@@ -978,40 +851,28 @@ func BeforeDelete(b *Book, e *engine.Engine) error {
 	if !scope.HasConditions(e, e.Scope.Value) {
 		return errors.New("Missing WHERE clause while deleting")
 	}
-	if bd, ok := b.Delete.Get(model.HookBeforeDelete); ok {
-		return bd.Exec(b, e)
-	}
-	return nil
+	return b.Exec(DeleteHook, model.HookBeforeDelete, e)
 }
 
 // AfterDelete is executed after deletion of records
 func AfterDelete(b *Book, e *engine.Engine) error {
-	if ad, ok := b.Delete.Get(model.HookAfterDelete); ok {
-		return ad.Exec(b, e)
-	}
-	return nil
+	return b.Exec(DeleteHook, model.HookAfterDelete, e)
 }
 
 // Delete deletes records. This makes sure to call BeforeDelete hook before
 // deleting anything and also calls AfterDelete before exiting.
 func Delete(b *Book, e *engine.Engine) error {
-	bd, ok := b.Delete.Get(model.BeforeDelete)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.BeforeDelete)
-	}
-	err := bd.Exec(b, e)
+	err := b.MustExec(DeleteHook, model.BeforeDelete, e)
 	if err != nil {
 		return err
 	}
-	sql, ok := b.Delete.Get(model.DeleteSQL)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.DeleteSQL)
-	}
-	err = sql.Exec(b, e)
+
+	err = b.MustExec(DeleteHook, model.DeleteSQL, e)
 	if err != nil {
 		return err
 	}
-	if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
+
+	if dialects.IsQL(e.Dialect) {
 		tx, err := e.SQLDB.Begin()
 		if err != nil {
 			return err
@@ -1041,12 +902,7 @@ func Delete(b *Book, e *engine.Engine) error {
 		}
 		e.RowsAffected = a
 	}
-
-	ad, ok := b.Delete.Get(model.AfterDelete)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.AfterDelete)
-	}
-	return ad.Exec(b, e)
+	return b.MustExec(DeleteHook, model.AfterDelete, e)
 }
 
 // Preload executes preload conditions.
@@ -1166,14 +1022,12 @@ func PreloadBelongsTo(b *Book, e *engine.Engine, field *model.Field, conditions 
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
 	pdb.Scope.Value = results
-	q, ok := b.Query.Get(model.Query)
-	if !ok {
-		return errors.New("missing query hook")
-	}
-	err := q.Exec(b, pdb)
+
+	err := b.MustExec(QueryHook, model.Query, pdb)
 	if err != nil {
 		return err
 	}
+
 	// assign find results
 	rVal := reflect.ValueOf(results)
 	if rVal.Kind() == reflect.Ptr {
@@ -1482,11 +1336,8 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
 	pdb.Scope.Value = results
-	q, ok := b.Query.Get(model.Query)
-	if !ok {
-		return fmt.Errorf("missing %s hook", model.Query)
-	}
-	err := q.Exec(b, pdb)
+
+	err := b.MustExec(QueryHook, model.Query, pdb)
 	if err != nil {
 		return err
 	}
@@ -1556,11 +1407,8 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
 	pdb.Scope.Value = results
-	q, ok := b.Query.Get(model.Query)
-	if !ok {
-		return errors.New("missing query hook")
-	}
-	err := q.Exec(b, pdb)
+
+	err := b.MustExec(QueryHook, model.Query, pdb)
 	if err != nil {
 		return err
 	}
