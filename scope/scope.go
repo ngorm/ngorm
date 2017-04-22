@@ -34,9 +34,10 @@ import (
 //
 func Quote(e *engine.Engine, str string) string {
 	if strings.Index(str, ".") != -1 {
-		newStrs := []string{}
-		for _, s := range strings.Split(str, ".") {
-			newStrs = append(newStrs, e.Dialect.Quote(s))
+		p := strings.Split(str, ".")
+		newStrs := make([]string, len(p))
+		for i := 0; i < len(p); i++ {
+			newStrs[i] = e.Dialect.Quote(p[i])
 		}
 		return strings.Join(newStrs, ".")
 	}
