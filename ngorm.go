@@ -89,7 +89,7 @@ type DB struct {
 }
 
 func (db *DB) clone() *DB {
-	n := &DB{
+	return &DB{
 		db:            db.db,
 		dialect:       db.dialect,
 		ctx:           db.ctx,
@@ -98,10 +98,8 @@ func (db *DB) clone() *DB {
 		structMap:     db.structMap,
 		hooks:         db.hooks,
 		now:           time.Now,
+		e:             db.NewEngine(),
 	}
-	ne := n.NewEngine()
-	n.e = ne
-	return n
 }
 
 //Open opens a database connection and returns *DB instance., dialect is the
@@ -152,16 +150,14 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 
 // NewEngine returns an initialized engine ready to kick some ass.
 func (db *DB) NewEngine() *engine.Engine {
-	return &engine.Engine{
-		Search:        &model.Search{},
-		Scope:         model.NewScope(),
-		StructMap:     db.structMap,
-		SingularTable: db.singularTable,
-		Ctx:           db.ctx,
-		Dialect:       db.dialect,
-		SQLDB:         db.db,
-		Now:           db.now,
-	}
+	e := engine.Get()
+	e.StructMap = db.structMap
+	e.SingularTable = db.singularTable
+	e.Ctx = db.ctx
+	e.Dialect = db.dialect
+	e.SQLDB = db.db
+	e.Now = db.now
+	return e
 }
 
 //CreateTable creates new database tables that maps to the models.
@@ -208,6 +204,7 @@ func (db *DB) CreateTableSQL(models ...interface{}) (*model.Expr, error) {
 	}
 	for _, m := range models {
 		e := db.NewEngine()
+		defer engine.Put(e)
 		for k, v := range scopeVars {
 			e.Scope.Set(k, v)
 		}
@@ -242,6 +239,7 @@ func (db *DB) DropTableSQL(models ...interface{}) (*model.Expr, error) {
 	}
 	for _, m := range models {
 		e := db.NewEngine()
+		defer engine.Put(e)
 		if n, ok := m.(string); ok {
 			e.Search.TableName = n
 		}
@@ -287,13 +285,18 @@ func (db *DB) Automigrate(models ...interface{}) (sql.Result, error) {
 
 //AutomigrateSQL generates sql query for running migrations on models.
 func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
-	var buf bytes.Buffer
+	// var buf bytes.Buffer
+	buf := util.B.Get()
+	defer func() {
+		util.B.Put(buf)
+	}()
 	if isQL(db) {
-		_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
+		buf.WriteString("BEGIN TRANSACTION;\n")
 	}
 	keys := make(map[string]bool)
 	for _, m := range models {
 		e := db.NewEngine()
+		defer engine.Put(e)
 
 		// Firste we generate the SQL
 		err := scope.Automigrate(e, m)
@@ -304,7 +307,7 @@ func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 			i := strings.Index(e.Scope.SQL, "(")
 			k := e.Scope.SQL[:i]
 			if _, ok := keys[k]; !ok {
-				_, _ = buf.WriteString("\t" + e.Scope.SQL + ";\n")
+				buf.WriteString("\t" + e.Scope.SQL + ";\n")
 				keys[k] = true
 			}
 		}
@@ -313,14 +316,14 @@ func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 				i := strings.Index(expr.Q, "(")
 				k := expr.Q[:i]
 				if _, ok := keys[k]; !ok {
-					_, _ = buf.WriteString("\t" + expr.Q + ";\n")
+					buf.WriteString("\t" + expr.Q + ";\n")
 					keys[k] = true
 				}
 			}
 		}
 	}
 	if isQL(db) {
-		_, _ = buf.WriteString("COMMIT;")
+		buf.WriteString("COMMIT;")
 	}
 	return &model.Expr{Q: buf.String()}, nil
 }
@@ -338,6 +341,7 @@ func (db *DB) Close() error {
 // model.HookCreateExec hook.
 func (db *DB) Create(value interface{}) error {
 	e := db.NewEngine()
+	defer engine.Put(e)
 	e.Scope.Value = value
 	return db.Hooks().MustExec(hooks.CreateHook, model.Create, e)
 }
@@ -382,6 +386,7 @@ func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
 	} else {
 		e = db.NewEngine()
 	}
+	defer engine.Put(e)
 	e.Scope.Value = value
 	if c, ok := db.hooks.Create.Get(model.HookCreateSQL); ok {
 		err := c.Exec(db.hooks, e)
@@ -407,6 +412,7 @@ func (db *DB) SQLCommon() model.SQLCommon {
 //SaveSQL generates SQL query for saving/updating database record for value.
 func (db *DB) SaveSQL(value interface{}) (*model.Expr, error) {
 	e := db.NewEngine()
+	defer engine.Put(e)
 	e.Scope.Value = value
 	err := db.Hooks().MustExec(hooks.UpdateHook, model.HookUpdateSQL, e)
 	if err != nil {
@@ -418,6 +424,7 @@ func (db *DB) SaveSQL(value interface{}) (*model.Expr, error) {
 // Save update value in database, if the value doesn't have primary key, will insert it
 func (db *DB) Save(value interface{}) error {
 	e := db.NewEngine()
+	defer engine.Put(e)
 	e.Scope.Value = value
 	field, _ := scope.PrimaryField(e, value)
 	if field == nil || field.IsBlank {
@@ -446,6 +453,7 @@ func (db *DB) Updates(values interface{}, ignoreProtectedAttrs ...bool) error {
 	if db.e == nil || db.e.Scope.Value == nil {
 		return errmsg.ErrMissingModel
 	}
+	defer db.recycle()
 	var ignore bool
 	if len(ignoreProtectedAttrs) > 0 {
 		ignore = ignoreProtectedAttrs[0]
@@ -465,6 +473,7 @@ func (db *DB) UpdatesSQL(values interface{}, ignoreProtectedAttrs ...bool) (*mod
 	if db.e == nil || db.e.Scope.Value == nil {
 		return nil, errmsg.ErrMissingModel
 	}
+	defer db.recycle()
 	var ignore bool
 	if len(ignoreProtectedAttrs) > 0 {
 		ignore = ignoreProtectedAttrs[0]
@@ -515,6 +524,7 @@ func (db *DB) HasTable(value interface{}) bool {
 	} else {
 		e := db.NewEngine()
 		name = scope.TableName(e, value)
+		engine.Put(e)
 	}
 	return db.Dialect().HasTable(name)
 }
@@ -522,6 +532,7 @@ func (db *DB) HasTable(value interface{}) bool {
 //First  fetches the first record and order by primary key.
 func (db *DB) First(out interface{}, where ...interface{}) error {
 	db.Set(model.OrderByPK, "ASC")
+	defer db.recycle()
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
 	db.e.Scope.Value = out
@@ -584,6 +595,7 @@ func (db *DB) FindSQL(out interface{}, where ...interface{}) (*model.Expr, error
 	if db.e == nil {
 		db.e = db.NewEngine()
 	}
+	defer db.recycle()
 	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
 	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
@@ -598,6 +610,7 @@ func (db *DB) Find(out interface{}, where ...interface{}) error {
 	if db.e == nil {
 		db.e = db.NewEngine()
 	}
+	defer db.recycle()
 	search.Inline(db.e, where...)
 	db.e.Scope.Value = out
 	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
@@ -724,8 +737,9 @@ func (db *DB) FirstOrInit(out interface{}, where ...interface{}) error {
 	if db.e == nil {
 		db.e = db.NewEngine()
 	}
+	defer db.recycle()
 	db.e.Scope.Value = out
-	err := db.First(out, where...)
+	err := db.Begin().First(out, where...)
 	if err != nil {
 		if err != errmsg.ErrRecordNotFound {
 			return err
@@ -744,6 +758,11 @@ func (db *DB) Begin() *DB {
 	return db.clone()
 }
 
+func (db *DB) recycle() {
+	engine.Put(db.e)
+	db.e = nil
+}
+
 // Table specify the table you would like to run db operations
 func (db *DB) Table(name string) *DB {
 	ndb := db.Begin()
@@ -759,6 +778,7 @@ func (db *DB) Pluck(column string, value interface{}) error {
 	if dest.Kind() == reflect.Ptr {
 		dest = dest.Elem()
 	}
+	defer db.recycle()
 	search.Select(db.e, column)
 	if dest.Kind() != reflect.Slice {
 		return fmt.Errorf("results should be a slice, not %s", dest.Kind())
@@ -789,10 +809,14 @@ func (db *DB) Count(value interface{}) error {
 	if !ok || regexes.CountingQuery.MatchString(fmt.Sprint(query)) {
 		search.Select(db.e, "count(*)")
 	}
+	defer db.recycle()
 	db.e.Search.IgnoreOrderQuery = true
 	err := builder.PrepareQuery(db.e, db.e.Scope.Value)
 	if err != nil {
 		return err
+	}
+	if isQL(db) {
+		// pretty.Println(db.e.Scope.SQL, db.e.Scope.SQLVars)
 	}
 	return db.SQLCommon().QueryRow(db.e.Scope.SQL, db.e.Scope.SQLVars...).Scan(value)
 }
@@ -838,6 +862,7 @@ func (db *DB) DropTableIfExists(values ...interface{}) error {
 //then will including the primary key as condition
 func (db *DB) Delete(value interface{}, where ...interface{}) error {
 	e := db.NewEngine()
+	defer engine.Put(e)
 	e.Scope.Value = value
 	search.Inline(e, where...)
 	return db.Hooks().MustExec(hooks.DeleteHook, model.Delete, e)
@@ -847,6 +872,7 @@ func (db *DB) Delete(value interface{}, where ...interface{}) error {
 //then will including the primary key as condition
 func (db *DB) DeleteSQL(value interface{}, where ...interface{}) (*model.Expr, error) {
 	e := db.NewEngine()
+	defer engine.Put(e)
 	e.Scope.Value = value
 	search.Inline(e, where...)
 	err := db.Hooks().MustExec(hooks.DeleteHook, model.DeleteSQL, e)
@@ -866,6 +892,7 @@ func (db *DB) UpdateColumns(values interface{}) error {
 	if db.e == nil || db.e.Scope.Value == nil {
 		return errmsg.ErrMissingModel
 	}
+	defer db.recycle()
 	db.e.Scope.Set(model.UpdateColumn, true)
 	db.e.Scope.Set(model.SaveAssociations, false)
 	db.e.Scope.Set(model.UpdateInterface, values)
@@ -892,6 +919,7 @@ func (db *DB) RemoveIndex(indexName string) error {
 	if db.e == nil || db.e.Scope.Value == nil {
 		return errmsg.ErrMissingModel
 	}
+	defer db.recycle()
 	return db.Dialect().RemoveIndex(
 		scope.TableName(db.e, db.e.Scope.Value), indexName)
 }
@@ -901,6 +929,7 @@ func (db *DB) DropColumn(column string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
 		return nil, errmsg.ErrMissingModel
 	}
+	defer db.recycle()
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v DROP COLUMN %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column))
 	if isQL(db) {
@@ -916,6 +945,7 @@ func (db *DB) ModifyColumn(column string, typ string) (sql.Result, error) {
 	if db.e == nil || db.e.Scope.Value == nil {
 		return nil, errmsg.ErrMissingModel
 	}
+	defer db.recycle()
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v MODIFY %v %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column), typ)
 	return db.ExecTx(
@@ -939,8 +969,9 @@ func (db *DB) FirstOrCreate(out interface{}, where ...interface{}) error {
 	if db.e == nil {
 		db.e = db.NewEngine()
 	}
+	defer db.recycle()
 	db.e.Scope.Value = out
-	err := db.First(out, where...)
+	err := db.Begin().First(out, where...)
 	if err != nil {
 		if err != errmsg.ErrRecordNotFound {
 			return err
@@ -978,6 +1009,7 @@ func (db *DB) AddForeignKeySQL(field string, dest string, onDelete string, onUpd
 	if db.e == nil || db.e.Scope.Value == nil {
 		return "", errmsg.ErrMissingModel
 	}
+	defer db.recycle()
 	if isQL(db) {
 		return "", errors.New("ql does not support foreign key")
 	}
@@ -1028,7 +1060,6 @@ func (db *DB) Association(column string) (*Association, error) {
 func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 	sdb := db.Begin()
 	sdb.e.Scope.Value = source
-
 	ndb := db.Begin()
 	ndb.e.Scope.Value = value
 	sdb.e.Scope.Set(model.AssociationSource, source)

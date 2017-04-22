@@ -201,17 +201,14 @@ func NewStructsMap() *SafeStructsMap {
 
 //Scope is the scope level of SQL building.
 type Scope struct {
-	Value           interface{}
-	SQL             string
-	SQLVars         []interface{}
-	InstanceID      string
-	PrimaryKeyField *Field
-	SkipLeft        bool
-	SelectAttrs     *[]string
-	MultiExpr       bool
-	Exprs           []*Expr
-	mu              sync.RWMutex
-	data            map[string]interface{}
+	Value       interface{}
+	SQL         string
+	SQLVars     []interface{}
+	SelectAttrs *[]string
+	MultiExpr   bool
+	Exprs       []*Expr
+	mu          sync.RWMutex
+	data        map[string]interface{}
 }
 
 //NewScope return an empty scope. The scope is initialized to allow Set, and Get

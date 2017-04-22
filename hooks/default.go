@@ -325,6 +325,7 @@ func AfterCreate(b *Book, e *engine.Engine) error {
 //ql dialect use only.
 func QLAfterCreate(b *Book, e *engine.Engine) error {
 	ne := e.Clone()
+	defer engine.Put(ne)
 	ne.Scope.Set(model.IgnoreProtectedAttrs, true)
 	ne.Scope.Set(model.UpdateInterface, util.ToSearchableMap(e.Scope.Value))
 	ne.Scope.Value = e.Scope.Value
@@ -480,6 +481,7 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 			// build sql for creating the new record and model.HookCreateExec
 			// which will execute the generates SQL.
 			ne := e.Clone()
+			defer engine.Put(ne)
 			ne.Scope.Value = fieldValue
 			err = b.MustExec(CreateHook, model.HookCreateSQL, ne)
 			if err != nil {
@@ -532,6 +534,7 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 				case reflect.Slice:
 					for i := 0; i < value.Len(); i++ {
 						ne := e.Clone()
+						defer engine.Put(ne)
 						vi := value.Index(i)
 						var elem interface{}
 						if vi.Kind() == reflect.Ptr {
@@ -596,6 +599,7 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 				default:
 					fieldValue := field.Field.Addr().Interface()
 					ne := e.Clone()
+					defer engine.Put(ne)
 					ne.Scope.Value = fieldValue
 					if rel.PolymorphicType != "" {
 						err = scope.SetColumn(ne, rel.PolymorphicType, rel.PolymorphicValue)
@@ -1072,6 +1076,7 @@ func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions
 
 	// generate query with join table
 	newScope := e.Clone()
+	defer engine.Put(newScope)
 	newScope.Scope.Value = reflect.New(fieldType).Interface()
 	search.Table(newScope, scope.TableName(newScope, newScope.Scope.Value))
 	search.Select(newScope, "*")
@@ -1178,6 +1183,7 @@ func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions
 // JoinWith does sql join
 func JoinWith(e *engine.Engine, s, handler *model.JoinTableHandler, source interface{}) (*engine.Engine, error) {
 	ne := e.Clone()
+	defer engine.Put(ne)
 	ne.Scope.Value = source
 	tableName := handler.TableName
 	quotedTableName := scope.Quote(ne, tableName)

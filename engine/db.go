@@ -41,15 +41,25 @@ func (e *Engine) AddError(err error) error {
 
 // Clone returns a new copy of engine
 func (e *Engine) Clone() *Engine {
-	return &Engine{
-		Scope:         model.NewScope(),
-		Search:        &model.Search{},
-		SingularTable: e.SingularTable,
-		Ctx:           e.Ctx,
-		Dialect:       e.Dialect,
-		StructMap:     e.StructMap,
-		SQLDB:         e.SQLDB,
-	}
+	en := Get()
+	en.SingularTable = e.SingularTable
+	en.Ctx = e.Ctx
+	en.Dialect = e.Dialect
+	en.StructMap = e.StructMap
+	en.SQLDB = e.SQLDB
+	return en
+}
+
+func (e *Engine) reset() {
+	e.RowsAffected = 0
+	e.SingularTable = false
+	e.Ctx = nil
+	e.Dialect = nil
+	e.Search = &model.Search{}
+	e.Scope = model.NewScope()
+	e.StructMap = nil
+	e.SQLDB = nil
+	e.Now = nil
 }
 
 //DBTabler is an interface for getting database table name from the *Engine

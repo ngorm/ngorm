@@ -249,7 +249,6 @@ func WhereSQL(e *engine.Engine, modelValue interface{}) (sql string, err error) 
 
 	buf := util.B.Get()
 	defer func() {
-		buf.Reset()
 		util.B.Put(buf)
 	}()
 	if len(primaryConditions) > 0 {
@@ -428,7 +427,6 @@ func OrderSQL(e *engine.Engine, modelValue interface{}) string {
 	}
 	buf := util.B.Get()
 	defer func() {
-		buf.Reset()
 		util.B.Put(buf)
 	}()
 	var orders []string
@@ -553,7 +551,6 @@ func AddIndex(e *engine.Engine, unique bool, indexName string, column ...string)
 	}
 	buf := util.B.Get()
 	defer func() {
-		buf.Reset()
 		util.B.Put(buf)
 	}()
 	sqlCreate := "CREATE INDEX"

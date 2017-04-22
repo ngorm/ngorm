@@ -3,7 +3,6 @@
 package util
 
 import (
-	"bytes"
 	"database/sql/driver"
 	"fmt"
 	"reflect"
@@ -67,41 +66,42 @@ func ToDBName(name string) string {
 	if v := smap.Get(name); v != "" {
 		return v
 	}
-
 	if name == "" {
 		return ""
 	}
-
 	var (
-		value                        = commonInitialismsReplacer.Replace(name)
-		buf                          = bytes.NewBufferString("")
 		lastCase, currCase, nextCase strCase
 	)
+	value := commonInitialismsReplacer.Replace(name)
+	buf := B.Get()
+	defer func() {
+		B.Put(buf)
+	}()
 
 	for i, v := range value[:len(value)-1] {
 		nextCase = strCase(value[i+1] >= 'A' && value[i+1] <= 'Z')
 		if i > 0 {
 			if currCase == upper {
 				if lastCase == upper && nextCase == upper {
-					_, _ = buf.WriteRune(v)
+					buf.WriteRune(v)
 				} else {
 					if value[i-1] != '_' && value[i+1] != '_' {
-						_, _ = buf.WriteRune('_')
+						buf.WriteRune('_')
 					}
-					_, _ = buf.WriteRune(v)
+					buf.WriteRune(v)
 				}
 			} else {
-				_, _ = buf.WriteRune(v)
+				buf.WriteRune(v)
 			}
 		} else {
 			currCase = upper
-			_, _ = buf.WriteRune(v)
+			buf.WriteRune(v)
 		}
 		lastCase = currCase
 		currCase = nextCase
 	}
 
-	_ = buf.WriteByte(value[len(value)-1])
+	buf.WriteByte(value[len(value)-1])
 
 	s := strings.ToLower(buf.String())
 	smap.Set(name, s)
@@ -116,18 +116,17 @@ func indirect(reflectValue reflect.Value) reflect.Value {
 }
 
 func ToQueryMarks(primaryValues [][]interface{}) string {
-	var results []string
-
-	for _, primaryValue := range primaryValues {
-		var marks []string
-		for range primaryValue {
-			marks = append(marks, "?")
+	// var results []string
+	results := make([]string, len(primaryValues))
+	for i := 0; i < len(primaryValues); i++ {
+		marks := make([]string, len(primaryValues[i]))
+		for j := 0; j < len(primaryValues[i]); j++ {
+			marks[j] = "?"
 		}
-
 		if len(marks) > 1 {
-			results = append(results, fmt.Sprintf("(%v)", strings.Join(marks, ",")))
+			results[i] = fmt.Sprintf("(%v)", strings.Join(marks, ","))
 		} else {
-			results = append(results, strings.Join(marks, ""))
+			results[i] = strings.Join(marks, "")
 		}
 	}
 	return strings.Join(results, ",")
@@ -144,9 +143,9 @@ func EqualAsString(a interface{}, b interface{}) bool {
 
 func ToString(str interface{}) string {
 	if values, ok := str.([]interface{}); ok {
-		var results []string
-		for _, value := range values {
-			results = append(results, ToString(value))
+		results := make([]string, len(values))
+		for i := 0; i < len(values); i++ {
+			results[i] = ToString(values[i])
 		}
 		return strings.Join(results, "_")
 	} else if bytes, ok := str.([]byte); ok {
@@ -227,7 +226,6 @@ func ToSearchableMap(attrs ...interface{}) (result interface{}) {
 func WrapTX(tx string) string {
 	buf := B.Get()
 	defer func() {
-		buf.Reset()
 		B.Put(buf)
 	}()
 	buf.WriteString("BEGIN TRANSACTION;\n")
@@ -240,8 +238,9 @@ func WrapTX(tx string) string {
 
 // ColumnAsArray returns an array of column values
 func ColumnAsArray(columns []string, values ...interface{}) (results [][]interface{}) {
+	var indirectValue reflect.Value
 	for _, value := range values {
-		indirectValue := reflect.ValueOf(value)
+		indirectValue = reflect.ValueOf(value)
 		if indirectValue.Kind() == reflect.Ptr {
 			indirectValue = indirectValue.Elem()
 		}
@@ -283,7 +282,6 @@ func ColumnAsArray(columns []string, values ...interface{}) (results [][]interfa
 			}
 		}
 	}
-
 	return
 }
 

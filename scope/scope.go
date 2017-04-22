@@ -88,7 +88,6 @@ func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
 // The value can implement engine.Tabler interface to help easily identify the
 // table name for the model.
 func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) {
-	var m model.Struct
 	// Scope value can't be nil
 	if value == nil {
 		return nil, errors.New("nil value")
@@ -108,6 +107,7 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 	if v := e.StructMap.Get(refType); v != nil {
 		return v, nil
 	}
+	var m model.Struct
 
 	m.ModelType = refType
 
@@ -989,14 +989,15 @@ func CreateJoinTable(e *engine.Engine, field *model.StructField) error {
 			tableOpts = opts.(string)
 		}
 
-		sql := fmt.Sprintf("CREATE TABLE %v (%v %v) %s",
-			Quote(e, j.TableName),
-			strings.Join(sqlTypes, ","),
-			primaryKeyStr, tableOpts)
 		if !e.Scope.MultiExpr {
 			e.Scope.MultiExpr = true
 		}
-		e.Scope.Exprs = append(e.Scope.Exprs, &model.Expr{Q: sql})
+		e.Scope.Exprs = append(e.Scope.Exprs,
+			&model.Expr{
+				Q: fmt.Sprintf("CREATE TABLE %v (%v %v) %s",
+					Quote(e, j.TableName),
+					strings.Join(sqlTypes, ","),
+					primaryKeyStr, tableOpts)})
 	}
 	return nil
 }
@@ -1124,11 +1125,12 @@ func Automigrate(e *engine.Engine, value interface{}) error {
 				if !e.Scope.MultiExpr {
 					e.Scope.MultiExpr = true
 				}
-				expr := &model.Expr{
-					Q: fmt.Sprintf("ALTER TABLE %v ADD %v %v;", quotedTableName,
-						Quote(e, field.DBName), sqlTag),
-				}
-				e.Scope.Exprs = append(e.Scope.Exprs, expr)
+				e.Scope.Exprs = append(e.Scope.Exprs,
+					&model.Expr{
+						Q: fmt.Sprintf("ALTER TABLE %v ADD %v %v;", quotedTableName,
+							Quote(e, field.DBName), sqlTag),
+					},
+				)
 			}
 		}
 		err = CreateJoinTable(e, field)
