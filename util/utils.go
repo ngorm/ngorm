@@ -225,12 +225,17 @@ func ToSearchableMap(attrs ...interface{}) (result interface{}) {
 
 // WrapTX returnstx intranstaction block
 func WrapTX(tx string) string {
-	t := `
-BEGIN TRANSACTION;
-	%s ;
-COMMIT;
-`
-	return fmt.Sprintf(t, tx)
+	buf := B.Get()
+	defer func() {
+		buf.Reset()
+		B.Put(buf)
+	}()
+	buf.WriteString("BEGIN TRANSACTION;\n")
+	buf.WriteString("\t")
+	buf.WriteString(tx)
+	buf.WriteString(";\n")
+	buf.WriteString("COMMIT;")
+	return buf.String()
 }
 
 // ColumnAsArray returns an array of column values

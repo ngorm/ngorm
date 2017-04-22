@@ -92,7 +92,7 @@ COMMIT;`
 	o[AddIndexSQL] = s
 	s = `
 BEGIN TRANSACTION;
-	DELETE FROM foos  WHERE id = $1 ;
+	DELETE FROM foos  WHERE id = $1;
 COMMIT;
 `
 	o[DeleteSQL] = s
