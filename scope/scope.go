@@ -47,7 +47,6 @@ func Quote(e *engine.Engine, str string) string {
 //something. This is only done when e.Scope.Fields is nil, for the case of non
 //nil value then *e.Scope.Fields is returned without computing anything.
 func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
-	var fields []*model.Field
 	i := reflect.ValueOf(value)
 	if i.Kind() == reflect.Ptr {
 		i = i.Elem()
@@ -57,20 +56,26 @@ func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, structField := range m.StructFields {
+
+	l := len(m.StructFields)
+	fields := make([]*model.Field, l)
+	l = 0
+	for j := 0; j < len(m.StructFields); j++ {
 		if isStruct {
 			fieldValue := i
-			for _, name := range structField.Names {
+			for _, name := range m.StructFields[j].Names {
 				fieldValue = reflect.Indirect(fieldValue).FieldByName(name)
 			}
-			fields = append(fields, &model.Field{
-				StructField: structField,
+			fields[l] = &model.Field{
+				StructField: m.StructFields[j],
 				Field:       fieldValue,
-				IsBlank:     util.IsBlank(fieldValue)})
+				IsBlank:     util.IsBlank(fieldValue)}
+			l++
 		} else {
-			fields = append(fields, &model.Field{
-				StructField: structField,
-				IsBlank:     true})
+			fields[l] = &model.Field{
+				StructField: m.StructFields[j],
+				IsBlank:     true}
+			l++
 		}
 	}
 	return fields, nil
