@@ -483,16 +483,9 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 			ne := e.Clone()
 			defer engine.Put(ne)
 			ne.Scope.Value = fieldValue
-			err = b.MustExec(CreateHook, model.HookCreateSQL, ne)
+			err = b.MustExec(CreateHook, model.Create, ne)
 			if err != nil {
 				return err
-			}
-			err = b.MustExec(CreateHook, model.HookCreateExec, ne)
-			if err != nil {
-				return err
-			}
-			if dialects.IsQL(e.Dialect) {
-				QLAfterCreate(b, ne)
 			}
 			if len(relationship.ForeignFieldNames) != 0 {
 				// set value's foreign key
