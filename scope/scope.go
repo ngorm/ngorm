@@ -604,14 +604,23 @@ func FieldByName(e *engine.Engine, value interface{}, name string) (*model.Field
 
 //PrimaryFields returns fields that have PRIMARY_KEY tag from the struct value.
 func PrimaryFields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
-	var fields []*model.Field
 	fds, err := Fields(e, value)
 	if err != nil {
 		return nil, err
 	}
-	for _, field := range fds {
-		if field.IsPrimaryKey {
-			fields = append(fields, field)
+	l := 0
+	i := 0
+	for i = 0; i < len(fds); i++ {
+		if fds[i].IsPrimaryKey {
+			l++
+		}
+	}
+	fields := make([]*model.Field, l)
+	l = 0
+	for i = 0; i < len(fds); i++ {
+		if fds[i].IsPrimaryKey {
+			fields[l] = fds[i]
+			l++
 		}
 	}
 	return fields, nil
