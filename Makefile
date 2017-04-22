@@ -18,5 +18,5 @@ cpu: clean
 
 mem: clean
 	go test -run @ -bench . -memprofile mem.out -memprofilerate 1 -timeout 24h
-	go tool pprof -lines  -alloc_space *.test mem.out
+	go tool pprof -lines  -alloc_objects *.test mem.out
 
