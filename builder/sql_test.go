@@ -52,9 +52,13 @@ func TestPrepareQuerySQL(t *testing.T) {
 	var user fixture.User
 	s, err := PrepareQuerySQL(e, &user)
 	if err != nil {
-		//t.Error(err)
+		t.Error(err)
 	}
-	fmt.Println(s)
+	exp := "SELECT * FROM users  WHERE (name=$1) LIMIT 1"
+	s = strings.TrimSpace(s)
+	if exp != s {
+		t.Errorf("expected %s got %s", exp, s)
+	}
 }
 
 func TestWhere(t *testing.T) {

@@ -121,10 +121,9 @@ func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interfa
 
 		var foreignDBNames []string
 		var foreignFieldNames []string
-
 		for _, foreignKey := range handler.Source.ForeignKeys {
 			foreignDBNames = append(foreignDBNames, foreignKey.DBName)
-			if field, ok := FieldByName(ne, source, foreignKey.AssociationDBName); ok != nil {
+			if field, ok := FieldByName(ne, source, foreignKey.AssociationDBName); ok == nil {
 				foreignFieldNames = append(foreignFieldNames, field.Name)
 			}
 		}

@@ -103,6 +103,7 @@ func (a *Association) Count() (int, error) {
 		if err != nil {
 			return 0, err
 		}
+		query.e.Scope.Value = fieldValue
 	} else if rel.Kind == "has_many" || rel.Kind == "has_one" {
 		primaryKeys := util.ColumnAsArray(rel.AssociationForeignFieldNames, a.db.e.Scope.Value)
 		query = query.Where(

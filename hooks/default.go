@@ -539,7 +539,6 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 						} else {
 							elem = vi.Addr().Interface()
 						}
-						// elem := value.Index(i).Addr().Interface()
 						ne.Scope.Value = elem
 						if rel.JoinTableHandler == nil && len(rel.ForeignFieldNames) != 0 {
 							for idx, fieldName := range rel.ForeignFieldNames {
@@ -560,16 +559,9 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 								return err
 							}
 						}
-						err = b.MustExec(CreateHook, model.HookCreateSQL, ne)
+						err = b.MustExec(CreateHook, model.Create, ne)
 						if err != nil {
 							return err
-						}
-						err = b.MustExec(CreateHook, model.HookCreateExec, ne)
-						if err != nil {
-							return err
-						}
-						if dialects.IsQL(e.Dialect) {
-							QLAfterCreate(b, ne)
 						}
 						if h := rel.JoinTableHandler; h != nil {
 							ne.Scope.SQL = ""
@@ -579,7 +571,6 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 								return err
 							}
 							if dialects.IsQL(e.Dialect) {
-								//TODO: ql
 								expr.Q = util.WrapTX(expr.Q)
 								tx, err := ne.SQLDB.Begin()
 								if err != nil {
@@ -590,11 +581,15 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 									tx.Rollback()
 									return err
 								}
-								return tx.Commit()
-								// return nil
+								if err = tx.Commit(); err != nil {
+									return err
+								}
+							} else {
+								_, err = ne.SQLDB.Exec(expr.Q, expr.Args...)
+								if err != nil {
+									return err
+								}
 							}
-							_, err = ne.SQLDB.Exec(expr.Q, expr.Args...)
-							return err
 						}
 
 					}
@@ -622,16 +617,9 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 							}
 						}
 					}
-					err = b.MustExec(CreateHook, model.HookCreateSQL, ne)
+					err = b.MustExec(CreateHook, model.Create, ne)
 					if err != nil {
 						return err
-					}
-					err = b.MustExec(CreateHook, model.HookCreateExec, ne)
-					if err != nil {
-						return err
-					}
-					if dialects.IsQL(e.Dialect) {
-						QLAfterCreate(b, ne)
 					}
 				}
 			}
