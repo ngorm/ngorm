@@ -99,10 +99,18 @@ func (a *Association) Count() (int, error) {
 		query      = a.db.Begin().Model(fieldValue)
 	)
 	if rel.Kind == "many_to_many" {
-		err := scope.JoinWith(rel.JoinTableHandler, query.e, a.db.e.Scope.Value)
-		if err != nil {
-			return 0, err
+		if isQL(a.db) {
+			err := scope.JoinWithQL(rel.JoinTableHandler, query.e, a.db.e.Scope.Value)
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			err := scope.JoinWith(rel.JoinTableHandler, query.e, a.db.e.Scope.Value)
+			if err != nil {
+				return 0, err
+			}
 		}
+
 		query.e.Scope.Value = fieldValue
 	} else if rel.Kind == "has_many" || rel.Kind == "has_one" {
 		primaryKeys := util.ColumnAsArray(rel.AssociationForeignFieldNames, a.db.e.Scope.Value)

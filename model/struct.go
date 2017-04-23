@@ -275,6 +275,7 @@ type Search struct {
 	Limit            interface{}
 	Group            string
 	TableName        string
+	TableNames       []string
 	Raw              bool
 	Unscoped         bool
 	IgnoreOrderQuery bool

@@ -107,6 +107,7 @@ func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interfa
 	if err != nil {
 		return err
 	}
+
 	if handler.Source.ModelType == m.ModelType {
 		d := reflect.New(handler.Destination.ModelType).Interface()
 		destinationTableName := QuotedTableName(ne, d)
@@ -148,6 +149,54 @@ func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interfa
 				quotedTableName,
 				strings.Join(joinConditions, " AND ")))
 		search.Where(ne, condString, util.ToQueryValues(foreignFieldValues)...)
+		return nil
+	}
+	return errors.New("wrong source type for join table handler")
+}
+
+// JoinWithQL query with `Join` conditions
+func JoinWithQL(handler *model.JoinTableHandler, ne *engine.Engine, source interface{}) error {
+	ne.Scope.Value = source
+	tableName := handler.TableName
+	quotedTableName := Quote(ne, tableName)
+	var joinConditions []string
+	m, err := GetModelStruct(ne, source)
+	if err != nil {
+		return err
+	}
+	if handler.Source.ModelType == m.ModelType {
+		ne.Search.TableNames = append(ne.Search.TableNames, handler.TableName)
+		d := reflect.New(handler.Destination.ModelType).Interface()
+		destinationTableName := QuotedTableName(ne, d)
+		for _, foreignKey := range handler.Destination.ForeignKeys {
+			joinConditions = append(joinConditions, fmt.Sprintf("%v.%v = %v.%v",
+				quotedTableName,
+				Quote(ne, foreignKey.DBName),
+				destinationTableName,
+				Quote(ne, foreignKey.AssociationDBName)))
+		}
+
+		var foreignDBNames []string
+		var foreignFieldNames []string
+		for _, foreignKey := range handler.Source.ForeignKeys {
+			foreignDBNames = append(foreignDBNames, foreignKey.DBName)
+			if field, ok := FieldByName(ne, source, foreignKey.AssociationDBName); ok == nil {
+				foreignFieldNames = append(foreignFieldNames, field.Name)
+			}
+		}
+
+		foreignFieldValues := util.ColumnAsArray(foreignFieldNames, ne.Scope.Value)
+
+		if len(foreignFieldValues) > 0 {
+			var quotedForeignDBNames []string
+			for _, dbName := range foreignDBNames {
+				quotedForeignDBNames = append(quotedForeignDBNames, tableName+"."+dbName)
+			}
+			for _, q := range quotedForeignDBNames {
+				joinConditions = append(joinConditions, fmt.Sprintf("%s=?", q))
+			}
+		}
+		search.Where(ne, strings.Join(joinConditions, " AND "), util.ToQueryValues(foreignFieldValues)...)
 		return nil
 	}
 	return errors.New("wrong source type for join table handler")

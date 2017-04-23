@@ -507,10 +507,15 @@ func PrepareQuerySQL(e *engine.Engine, modelValue interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	var from []string
+	from = append(from, scope.QuotedTableName(e, modelValue))
+	if e.Search.TableNames != nil {
+		from = append(from, e.Search.TableNames...)
+	}
 	return strings.Replace(
 		fmt.Sprintf("SELECT %v FROM %v %v",
 			SelectSQL(e, modelValue),
-			scope.QuotedTableName(e, modelValue),
+			strings.Join(from, ","),
 			c),
 		"$$", "?", -1), nil
 }

@@ -1073,9 +1073,7 @@ func testRelManyToMany(t *testing.T, db *DB) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if isQL(db) {
-		t.Skip()
-	}
+
 	blog := Blog{
 		Locale:  "ZH",
 		Subject: "subject",
