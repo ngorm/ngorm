@@ -103,7 +103,6 @@ func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interfa
 	tableName := handler.TableName
 	quotedTableName := Quote(ne, tableName)
 	var joinConditions []string
-	var values []interface{}
 	m, err := GetModelStruct(ne, source)
 	if err != nil {
 		return err
@@ -140,9 +139,6 @@ func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interfa
 			condString = fmt.Sprintf("%v IN (%v)",
 				ToQueryCondition(ne, quotedForeignDBNames),
 				util.ToQueryMarks(foreignFieldValues))
-
-			keys := util.ColumnAsArray(foreignFieldNames, ne.Scope.Value)
-			values = append(values, util.ToQueryValues(keys))
 		} else {
 			condString = fmt.Sprintf("1 <> 1")
 		}
