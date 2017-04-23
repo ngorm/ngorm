@@ -31,14 +31,6 @@ type Engine struct {
 	Now func() time.Time
 }
 
-//AddError adds err to Engine.Error.
-//
-// THis is here until I refactor all the APIs to return errors instead of
-// patching the Engine with arbitrary errors
-func (e *Engine) AddError(err error) error {
-	return nil
-}
-
 // Clone returns a new copy of engine
 func (e *Engine) Clone() *Engine {
 	en := Get()
