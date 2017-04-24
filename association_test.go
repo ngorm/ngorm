@@ -804,3 +804,36 @@ func testAssociationHasManyOverideFK2(t *testing.T, db *DB) {
 		t.Errorf("expected %v got %v", n, f.Relationship.AssociationForeignFieldNames)
 	}
 }
+
+func TestAssociationManyToMany(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAssociationManyToMany,
+			&fixture.Language{}, &fixture.User{},
+		)
+	}
+}
+
+func testAssociationManyToMany(t *testing.T, db *DB) {
+	_, err := db.Automigrate(
+		&fixture.User{}, &fixture.Language{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var languages = []fixture.Language{{Name: "ZH"}, {Name: "EN"}}
+	user := fixture.User{Name: "Many2Many", Languages: languages}
+	err = db.Begin().Save(&user)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Query
+	var newLanguages []fixture.Language
+	err = db.Begin().Model(&user).Related(&newLanguages, "Languages")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(newLanguages) != len(languages) {
+		t.Errorf("expected %d got %d", len(languages), len(newLanguages))
+	}
+}

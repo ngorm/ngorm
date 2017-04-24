@@ -1089,10 +1089,18 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 		if rel := fromField.Relationship; rel != nil {
 			if rel.Kind == "many_to_many" {
 				h := rel.JoinTableHandler
-				err = scope.JoinWith(h, ndb.e, sdb.e.Scope.Value)
-				if err != nil {
-					return err
+				if isQL(db) {
+					err = scope.JoinWithQL(h, ndb.e, sdb.e.Scope.Value)
+					if err != nil {
+						return err
+					}
+				} else {
+					err = scope.JoinWith(h, ndb.e, sdb.e.Scope.Value)
+					if err != nil {
+						return err
+					}
 				}
+
 				return ndb.Find(value)
 			} else if rel.Kind == "belongs_to" {
 				for idx, foreignKey := range rel.ForeignDBNames {
