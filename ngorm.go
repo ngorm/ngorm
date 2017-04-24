@@ -946,6 +946,9 @@ func (db *DB) ModifyColumn(column string, typ string) (sql.Result, error) {
 		return nil, errmsg.ErrMissingModel
 	}
 	defer db.recycle()
+	if isQL(db) {
+		return nil, errors.New("ngorm: ql does to support MODIFY column")
+	}
 	db.e.Scope.SQL = fmt.Sprintf("ALTER TABLE %v MODIFY %v %v",
 		scope.QuotedTableName(db.e, db.e.Scope.Value), scope.Quote(db.e, column), typ)
 	return db.ExecTx(
