@@ -836,4 +836,17 @@ func testAssociationManyToMany(t *testing.T, db *DB) {
 	if len(newLanguages) != len(languages) {
 		t.Errorf("expected %d got %d", len(languages), len(newLanguages))
 	}
+	var newLanguages1 []fixture.Language
+
+	a, err := db.Begin().Model(&user).Association("Languages")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = a.Find(&newLanguages1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(newLanguages1) != len(languages) {
+		t.Errorf("expected %d got %d", len(languages), len(newLanguages1))
+	}
 }
