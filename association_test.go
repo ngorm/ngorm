@@ -735,3 +735,72 @@ func testAssociationHasMany(t *testing.T, db *DB) {
 		t.Errorf("Query has many relations with Related")
 	}
 }
+
+func TestAssociationHasManyOverideFK(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAssociationHasManyOverideFK)
+	}
+}
+
+func testAssociationHasManyOverideFK(t *testing.T, db *DB) {
+	type Profile struct {
+		model.Model
+		Name      string
+		UserRefer uint
+	}
+
+	type User struct {
+		model.Model
+		Profile []Profile `gorm:"ForeignKey:UserRefer"`
+	}
+	f, err := scope.FieldByName(db.NewEngine(), &User{}, "Profile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.Relationship.Kind != "has_many" {
+		t.Errorf("expected has_many got %s", f.Relationship.Kind)
+	}
+	n := []string{"UserRefer"}
+	if !reflect.DeepEqual(f.Relationship.ForeignFieldNames, n) {
+		t.Errorf("expected %v got %v", n, f.Relationship.ForeignFieldNames)
+	}
+	n = []string{"ID"}
+	if !reflect.DeepEqual(f.Relationship.AssociationForeignFieldNames, n) {
+		t.Errorf("expected %v got %v", n, f.Relationship.AssociationForeignFieldNames)
+	}
+}
+
+func TestAssociationHasManyOverideFK2(t *testing.T) {
+	for _, d := range allTestDB() {
+		runWrapDB(t, d, testAssociationHasManyOverideFK2)
+	}
+}
+
+func testAssociationHasManyOverideFK2(t *testing.T, db *DB) {
+	type Profile struct {
+		model.Model
+		Name   string
+		UserID uint
+	}
+
+	type User struct {
+		model.Model
+		Refer   string
+		Profile []Profile `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
+	}
+	f, err := scope.FieldByName(db.NewEngine(), &User{}, "Profile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.Relationship.Kind != "has_many" {
+		t.Errorf("expected has_many got %s", f.Relationship.Kind)
+	}
+	n := []string{"UserID"}
+	if !reflect.DeepEqual(f.Relationship.ForeignFieldNames, n) {
+		t.Errorf("expected %v got %v", n, f.Relationship.ForeignFieldNames)
+	}
+	n = []string{"Refer"}
+	if !reflect.DeepEqual(f.Relationship.AssociationForeignFieldNames, n) {
+		t.Errorf("expected %v got %v", n, f.Relationship.AssociationForeignFieldNames)
+	}
+}
