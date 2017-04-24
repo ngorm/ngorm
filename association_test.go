@@ -716,10 +716,6 @@ func testAssociationHasMany(t *testing.T, db *DB) {
 	}
 
 	var comments1 []fixture.Comment
-	// DB.Model(&post).Association("Comments").Find(&comments1)
-	// if !compareComments(comments1, []string{"Comment 1", "Comment 2"}) {
-	// 	t.Errorf("Query has many relations with Association")
-	// }
 
 	a, err := db.Begin().Model(&post).Association("Comments")
 	if err != nil {
