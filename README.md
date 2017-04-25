@@ -332,7 +332,7 @@ Use this to compose `SELECT` queries. The first argument is the Query and you ca
 
 eg
 ```go
-db.Select("count(*))
+db.Select("count(*)")
 ```
 
 This will build `SELECT count(*)`
