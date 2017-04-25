@@ -328,6 +328,16 @@ This is an example of looking up for all users.
 
 ##  Select
 
+Use this to compose `SELECT` queries. The first argument is the Query and you can  pass any positional arguments after it.
+
+eg
+```go
+db.Select("count(*))
+```
+
+This will build `SELECT count(*)`
+
+
 ##  SingulatTable
 
 ##  Table
