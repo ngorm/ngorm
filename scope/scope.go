@@ -775,6 +775,7 @@ func Scan(rows *sql.Rows, columns []string, fields []*model.Field) {
 		selectFields       []*model.Field
 		selectedColumnsMap = map[string]int{}
 		resetFields        = map[int]*model.Field{}
+		reflectValue       reflect.Value
 	)
 
 	for index, column := range columns {
@@ -790,7 +791,7 @@ func Scan(rows *sql.Rows, columns []string, fields []*model.Field) {
 				if field.Field.Kind() == reflect.Ptr {
 					values[index] = field.Field.Addr().Interface()
 				} else {
-					reflectValue := reflect.New(reflect.PtrTo(field.Struct.Type))
+					reflectValue = reflect.New(reflect.PtrTo(field.Struct.Type))
 					reflectValue.Elem().Set(field.Field.Addr())
 					values[index] = reflectValue.Interface()
 					resetFields[index] = field
