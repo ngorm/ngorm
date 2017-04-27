@@ -1,11 +1,13 @@
+PG=postgres://postgres@localhost:5432/ngorm?sslmode=disable
+
 bench:
 	go test -run none -bench .
 
 bench-old:
-	go test -run none -bench . >old.txt
+	NGORM_PG_CONN=$(PG) go test -run none -bench . >old.txt
 
 bench-new:
-	go test -run none -bench . >new.txt
+	NGORM_PG_CONN=$(PG) go test -run none -bench . >new.txt
 
 benchcomp:
 	benchcmp old.txt new.txt
