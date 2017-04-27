@@ -863,7 +863,7 @@ func (db *DB) DropTableIfExists(values ...interface{}) error {
 func (db *DB) Delete(value interface{}, where ...interface{}) error {
 	e := db.NewEngine()
 	defer engine.Put(e)
-	e.Scope.Value = value
+	e.Scope.ContextValue(value)
 	search.Inline(e, where...)
 	return db.Hooks().MustExec(hooks.DeleteHook, model.Delete, e)
 }
@@ -873,7 +873,7 @@ func (db *DB) Delete(value interface{}, where ...interface{}) error {
 func (db *DB) DeleteSQL(value interface{}, where ...interface{}) (*model.Expr, error) {
 	e := db.NewEngine()
 	defer engine.Put(e)
-	e.Scope.Value = value
+	e.Scope.ContextValue(value)
 	search.Inline(e, where...)
 	err := db.Hooks().MustExec(hooks.DeleteHook, model.DeleteSQL, e)
 	if err != nil {
@@ -1048,10 +1048,10 @@ func (db *DB) Association(column string) (*Association, error) {
 		return nil, err
 	}
 	ndb := db.Begin()
-	ndb.e.Scope.Value = db.e.Scope.Value
+	ndb.e.Scope.ContextValue(db.e.Scope.Value)
 	ndb.e.Scope.Set(model.AssociationSource, db.e.Scope.Value)
 	if field.Relationship == nil || len(field.Relationship.ForeignFieldNames) == 0 {
-		v := reflect.ValueOf(db.e.Scope.Value)
+		v := db.e.Scope.ValueOf()
 		if v.Kind() == reflect.Ptr {
 			v = v.Elem()
 		}

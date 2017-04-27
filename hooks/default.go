@@ -111,17 +111,17 @@ func QueryExec(b *Book, e *engine.Engine) error {
 //the desired SQL query.
 func QuerySQL(b *Book, e *engine.Engine) error {
 	if orderBy, ok := e.Scope.Get(model.OrderByPK); ok {
-		pf, err := scope.PrimaryField(e, e.Scope.Value)
+		pf, err := scope.PrimaryField(e, e.Scope.ValueOf())
 		if err != nil {
 		} else {
 			search.Order(e, fmt.Sprintf("%v%v %v",
 				e.Dialect.QueryFieldName(
-					scope.QuotedTableName(e, e.Scope.Value)),
+					scope.QuotedTableName(e, e.Scope.ValueOf())),
 				scope.Quote(e, pf.DBName), orderBy))
 		}
 
 	}
-	return builder.PrepareQuery(e, e.Scope.Value)
+	return builder.PrepareQuery(e, e.Scope.ValueOf())
 }
 
 //AfterQuery executes any call back after the  Query hook has been executed. Any
@@ -169,7 +169,7 @@ func create(b *Book, e *engine.Engine) error {
 		// The blank columns with default values
 		cv []string
 	)
-	fds, err := scope.Fields(e, e.Scope.Value)
+	fds, err := scope.Fields(e, e.Scope.ValueOf())
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func create(b *Book, e *engine.Engine) error {
 				}
 			} else if field.Relationship != nil && field.Relationship.Kind == "belongs_to" {
 				for _, foreignKey := range field.Relationship.ForeignDBNames {
-					foreignField, err := scope.FieldByName(e, e.Scope.Value, foreignKey)
+					foreignField, err := scope.FieldByName(e, e.Scope.ValueOf(), foreignKey)
 					if err != nil {
 						return err
 					}
@@ -202,12 +202,12 @@ func create(b *Book, e *engine.Engine) error {
 
 	var (
 		returningColumn = "*"
-		tableName       = scope.QuotedTableName(e, e.Scope.Value)
+		tableName       = scope.QuotedTableName(e, e.Scope.ValueOf())
 
 		extraOption string
 	)
 
-	primaryField, err := scope.PrimaryField(e, e.Scope.Value)
+	primaryField, err := scope.PrimaryField(e, e.Scope.ValueOf())
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func create(b *Book, e *engine.Engine) error {
 	} else {
 		sql := fmt.Sprintf(
 			"INSERT INTO %v (%v) VALUES (%v)%v%v",
-			scope.QuotedTableName(e, e.Scope.Value),
+			scope.QuotedTableName(e, e.Scope.ValueOf()),
 			strings.Join(cols, ","),
 			strings.Join(placeholders, ","),
 			util.AddExtraSpaceIfExist(extraOption),
@@ -247,7 +247,7 @@ func create(b *Book, e *engine.Engine) error {
 //CreateExec executes the INSERT query and assigns primary key if it is not set
 //assuming the primary key is the ID field.
 func CreateExec(b *Book, e *engine.Engine) error {
-	primaryField, err := scope.PrimaryField(e, e.Scope.Value)
+	primaryField, err := scope.PrimaryField(e, e.Scope.ValueOf())
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func CreateExec(b *Book, e *engine.Engine) error {
 	if primaryField != nil {
 		returningColumn = scope.Quote(e, primaryField.DBName)
 	}
-	tableName := scope.QuotedTableName(e, e.Scope.Value)
+	tableName := scope.QuotedTableName(e, e.Scope.ValueOf())
 	lastInsertIDReturningSuffix :=
 		e.Dialect.LastInsertIDReturningSuffix(tableName, returningColumn)
 	if lastInsertIDReturningSuffix == "" || primaryField == nil {

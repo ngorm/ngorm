@@ -35,11 +35,10 @@ import (
 func Quote(e *engine.Engine, str string) string {
 	if strings.Index(str, ".") != -1 {
 		p := strings.Split(str, ".")
-		newStrs := make([]string, len(p))
 		for i := 0; i < len(p); i++ {
-			newStrs[i] = e.Dialect.Quote(p[i])
+			p[i] = e.Dialect.Quote(p[i])
 		}
-		return strings.Join(newStrs, ".")
+		return strings.Join(p, ".")
 	}
 	return e.Dialect.Quote(str)
 }
@@ -77,13 +76,12 @@ func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
 				StructField: m.StructFields[j],
 				Field:       fieldValue,
 				IsBlank:     util.IsBlank(fieldValue)}
-			l++
 		} else {
 			fields[l] = &model.Field{
 				StructField: m.StructFields[j],
 				IsBlank:     true}
-			l++
 		}
+		l++
 	}
 	return fields, nil
 }
@@ -602,12 +600,11 @@ func FieldByName(e *engine.Engine, value interface{}, name string) (*model.Field
 	if err != nil {
 		return nil, err
 	}
-	for _, field := range fds {
-		if field.Name == name || field.DBName == name {
-			return field, nil
-		}
-		if field.DBName == dbName {
-			return field, nil
+	for i := 0; i < len(fds); i++ {
+		if fds[i].Name == name ||
+			fds[i].DBName == name ||
+			fds[i].DBName == dbName {
+			return fds[i], nil
 		}
 	}
 	return nil, fmt.Errorf("field %s not found", name)
@@ -688,7 +685,6 @@ func TableName(e *engine.Engine, value interface{}) string {
 	}
 	ms, err := GetModelStruct(e, value)
 	if err != nil {
-		//TODO log this?
 		return ""
 	}
 	return ms.DefaultTableName
@@ -1229,7 +1225,7 @@ func UpdatedAttrsWithValues(e *engine.Engine, value interface{}) (results map[st
 
 	results = map[string]interface{}{}
 	for key, value := range ConvertInterfaceToMap(e, value, true) {
-		field, err := FieldByName(e, e.Scope.Value, key)
+		field, err := FieldByName(e, e.Scope.ValueOf(), key)
 		if err != nil {
 			//TODO return error?
 		} else {
