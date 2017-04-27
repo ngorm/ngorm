@@ -15,10 +15,10 @@ clean:
 	rm -f *out *.test
 
 cpu: clean
-	go test -run @ -bench . -cpuprofile cpu.out
+	NGORM_PG_CONN=$(PG) go test -run @ -bench . -cpuprofile cpu.out
 	go tool pprof -lines *.test cpu.out
 
 mem: clean
-	go test -run @ -bench . -memprofile mem.out -memprofilerate 1 -timeout 24h
+	NGORM_PG_CONN=$(PG) go test -run @ -bench . -memprofile mem.out -memprofilerate 1 -timeout 24h
 	go tool pprof -lines  -alloc_objects *.test mem.out
 
