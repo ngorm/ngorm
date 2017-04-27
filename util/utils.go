@@ -171,9 +171,9 @@ func GetValueFromFields(value reflect.Value, fieldNames []string) (results []int
 	// If value is a nil pointer, Indirect returns a zero Value!
 	// Therefor we need to check for a zero value,
 	// as FieldByName could panic
-	if indirectValue := reflect.Indirect(value); indirectValue.IsValid() {
+	if value = reflect.Indirect(value); value.IsValid() {
 		for _, fieldName := range fieldNames {
-			if fieldValue := indirectValue.FieldByName(fieldName); fieldValue.IsValid() {
+			if fieldValue := value.FieldByName(fieldName); value.IsValid() {
 				result := fieldValue.Interface()
 				if r, ok := result.(driver.Valuer); ok {
 					result, _ = r.Value()
