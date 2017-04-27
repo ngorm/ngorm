@@ -240,7 +240,11 @@ func WrapTX(tx string) string {
 func ColumnAsArray(columns []string, values ...interface{}) (results [][]interface{}) {
 	var indirectValue reflect.Value
 	for _, value := range values {
-		indirectValue = reflect.ValueOf(value)
+		if v, ok := value.(reflect.Value); ok {
+			indirectValue = v
+		} else {
+			indirectValue = reflect.ValueOf(value)
+		}
 		if indirectValue.Kind() == reflect.Ptr {
 			indirectValue = indirectValue.Elem()
 		}

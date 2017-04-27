@@ -342,7 +342,7 @@ func (db *DB) Close() error {
 func (db *DB) Create(value interface{}) error {
 	e := db.NewEngine()
 	defer engine.Put(e)
-	e.Scope.Value = value
+	e.Scope.ContextValue(value)
 	return db.Hooks().MustExec(hooks.CreateHook, model.Create, e)
 }
 
@@ -387,7 +387,7 @@ func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
 		e = db.NewEngine()
 	}
 	defer engine.Put(e)
-	e.Scope.Value = value
+	e.Scope.ContextValue(value)
 	if c, ok := db.hooks.Create.Get(model.HookCreateSQL); ok {
 		err := c.Exec(db.hooks, e)
 		if err != nil {
@@ -413,7 +413,7 @@ func (db *DB) SQLCommon() model.SQLCommon {
 func (db *DB) SaveSQL(value interface{}) (*model.Expr, error) {
 	e := db.NewEngine()
 	defer engine.Put(e)
-	e.Scope.Value = value
+	e.Scope.ContextValue(value)
 	err := db.Hooks().MustExec(hooks.UpdateHook, model.HookUpdateSQL, e)
 	if err != nil {
 		return nil, err
@@ -425,7 +425,7 @@ func (db *DB) SaveSQL(value interface{}) (*model.Expr, error) {
 func (db *DB) Save(value interface{}) error {
 	e := db.NewEngine()
 	defer engine.Put(e)
-	e.Scope.Value = value
+	e.Scope.ContextValue(value)
 	field, _ := scope.PrimaryField(e, value)
 	if field == nil || field.IsBlank {
 		return db.Create(value)
@@ -439,7 +439,7 @@ func (db *DB) Save(value interface{}) error {
 //	db.Model(&user).Update("name","hero")
 func (db *DB) Model(value interface{}) *DB {
 	c := db.clone()
-	c.e.Scope.Value = value
+	c.e.Scope.ContextValue(value)
 	return c
 }
 
@@ -535,7 +535,7 @@ func (db *DB) First(out interface{}, where ...interface{}) error {
 	defer db.recycle()
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
-	db.e.Scope.Value = out
+	db.e.Scope.ContextValue(out)
 	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
 }
 
@@ -545,7 +545,7 @@ func (db *DB) FirstSQL(out interface{}, where ...interface{}) (*model.Expr, erro
 	db.Set(model.OrderByPK, "ASC")
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
-	db.e.Scope.Value = out
+	db.e.Scope.ContextValue(out)
 	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
 	if err != nil {
 		return nil, err
@@ -558,7 +558,7 @@ func (db *DB) Last(out interface{}, where ...interface{}) error {
 	db.Set(model.OrderByPK, "DESC")
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
-	db.e.Scope.Value = out
+	db.e.Scope.ContextValue(out)
 	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
 }
 
@@ -568,7 +568,7 @@ func (db *DB) LastSQL(out interface{}, where ...interface{}) (*model.Expr, error
 	db.Set(model.OrderByPK, "DESC")
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
-	db.e.Scope.Value = out
+	db.e.Scope.ContextValue(out)
 	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
 	if err != nil {
 		return nil, err
@@ -597,7 +597,7 @@ func (db *DB) FindSQL(out interface{}, where ...interface{}) (*model.Expr, error
 	}
 	defer db.recycle()
 	search.Inline(db.e, where...)
-	db.e.Scope.Value = out
+	db.e.Scope.ContextValue(out)
 	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
 	if err != nil {
 		return nil, err
@@ -612,7 +612,7 @@ func (db *DB) Find(out interface{}, where ...interface{}) error {
 	}
 	defer db.recycle()
 	search.Inline(db.e, where...)
-	db.e.Scope.Value = out
+	db.e.Scope.ContextValue(out)
 	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
 }
 
@@ -738,7 +738,7 @@ func (db *DB) FirstOrInit(out interface{}, where ...interface{}) error {
 		db.e = db.NewEngine()
 	}
 	defer db.recycle()
-	db.e.Scope.Value = out
+	db.e.Scope.ContextValue(out)
 	err := db.Begin().First(out, where...)
 	if err != nil {
 		if err != errmsg.ErrRecordNotFound {
@@ -973,7 +973,7 @@ func (db *DB) FirstOrCreate(out interface{}, where ...interface{}) error {
 		db.e = db.NewEngine()
 	}
 	defer db.recycle()
-	db.e.Scope.Value = out
+	db.e.Scope.ContextValue(out)
 	err := db.Begin().First(out, where...)
 	if err != nil {
 		if err != errmsg.ErrRecordNotFound {
@@ -1062,16 +1062,16 @@ func (db *DB) Association(column string) (*Association, error) {
 
 func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 	sdb := db.Begin()
-	sdb.e.Scope.Value = source
+	sdb.e.Scope.ContextValue(source)
 	ndb := db.Begin()
-	ndb.e.Scope.Value = value
+	ndb.e.Scope.ContextValue(value)
 	sdb.e.Scope.Set(model.AssociationSource, source)
 
 	foreignKeys = append(foreignKeys, ndb.e.Scope.TypeName()+"ID")
 	foreignKeys = append(foreignKeys, sdb.e.Scope.TypeName()+"ID")
 
 	for _, foreignKey := range foreignKeys {
-		fromField, err := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey)
+		fromField, err := scope.FieldByName(sdb.e, sdb.e.Scope.ValueOf(), foreignKey)
 		if err != nil {
 			toField, err := scope.FieldByName(ndb.e, value, foreignKey)
 			if err != nil {
@@ -1107,7 +1107,7 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 				return ndb.Find(value)
 			} else if rel.Kind == "belongs_to" {
 				for idx, foreignKey := range rel.ForeignDBNames {
-					if field, ok := scope.FieldByName(sdb.e, sdb.e.Scope.Value, foreignKey); ok == nil {
+					if field, ok := scope.FieldByName(sdb.e, sdb.e.Scope.ValueOf(), foreignKey); ok == nil {
 						ndb = ndb.Where(fmt.Sprintf("%v = ?",
 							scope.Quote(ndb.e, rel.AssociationForeignDBNames[idx])),
 							field.Field.Interface())
@@ -1116,7 +1116,7 @@ func (db *DB) related(source, value interface{}, foreignKeys ...string) error {
 				return ndb.Find(value)
 			} else if rel.Kind == "has_many" || rel.Kind == "has_one" {
 				for idx, foreignKey := range rel.ForeignDBNames {
-					field, err := scope.FieldByName(sdb.e, sdb.e.Scope.Value, rel.AssociationForeignDBNames[idx])
+					field, err := scope.FieldByName(sdb.e, sdb.e.Scope.ValueOf(), rel.AssociationForeignDBNames[idx])
 					if err == nil {
 						ndb = ndb.Where(fmt.Sprintf("%v = ?",
 							scope.Quote(ndb.e, foreignKey)), field.Field.Interface())

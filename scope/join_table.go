@@ -99,7 +99,7 @@ func AddJoinRelation(table string, s *model.JoinTableHandler,
 
 // JoinWith query with `Join` conditions
 func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interface{}) error {
-	ne.Scope.Value = source
+	ne.Scope.ContextValue(source)
 	tableName := handler.TableName
 	quotedTableName := Quote(ne, tableName)
 	var joinConditions []string
@@ -128,7 +128,7 @@ func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interfa
 			}
 		}
 
-		foreignFieldValues := util.ColumnAsArray(foreignFieldNames, ne.Scope.Value)
+		foreignFieldValues := util.ColumnAsArray(foreignFieldNames, ne.Scope.ValueOf())
 
 		var condString string
 		if len(foreignFieldValues) > 0 {
@@ -156,7 +156,7 @@ func JoinWith(handler *model.JoinTableHandler, ne *engine.Engine, source interfa
 
 // JoinWithQL query with `Join` conditions
 func JoinWithQL(handler *model.JoinTableHandler, ne *engine.Engine, source interface{}) error {
-	ne.Scope.Value = source
+	ne.Scope.ContextValue(source)
 	tableName := handler.TableName
 	quotedTableName := Quote(ne, tableName)
 	var joinConditions []string
@@ -185,7 +185,7 @@ func JoinWithQL(handler *model.JoinTableHandler, ne *engine.Engine, source inter
 			}
 		}
 
-		foreignFieldValues := util.ColumnAsArray(foreignFieldNames, ne.Scope.Value)
+		foreignFieldValues := util.ColumnAsArray(foreignFieldNames, ne.Scope.ValueOf())
 
 		if len(foreignFieldValues) > 0 {
 			var quotedForeignDBNames []string

@@ -48,7 +48,13 @@ func Quote(e *engine.Engine, str string) string {
 //something. This is only done when e.Scope.Fields is nil, for the case of non
 //nil value then *e.Scope.Fields is returned without computing anything.
 func Fields(e *engine.Engine, value interface{}) ([]*model.Field, error) {
-	i := reflect.ValueOf(value)
+	var i reflect.Value
+
+	if v, ok := value.(reflect.Value); ok {
+		i = v
+	} else {
+		i = reflect.ValueOf(value)
+	}
 	if i.Kind() == reflect.Ptr {
 		i = i.Elem()
 	}
@@ -98,8 +104,13 @@ func GetModelStruct(e *engine.Engine, value interface{}) (*model.Struct, error) 
 	if value == nil {
 		return nil, errors.New("nil value")
 	}
+	var refType reflect.Type
 
-	refType := reflect.ValueOf(value).Type()
+	if v, ok := value.(reflect.Value); ok {
+		refType = v.Type()
+	} else {
+		refType = reflect.ValueOf(value).Type()
+	}
 	for refType.Kind() == reflect.Slice || refType.Kind() == reflect.Ptr {
 		refType = refType.Elem()
 	}
@@ -662,13 +673,18 @@ func TableName(e *engine.Engine, value interface{}) string {
 	if e.Search != nil && len(e.Search.TableName) > 0 {
 		return e.Search.TableName
 	}
-
-	if tabler, ok := value.(engine.Tabler); ok {
-		return tabler.TableName()
-	}
-
-	if tabler, ok := value.(engine.DBTabler); ok {
-		return tabler.TableName(e)
+	switch t := value.(type) {
+	case engine.Tabler:
+		return t.TableName()
+	case engine.DBTabler:
+		return t.TableName(e)
+	case reflect.Value:
+		switch x := t.Interface().(type) {
+		case engine.Tabler:
+			return x.TableName()
+		case engine.DBTabler:
+			return x.TableName(e)
+		}
 	}
 	ms, err := GetModelStruct(e, value)
 	if err != nil {
@@ -822,7 +838,7 @@ func SetColumn(e *engine.Engine, column interface{}, value interface{}) error {
 			dbName           = util.ToDBName(name)
 			mostMatchedField *model.Field
 		)
-		fds, err := Fields(e, e.Scope.Value)
+		fds, err := Fields(e, e.Scope.ValueOf())
 		if err != nil {
 			return err
 		}
@@ -1202,7 +1218,7 @@ func HasConditions(e *engine.Engine, modelValue interface{}) bool {
 // That applies if the value is a struct. Any other type of values are handeled
 // by ConvertInterfaceToMap function.
 func UpdatedAttrsWithValues(e *engine.Engine, value interface{}) (results map[string]interface{}, hasUpdate bool) {
-	v := reflect.ValueOf(e.Scope.Value)
+	v := e.Scope.ValueOf()
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}

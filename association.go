@@ -100,20 +100,24 @@ func (a *Association) Count() (int, error) {
 	)
 	if rel.Kind == "many_to_many" {
 		if isQL(a.db) {
-			err := scope.JoinWithQL(rel.JoinTableHandler, query.e, a.db.e.Scope.Value)
+			err := scope.JoinWithQL(
+				rel.JoinTableHandler,
+				query.e, a.db.e.Scope.ValueOf())
 			if err != nil {
 				return 0, err
 			}
 		} else {
-			err := scope.JoinWith(rel.JoinTableHandler, query.e, a.db.e.Scope.Value)
+			err := scope.JoinWith(
+				rel.JoinTableHandler,
+				query.e, a.db.e.Scope.ValueOf())
 			if err != nil {
 				return 0, err
 			}
 		}
 
-		query.e.Scope.Value = fieldValue
+		query.e.Scope.ContextValue(fieldValue)
 	} else if rel.Kind == "has_many" || rel.Kind == "has_one" {
-		primaryKeys := util.ColumnAsArray(rel.AssociationForeignFieldNames, a.db.e.Scope.Value)
+		primaryKeys := util.ColumnAsArray(rel.AssociationForeignFieldNames, a.db.e.Scope.ValueOf())
 		query = query.Where(
 			fmt.Sprintf("%v IN (%v)",
 				scope.ToQueryCondition(a.db.e, rel.ForeignDBNames),
@@ -121,7 +125,7 @@ func (a *Association) Count() (int, error) {
 			util.ToQueryValues(primaryKeys)...,
 		)
 	} else if rel.Kind == "belongs_to" {
-		primaryKeys := util.ColumnAsArray(rel.ForeignFieldNames, a.db.e.Scope.Value)
+		primaryKeys := util.ColumnAsArray(rel.ForeignFieldNames, a.db.e.Scope.ValueOf())
 		query = query.Where(
 			fmt.Sprintf("%v IN (%v)",
 				scope.ToQueryCondition(a.db.e, rel.AssociationForeignDBNames),

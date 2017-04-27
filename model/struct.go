@@ -202,6 +202,8 @@ func NewStructsMap() *SafeStructsMap {
 //Scope is the scope level of SQL building.
 type Scope struct {
 	Value       interface{}
+	v           reflect.Value
+	hasValue    bool
 	SQL         string
 	SQLVars     []interface{}
 	SelectAttrs *[]string
@@ -216,6 +218,26 @@ type Scope struct {
 func NewScope() *Scope {
 	return &Scope{
 		data: make(map[string]interface{}),
+	}
+}
+
+func (s *Scope) ValueOf() reflect.Value {
+	if s.hasValue {
+		return s.v
+	}
+	s.v = reflect.ValueOf(s.Value)
+	s.hasValue = true
+	return s.v
+}
+
+func (s *Scope) ContextValue(v interface{}) {
+	s.hasValue = true
+	if i, ok := v.(reflect.Value); ok {
+		s.Value = i.Interface()
+		s.v = i
+	} else {
+		s.Value = v
+		s.v = reflect.ValueOf(s.Value)
 	}
 }
 
