@@ -864,21 +864,19 @@ func SetColumn(e *engine.Engine, column interface{}, value interface{}) error {
 //SelectAttrs returns the attributes in the select query.
 func SelectAttrs(e *engine.Engine) []string {
 	if e.Scope.SelectAttrs == nil {
-		attrs := []string{}
 		for _, value := range e.Search.Selects {
 			if str, ok := value.(string); ok {
-				attrs = append(attrs, str)
+				e.Scope.SelectAttrs = append(e.Scope.SelectAttrs, str)
 			} else if strs, ok := value.([]string); ok {
-				attrs = append(attrs, strs...)
+				e.Scope.SelectAttrs = append(e.Scope.SelectAttrs, strs...)
 			} else if strs, ok := value.([]interface{}); ok {
 				for _, str := range strs {
-					attrs = append(attrs, fmt.Sprintf("%v", str))
+					e.Scope.SelectAttrs = append(e.Scope.SelectAttrs, fmt.Sprintf("%v", str))
 				}
 			}
 		}
-		e.Scope.SelectAttrs = &attrs
 	}
-	return *e.Scope.SelectAttrs
+	return e.Scope.SelectAttrs
 }
 
 //ChangeableField returns true if the field's value can be changed.

@@ -207,7 +207,7 @@ type Scope struct {
 	hasValue    bool
 	SQL         string
 	SQLVars     []interface{}
-	SelectAttrs *[]string
+	SelectAttrs []string
 	MultiExpr   bool
 	Exprs       []*Expr
 	mu          sync.RWMutex
