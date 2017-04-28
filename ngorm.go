@@ -82,7 +82,6 @@ type DB struct {
 	cancel        func()
 	singularTable bool
 	structMap     *model.SafeStructsMap
-	hooks         *hooks.Book
 	e             *engine.Engine
 	err           error
 	now           func() time.Time
@@ -96,7 +95,6 @@ func (db *DB) clone() *DB {
 		cancel:        db.cancel,
 		singularTable: db.singularTable,
 		structMap:     db.structMap,
-		hooks:         db.hooks,
 		now:           time.Now,
 		e:             db.NewEngine(),
 	}
@@ -137,13 +135,11 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 	}
 	dia.SetDB(db)
 	ctx, cancel := context.WithCancel(context.Background())
-	h := hooks.DefaultBook()
 	return &DB{
 		db:        db,
 		dialect:   dia,
 		structMap: model.NewStructsMap(),
 		ctx:       ctx,
-		hooks:     h,
 		cancel:    cancel,
 	}, nil
 }
@@ -343,7 +339,7 @@ func (db *DB) Create(value interface{}) error {
 	e := db.NewEngine()
 	defer engine.Put(e)
 	e.Scope.ContextValue(value)
-	return db.Hooks().MustExec(hooks.CreateHook, model.Create, e)
+	return hooks.Create(e)
 }
 
 //CreateSQL generates SQl query for creating a new record/records for value. This
@@ -388,15 +384,11 @@ func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
 	}
 	defer engine.Put(e)
 	e.Scope.ContextValue(value)
-	if c, ok := db.hooks.Create.Get(model.HookCreateSQL); ok {
-		err := c.Exec(db.hooks, e)
-		if err != nil {
-			return nil, err
-		}
-		return &model.Expr{Q: e.Scope.SQL, Args: e.Scope.SQLVars}, nil
+	err := hooks.CreateSQL(e)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("missing create sql hook")
-
+	return &model.Expr{Q: e.Scope.SQL, Args: e.Scope.SQLVars}, nil
 }
 
 //Dialect return the dialect that is used by DB
@@ -414,7 +406,7 @@ func (db *DB) SaveSQL(value interface{}) (*model.Expr, error) {
 	e := db.NewEngine()
 	defer engine.Put(e)
 	e.Scope.ContextValue(value)
-	err := db.Hooks().MustExec(hooks.UpdateHook, model.HookUpdateSQL, e)
+	err := hooks.UpdateSQL(e)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +422,7 @@ func (db *DB) Save(value interface{}) error {
 	if field == nil || field.IsBlank {
 		return db.Create(value)
 	}
-	return db.Hooks().MustExec(hooks.UpdateHook, model.Update, e)
+	return hooks.Update(e)
 }
 
 //Model sets value as the database model. This model will be used for future
@@ -460,7 +452,7 @@ func (db *DB) Updates(values interface{}, ignoreProtectedAttrs ...bool) error {
 	}
 	db.e.Scope.Set(model.IgnoreProtectedAttrs, ignore)
 	db.e.Scope.Set(model.UpdateInterface, values)
-	return db.Hooks().MustExec(hooks.UpdateHook, model.Update, db.e)
+	return hooks.Update(db.e)
 }
 
 //UpdateSQL generates SQL that will be executed when you use db.Update
@@ -480,7 +472,7 @@ func (db *DB) UpdatesSQL(values interface{}, ignoreProtectedAttrs ...bool) (*mod
 	}
 	db.e.Scope.Set(model.IgnoreProtectedAttrs, ignore)
 	db.e.Scope.Set(model.UpdateInterface, values)
-	err := db.Hooks().MustExec(hooks.UpdateHook, model.HookUpdateSQL, db.e)
+	err := hooks.UpdateSQL(db.e)
 	if err != nil {
 		return nil, err
 	}
@@ -536,7 +528,7 @@ func (db *DB) First(out interface{}, where ...interface{}) error {
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
 	db.e.Scope.ContextValue(out)
-	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
+	return hooks.Query(db.e)
 }
 
 //FirstSQL returns SQL query for retrieving the first record ordering by primary
@@ -546,7 +538,7 @@ func (db *DB) FirstSQL(out interface{}, where ...interface{}) (*model.Expr, erro
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
 	db.e.Scope.ContextValue(out)
-	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
+	err := hooks.QuerySQL(db.e)
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +551,7 @@ func (db *DB) Last(out interface{}, where ...interface{}) error {
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
 	db.e.Scope.ContextValue(out)
-	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
+	return hooks.Query(db.e)
 }
 
 //LastSQL returns SQL query for retrieving the last record ordering by primary
@@ -569,16 +561,11 @@ func (db *DB) LastSQL(out interface{}, where ...interface{}) (*model.Expr, error
 	search.Inline(db.e, where...)
 	search.Limit(db.e, 1)
 	db.e.Scope.ContextValue(out)
-	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
+	err := hooks.QuerySQL(db.e)
 	if err != nil {
 		return nil, err
 	}
 	return &model.Expr{Q: db.e.Scope.SQL, Args: db.e.Scope.SQLVars}, nil
-}
-
-//Hooks returns the hook book for this db instance.
-func (db *DB) Hooks() *hooks.Book {
-	return db.hooks
 }
 
 // Limit specify the number of records to be retrieved
@@ -598,7 +585,7 @@ func (db *DB) FindSQL(out interface{}, where ...interface{}) (*model.Expr, error
 	defer db.recycle()
 	search.Inline(db.e, where...)
 	db.e.Scope.ContextValue(out)
-	err := db.Hooks().MustExec(hooks.QueryHook, model.HookQuerySQL, db.e)
+	err := hooks.QuerySQL(db.e)
 	if err != nil {
 		return nil, err
 	}
@@ -613,7 +600,7 @@ func (db *DB) Find(out interface{}, where ...interface{}) error {
 	defer db.recycle()
 	search.Inline(db.e, where...)
 	db.e.Scope.ContextValue(out)
-	return db.Hooks().MustExec(hooks.QueryHook, model.Query, db.e)
+	return hooks.Query(db.e)
 }
 
 // Attrs initialize struct with argument if record not found
@@ -815,9 +802,6 @@ func (db *DB) Count(value interface{}) error {
 	if err != nil {
 		return err
 	}
-	if isQL(db) {
-		// pretty.Println(db.e.Scope.SQL, db.e.Scope.SQLVars)
-	}
 	return db.SQLCommon().QueryRow(db.e.Scope.SQL, db.e.Scope.SQLVars...).Scan(value)
 }
 
@@ -865,7 +849,7 @@ func (db *DB) Delete(value interface{}, where ...interface{}) error {
 	defer engine.Put(e)
 	e.Scope.ContextValue(value)
 	search.Inline(e, where...)
-	return db.Hooks().MustExec(hooks.DeleteHook, model.Delete, e)
+	return hooks.Delete(e)
 }
 
 // DeleteSQL  generates SQL to delete value match given conditions, if the value has primary key,
@@ -875,7 +859,7 @@ func (db *DB) DeleteSQL(value interface{}, where ...interface{}) (*model.Expr, e
 	defer engine.Put(e)
 	e.Scope.ContextValue(value)
 	search.Inline(e, where...)
-	err := db.Hooks().MustExec(hooks.DeleteHook, model.DeleteSQL, e)
+	err := hooks.DeleteSQL(e)
 	if err != nil {
 		return nil, err
 	}
@@ -896,7 +880,7 @@ func (db *DB) UpdateColumns(values interface{}) error {
 	db.e.Scope.Set(model.UpdateColumn, true)
 	db.e.Scope.Set(model.SaveAssociations, false)
 	db.e.Scope.Set(model.UpdateInterface, values)
-	return db.Hooks().MustExec(hooks.UpdateHook, model.Update, db.e)
+	return hooks.Update(db.e)
 }
 
 // AddUniqueIndex add unique index for columns with given name

@@ -2,7 +2,6 @@
 package hooks
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -27,16 +26,16 @@ import (
 //
 // If all is well HookAfterQuery is executed, if this hook is not registered
 // then no error is returned.
-func Query(b *Book, e *engine.Engine) error {
-	err := b.MustExec(QueryHook, model.HookQuerySQL, e)
+func Query(e *engine.Engine) error {
+	err := QuerySQL(e)
 	if err != nil {
 		return err
 	}
-	err = b.MustExec(QueryHook, model.HookQueryExec, e)
+	err = QueryExec(e)
 	if err != nil {
 		return err
 	}
-	return b.Exec(QueryHook, model.HookAfterQuery, e)
+	return AfterQuery(e)
 }
 
 //QueryExec  executes SQL queries and scans the result to the pointer object
@@ -46,7 +45,7 @@ func Query(b *Book, e *engine.Engine) error {
 // other types are not supported.
 //
 // NOTE: queries are not executed in transaction context.
-func QueryExec(b *Book, e *engine.Engine) error {
+func QueryExec(e *engine.Engine) error {
 	var isSlice, isPtr bool
 	var resultType reflect.Type
 	results := reflect.ValueOf(e.Scope.Value)
@@ -109,7 +108,7 @@ func QueryExec(b *Book, e *engine.Engine) error {
 
 //QuerySQL generates SQL for queries. This uses `builder.PrepareQuery` to build
 //the desired SQL query.
-func QuerySQL(b *Book, e *engine.Engine) error {
+func QuerySQL(e *engine.Engine) error {
 	if orderBy, ok := e.Scope.Get(model.OrderByPK); ok {
 		pf, err := scope.PrimaryField(e, e.Scope.ValueOf())
 		if err != nil {
@@ -126,43 +125,30 @@ func QuerySQL(b *Book, e *engine.Engine) error {
 
 //AfterQuery executes any call back after the  Query hook has been executed. Any
 //callback registered with key model.HookQueryAfterFind will be executed.
-func AfterQuery(b *Book, e *engine.Engine) error {
+func AfterQuery(e *engine.Engine) error {
 	if e.Search.Preload != nil {
-		err := Preload(b, e)
+		err := Preload(e)
 		if err != nil {
 			return err
 		}
 	}
-	return b.Exec(QueryHook, model.HookAfterFindQuery, e)
-}
-
-//BeforeCreate a callback executed before crating anew record.
-func BeforeCreate(b *Book, e *engine.Engine) error {
-	err := b.Exec(CreateHook, model.HookBeforeSave, e)
-	if err != nil {
-		return err
-	}
-	return b.Exec(CreateHook, model.HookBeforeCreate, e)
+	return nil
 }
 
 //Create the hook executed to create a new record.
-func Create(b *Book, e *engine.Engine) error {
-	err := b.MustExec(CreateHook, model.BeforeCreate, e)
+func Create(e *engine.Engine) error {
+	err := CreateSQL(e)
 	if err != nil {
 		return err
 	}
-	err = b.Exec(CreateHook, model.HookCreateSQL, e)
+	err = CreateExec(e)
 	if err != nil {
 		return err
 	}
-	err = b.MustExec(CreateHook, model.HookCreateExec, e)
-	if err != nil {
-		return err
-	}
-	return b.MustExec(CreateHook, model.AfterCreate, e)
+	return AfterCreate(e)
 }
 
-func create(b *Book, e *engine.Engine) error {
+func create(e *engine.Engine) error {
 	var (
 		cols, placeholders []string
 
@@ -246,7 +232,7 @@ func create(b *Book, e *engine.Engine) error {
 
 //CreateExec executes the INSERT query and assigns primary key if it is not set
 //assuming the primary key is the ID field.
-func CreateExec(b *Book, e *engine.Engine) error {
+func CreateExec(e *engine.Engine) error {
 	primaryField, err := scope.PrimaryField(e, e.Scope.ValueOf())
 	if err != nil {
 		return err
@@ -314,23 +300,24 @@ func CreateExec(b *Book, e *engine.Engine) error {
 }
 
 //AfterCreate executes hooks after Creating records
-func AfterCreate(b *Book, e *engine.Engine) error {
+func AfterCreate(e *engine.Engine) error {
 	if dialects.IsQL(e.Dialect) {
-		QLAfterCreate(b, e)
+		QLAfterCreate(e)
 	}
-	return b.MustExec(UpdateHook, model.HookSaveAfterAss, e)
+	return AfterAssociation(e)
 }
 
 //QLAfterCreate hook executed after a new record has been created. This is for
 //ql dialect use only.
-func QLAfterCreate(b *Book, e *engine.Engine) error {
+func QLAfterCreate(e *engine.Engine) error {
 	ne := e.Clone()
 	defer engine.Put(ne)
 	ne.Scope.Set(model.IgnoreProtectedAttrs, true)
 	ne.Scope.Set(model.UpdateInterface, util.ToSearchableMap(e.Scope.Value))
 	ne.Scope.Value = e.Scope.Value
+	ne.Scope.ContextValue(e.Scope.Value)
 
-	err := b.MustExec(UpdateHook, model.HookUpdateSQL, ne)
+	err := UpdateSQL(ne)
 	if err != nil {
 		return err
 	}
@@ -338,7 +325,7 @@ func QLAfterCreate(b *Book, e *engine.Engine) error {
 	if err != nil {
 		return err
 	}
-	return b.MustExec(UpdateHook, model.HookUpdateExec, ne)
+	return UpdateExec(ne)
 }
 
 func fixWhere(s *model.Scope) error {
@@ -380,38 +367,31 @@ func fixWhere(s *model.Scope) error {
 // If this hook succeeds then It calls
 //
 //	model.HookBeforeUpdate
-func BeforeUpdate(b *Book, e *engine.Engine) error {
+func BeforeUpdate(e *engine.Engine) error {
 	if !scope.HasConditions(e, e.Scope.Value) {
 		return errors.New("missing WHERE condition for update")
 	}
 
 	// set timestamps if any
-	err := b.MustExec(UpdateHook, model.HookUpdateTimestamp, e)
+	err := UpdateTimestamp(e)
 	if err != nil {
 		return err
 	}
 
 	// assign update attrs
-	err = b.MustExec(UpdateHook, model.HookAssignUpdatingAttrs, e)
+	err = AssignUpdatingAttrs(e)
 	if err != nil {
 		return err
 	}
 
 	// save before associations
-	err = b.MustExec(UpdateHook, model.HookSaveBeforeAss, e)
+	err = SaveBeforeAssociation(e)
 	if err != nil {
 		return err
 	}
 
 	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
-		err = b.Exec(SaveHook, model.HookBeforeSave, e)
-		if err != nil {
-			return err
-		}
-		err = b.Exec(UpdateHook, model.HookBeforeUpdate, e)
-		if err != nil {
-			return err
-		}
+
 	}
 	return nil
 }
@@ -424,26 +404,15 @@ func BeforeUpdate(b *Book, e *engine.Engine) error {
 // If this hook succeeds then It calls
 //
 //	model.HookAfterSave
-func AfterUpdate(b *Book, e *engine.Engine) error {
+func AfterUpdate(e *engine.Engine) error {
 	if !scope.HasConditions(e, e.Scope.Value) {
 		return errors.New("missing WHERE condition for update")
 	}
-
-	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
-		err := b.Exec(UpdateHook, model.HookAfterUpdate, e)
-		if err != nil {
-			return err
-		}
-		err = b.Exec(SaveHook, model.HookAfterSave, e)
-		if err != nil {
-			return err
-		}
-	}
-	return b.MustExec(UpdateHook, model.HookSaveAfterAss, e)
+	return AfterAssociation(e)
 }
 
 //UpdateTimestamp sets the value of UpdatedAt field.
-func UpdateTimestamp(b *Book, e *engine.Engine) error {
+func UpdateTimestamp(e *engine.Engine) error {
 	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
 		return scope.SetColumn(e, "UpdatedAt", time.Now())
 	}
@@ -452,7 +421,7 @@ func UpdateTimestamp(b *Book, e *engine.Engine) error {
 
 //AssignUpdatingAttrs assigns value for the attributes that are supposed to be
 //updated.
-func AssignUpdatingAttrs(b *Book, e *engine.Engine) error {
+func AssignUpdatingAttrs(e *engine.Engine) error {
 	if attrs, ok := e.Scope.Get(model.UpdateInterface); ok {
 		if u, uok := scope.UpdatedAttrsWithValues(e, attrs); uok {
 			e.Scope.Set(model.UpdateAttrs, u)
@@ -462,7 +431,7 @@ func AssignUpdatingAttrs(b *Book, e *engine.Engine) error {
 }
 
 //SaveBeforeAssociation saves associations on the model
-func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
+func SaveBeforeAssociation(e *engine.Engine) error {
 	if !scope.ShouldSaveAssociation(e) {
 		return nil
 	}
@@ -482,8 +451,8 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 			// which will execute the generates SQL.
 			ne := e.Clone()
 			defer engine.Put(ne)
-			ne.Scope.Value = fieldValue
-			err = b.MustExec(CreateHook, model.Create, ne)
+			ne.Scope.ContextValue(fieldValue)
+			err = Create(ne)
 			if err != nil {
 				return err
 			}
@@ -508,11 +477,11 @@ func SaveBeforeAssociation(b *Book, e *engine.Engine) error {
 }
 
 //AfterAssociation saves associations on the model
-func AfterAssociation(b *Book, e *engine.Engine) error {
+func AfterAssociation(e *engine.Engine) error {
 	if !scope.ShouldSaveAssociation(e) {
 		return nil
 	}
-	fds, err := scope.Fields(e, e.Scope.Value)
+	fds, err := scope.Fields(e, e.Scope.ValueOf())
 	if err != nil {
 		return err
 	}
@@ -535,7 +504,7 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 						} else {
 							elem = vi.Addr().Interface()
 						}
-						ne.Scope.Value = elem
+						ne.Scope.ContextValue(elem)
 						if rel.JoinTableHandler == nil && len(rel.ForeignFieldNames) != 0 {
 							for idx, fieldName := range rel.ForeignFieldNames {
 								associationForeignName := rel.AssociationForeignFieldNames[idx]
@@ -555,7 +524,7 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 								return err
 							}
 						}
-						err = b.MustExec(CreateHook, model.Create, ne)
+						err = Create(ne)
 						if err != nil {
 							return err
 						}
@@ -614,7 +583,7 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 							}
 						}
 					}
-					err = b.MustExec(CreateHook, model.Create, ne)
+					err = Create(ne)
 					if err != nil {
 						return err
 					}
@@ -626,26 +595,23 @@ func AfterAssociation(b *Book, e *engine.Engine) error {
 }
 
 //CreateSQL generates SQL for creating new record
-func CreateSQL(b *Book, e *engine.Engine) error {
-	err := b.Exec(CreateHook, model.BeforeCreate, e)
-	if err != nil {
-		return err
-	}
+func CreateSQL(e *engine.Engine) error {
 	if scope.ShouldSaveAssociation(e) {
-		err = b.MustExec(CreateHook, model.HookSaveBeforeAss, e)
+		err := SaveBeforeAssociation(e)
 		if err != nil {
 			return err
 		}
 	}
-	err = b.Exec(CreateHook, model.HookUpdateTimestamp, e)
+	err := UpdateTimestamp(e)
 	if err != nil {
 		return err
 	}
-	err = create(b, e)
+	err = create(e)
 	if err != nil {
 		return err
 	}
-	var buf bytes.Buffer
+	buf := util.B.Get()
+	defer util.B.Put(buf)
 	if e.Dialect.GetName() == "ql" || e.Dialect.GetName() == "ql-mem" {
 		_, _ = buf.WriteString("BEGIN TRANSACTION;\n")
 	}
@@ -663,9 +629,9 @@ func CreateSQL(b *Book, e *engine.Engine) error {
 }
 
 //UpdateSQL builds query for updating records.
-func UpdateSQL(b *Book, e *engine.Engine) error {
+func UpdateSQL(e *engine.Engine) error {
 	var sqls []string
-	err := b.Exec(UpdateHook, model.HookAssignUpdatingAttrs, e)
+	err := AssignUpdatingAttrs(e)
 	if err != nil {
 		return err
 	}
@@ -732,7 +698,7 @@ func UpdateSQL(b *Book, e *engine.Engine) error {
 
 //UpdateExec executes UPDATE sql. This assumes the query is already in
 //e.Scope.SQL.
-func UpdateExec(b *Book, e *engine.Engine) error {
+func UpdateExec(e *engine.Engine) error {
 	if e.Scope.SQL == "" {
 		return errors.New("missing update sql ")
 	}
@@ -763,32 +729,32 @@ func UpdateExec(b *Book, e *engine.Engine) error {
 //
 //	model.HookUpdateExec
 //which executes the UPDATE sql.
-func Update(b *Book, e *engine.Engine) error {
+func Update(e *engine.Engine) error {
 
 	// run before update hooks
-	err := b.MustExec(UpdateHook, model.BeforeUpdate, e)
+	err := BeforeUpdate(e)
 	if err != nil {
 		return err
 	}
 
 	// generate update sql
-	err = b.MustExec(UpdateHook, model.HookUpdateSQL, e)
+	err = UpdateSQL(e)
 	if err != nil {
 		return err
 	}
 
 	// execute update sql
-	err = b.MustExec(UpdateHook, model.HookUpdateExec, e)
+	err = UpdateExec(e)
 	if err != nil {
 		return err
 	}
 
 	// execute update sql
-	return b.MustExec(UpdateHook, model.AfterUpdate, e)
+	return AfterUpdate(e)
 }
 
 // DeleteSQL generatesSQL for deleting records.
-func DeleteSQL(b *Book, e *engine.Engine) error {
+func DeleteSQL(e *engine.Engine) error {
 	var extraOption string
 	if str, ok := e.Scope.Get(model.DeleteOption); ok {
 		extraOption = fmt.Sprint(str)
@@ -828,27 +794,22 @@ func DeleteSQL(b *Book, e *engine.Engine) error {
 }
 
 // BeforeDelete is called before deleting any record
-func BeforeDelete(b *Book, e *engine.Engine) error {
+func BeforeDelete(e *engine.Engine) error {
 	if !scope.HasConditions(e, e.Scope.Value) {
 		return errors.New("Missing WHERE clause while deleting")
 	}
-	return b.Exec(DeleteHook, model.HookBeforeDelete, e)
-}
-
-// AfterDelete is executed after deletion of records
-func AfterDelete(b *Book, e *engine.Engine) error {
-	return b.Exec(DeleteHook, model.HookAfterDelete, e)
+	return nil
 }
 
 // Delete deletes records. This makes sure to call BeforeDelete hook before
 // deleting anything and also calls AfterDelete before exiting.
-func Delete(b *Book, e *engine.Engine) error {
-	err := b.MustExec(DeleteHook, model.BeforeDelete, e)
+func Delete(e *engine.Engine) error {
+	err := BeforeDelete(e)
 	if err != nil {
 		return err
 	}
 
-	err = b.MustExec(DeleteHook, model.DeleteSQL, e)
+	err = DeleteSQL(e)
 	if err != nil {
 		return err
 	}
@@ -883,11 +844,11 @@ func Delete(b *Book, e *engine.Engine) error {
 		}
 		e.RowsAffected = a
 	}
-	return b.MustExec(DeleteHook, model.AfterDelete, e)
+	return nil
 }
 
 // Preload executes preload conditions.
-func Preload(b *Book, e *engine.Engine) error {
+func Preload(e *engine.Engine) error {
 	if e.Search.Preload == nil {
 		return nil
 	}
@@ -927,22 +888,22 @@ func Preload(b *Book, e *engine.Engine) error {
 
 					switch field.Relationship.Kind {
 					case "has_one":
-						err = PreloadHasOne(b, cs, field, conds)
+						err = PreloadHasOne(cs, field, conds)
 						if err != nil {
 							return err
 						}
 					case "has_many":
-						err = PreloadHasMany(b, cs, field, conds)
+						err = PreloadHasMany(cs, field, conds)
 						if err != nil {
 							return err
 						}
 					case "belongs_to":
-						err = PreloadBelongsTo(b, cs, field, conds)
+						err = PreloadBelongsTo(cs, field, conds)
 						if err != nil {
 							return err
 						}
 					case "many_to_many":
-						err = PreloadManyToMany(b, cs, field, conds)
+						err = PreloadManyToMany(cs, field, conds)
 						if err != nil {
 							return err
 						}
@@ -981,7 +942,7 @@ func Preload(b *Book, e *engine.Engine) error {
 }
 
 // PreloadBelongsTo preloads belongs_to relationship
-func PreloadBelongsTo(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
+func PreloadBelongsTo(e *engine.Engine, field *model.Field, conditions []interface{}) error {
 	relation := field.Relationship
 
 	// preload conditions
@@ -1004,7 +965,7 @@ func PreloadBelongsTo(b *Book, e *engine.Engine, field *model.Field, conditions 
 	search.Inline(pdb, pCond...)
 	pdb.Scope.Value = results
 
-	err := b.MustExec(QueryHook, model.Query, pdb)
+	err := Query(pdb)
 	if err != nil {
 		return err
 	}
@@ -1043,7 +1004,7 @@ func PreloadBelongsTo(b *Book, e *engine.Engine, field *model.Field, conditions 
 }
 
 // PreloadManyToMany preloads many_to_many relation
-func PreloadManyToMany(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
+func PreloadManyToMany(e *engine.Engine, field *model.Field, conditions []interface{}) error {
 	var (
 		relation         = field.Relationship
 		joinTableHandler = relation.JoinTableHandler
@@ -1293,7 +1254,7 @@ func ColumnAsScope(e *engine.Engine, column string) (*engine.Engine, error) {
 }
 
 // PreloadHasOne preloads has_one relation
-func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
+func PreloadHasOne(e *engine.Engine, field *model.Field, conditions []interface{}) error {
 	rel := field.Relationship
 
 	// get relations's primary keys
@@ -1318,9 +1279,9 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 	results := util.MakeSlice(field.Struct.Type)
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
-	pdb.Scope.Value = results
+	pdb.Scope.ContextValue(results)
 
-	err := b.MustExec(QueryHook, model.Query, pdb)
+	err := Query(pdb)
 	if err != nil {
 		return err
 	}
@@ -1363,11 +1324,11 @@ func PreloadHasOne(b *Book, e *engine.Engine, field *model.Field, conditions []i
 }
 
 // PreloadHasMany preloads has_many relation
-func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []interface{}) error {
-	relation := field.Relationship
+func PreloadHasMany(e *engine.Engine, field *model.Field, conditions []interface{}) error {
+	rel := field.Relationship
 
 	// get relations's primary keys
-	primaryKeys := util.ColumnAsArray(relation.AssociationForeignFieldNames, e.Scope.Value)
+	primaryKeys := util.ColumnAsArray(rel.AssociationForeignFieldNames, e.Scope.Value)
 	if len(primaryKeys) == 0 {
 		return nil
 	}
@@ -1377,13 +1338,13 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 
 	// find relations
 	query := fmt.Sprintf("%v IN (%v)",
-		scope.ToQueryCondition(e, relation.ForeignDBNames),
+		scope.ToQueryCondition(e, rel.ForeignDBNames),
 		util.ToQueryMarks(primaryKeys))
 	values := util.ToQueryValues(primaryKeys)
-	if relation.PolymorphicType != "" {
+	if rel.PolymorphicType != "" {
 		query += fmt.Sprintf(" AND %v = ?",
-			scope.Quote(e, relation.PolymorphicDBName))
-		values = append(values, relation.PolymorphicValue)
+			scope.Quote(e, rel.PolymorphicDBName))
+		values = append(values, rel.PolymorphicValue)
 	}
 
 	results := util.MakeSlice(field.Struct.Type)
@@ -1391,10 +1352,11 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 	search.Inline(pdb, pCond...)
 	pdb.Scope.Value = results
 
-	err := b.MustExec(QueryHook, model.Query, pdb)
+	err := Query(pdb)
 	if err != nil {
 		return err
 	}
+
 	// assign find results
 	rVal := reflect.ValueOf(results)
 	if rVal.Kind() == reflect.Ptr {
@@ -1409,7 +1371,7 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 		preloadMap := make(map[string][]reflect.Value)
 		for i := 0; i < rVal.Len(); i++ {
 			result := rVal.Index(i)
-			foreignValues := util.GetValueFromFields(result, relation.ForeignFieldNames)
+			foreignValues := util.GetValueFromFields(result, rel.ForeignFieldNames)
 			preloadMap[util.ToString(foreignValues)] = append(preloadMap[util.ToString(foreignValues)], result)
 		}
 
@@ -1418,7 +1380,7 @@ func PreloadHasMany(b *Book, e *engine.Engine, field *model.Field, conditions []
 			if object.Kind() == reflect.Ptr {
 				object = object.Elem()
 			}
-			objectRealValue := util.GetValueFromFields(object, relation.AssociationForeignFieldNames)
+			objectRealValue := util.GetValueFromFields(object, rel.AssociationForeignFieldNames)
 			f := object.FieldByName(field.Name)
 			if results, ok := preloadMap[util.ToString(objectRealValue)]; ok {
 				f.Set(reflect.Append(f, results...))

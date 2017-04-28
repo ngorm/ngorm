@@ -96,7 +96,7 @@ func testPolymorphic(t *testing.T, db *DB) {
 		t.Error(err)
 	}
 	if len(catToys) != 1 {
-		t.Errorf("expected 1 got %d", len(catToys))
+		t.Fatalf("expected 1 got %d", len(catToys))
 	}
 	if catToys[0].Name != cat.Toy.Name {
 		t.Errorf("expected %s got %s", cat.Toy.Name, catToys[0].Name)
@@ -217,7 +217,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 		t.Fatal(err)
 	}
 	if len(hamsterToys) != 1 {
-		t.Errorf("expected %d got %d", 1, len(hamsterToys))
+		t.Fatalf("expected %d got %d", 1, len(hamsterToys))
 	}
 	if hamsterToys[0].Name != hamster.PreferredToy.Name {
 		t.Errorf("expected %s got %s", hamster.PreferredToy.Name, hamsterToys[0].Name)
