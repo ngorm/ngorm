@@ -96,7 +96,7 @@ func (a *Association) Count() (int, error) {
 		count      = 0
 		rel        = a.field.Relationship
 		fieldValue = a.field.Field.Interface()
-		query      = a.db.Begin().Model(fieldValue)
+		query      = a.db.Model(fieldValue)
 	)
 	if rel.Kind == "many_to_many" {
 		if isQL(a.db) {

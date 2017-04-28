@@ -491,7 +491,7 @@ func testDBUpdate(t *testing.T, db *DB) {
 		t.Fatal(err)
 	}
 	up := "stuff"
-	err = db.Begin().Model(&fu).Update("stuff", up)
+	err = db.Model(&fu).Update("stuff", up)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -547,7 +547,7 @@ func testDBPluck(t *testing.T, db *DB) {
 		}
 	}
 	var stuffs []string
-	err = db.Begin().Model(&Foo{}).Pluck("stuff", &stuffs)
+	err = db.Model(&Foo{}).Pluck("stuff", &stuffs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -575,7 +575,7 @@ func testDBCount(t *testing.T, db *DB) {
 		}
 	}
 	var stuffs int64
-	err = db.Begin().Model(&Foo{}).Count(&stuffs)
+	err = db.Model(&Foo{}).Count(&stuffs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1088,7 +1088,7 @@ func testRelManyToMany(t *testing.T, db *DB) {
 		t.Error(err)
 	}
 
-	a, err := db.Begin().Model(&blog).Association("Tags")
+	a, err := db.Model(&blog).Association("Tags")
 	if err != nil {
 		t.Fatal(err)
 	}

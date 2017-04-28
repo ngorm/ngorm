@@ -65,7 +65,7 @@ func testPolymorphic(t *testing.T, db *DB) {
 	db.Begin().Save(&cat)
 	db.Begin().Save(&dog)
 
-	a, err := db.Begin().Model(&cat).Association("Toy")
+	a, err := db.Model(&cat).Association("Toy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func testPolymorphic(t *testing.T, db *DB) {
 		t.Errorf("expected 1 got %d", count)
 	}
 
-	a, err = db.Begin().Model(&dog).Association("Toys")
+	a, err = db.Model(&dog).Association("Toys")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func testPolymorphic(t *testing.T, db *DB) {
 
 	// Query
 	var catToys []Toy
-	err = db.Begin().Model(&cat).Related(&catToys, "Toy")
+	err = db.Model(&cat).Related(&catToys, "Toy")
 	if err != nil {
 		t.Error(err)
 	}
@@ -103,7 +103,7 @@ func testPolymorphic(t *testing.T, db *DB) {
 	}
 
 	var dogToys []Toy
-	err = db.Begin().Model(&dog).Related(&dogToys, "Toys")
+	err = db.Model(&dog).Related(&dogToys, "Toys")
 	if err != nil {
 		t.Error(err)
 	}
@@ -112,7 +112,7 @@ func testPolymorphic(t *testing.T, db *DB) {
 	}
 
 	var catToy Toy
-	a, err = db.Begin().Model(&cat).Association("Toy")
+	a, err = db.Model(&cat).Association("Toy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func testPolymorphic(t *testing.T, db *DB) {
 		t.Errorf("expected %s got %s", cat.Toy.Name, catToy.Name)
 	}
 
-	a, err = db.Begin().Model(&cat).Association("Toy")
+	a, err = db.Model(&cat).Association("Toy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +134,7 @@ func testPolymorphic(t *testing.T, db *DB) {
 	if err != nil {
 		t.Error(err)
 	}
-	a, err = db.Begin().Model(&dog).Association("Toys")
+	a, err = db.Model(&dog).Association("Toys")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,7 +185,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 	hamster2.PreferredToy = Toy{}
 	hamster2.OtherToy = Toy{}
 
-	a, err := db.Begin().Model(&hamster2).Association("PreferredToy")
+	a, err := db.Model(&hamster2).Association("PreferredToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +197,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 		t.Errorf("expected %d got %d", 1, count)
 	}
 
-	a, err = db.Begin().Model(&hamster2).Association("OtherToy")
+	a, err = db.Model(&hamster2).Association("OtherToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -212,7 +212,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 	// Query
 	var hamsterToys []Toy
 
-	err = db.Begin().Model(&hamster).Related(&hamsterToys, "PreferredToy")
+	err = db.Model(&hamster).Related(&hamsterToys, "PreferredToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -223,7 +223,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 		t.Errorf("expected %s got %s", hamster.PreferredToy.Name, hamsterToys[0].Name)
 	}
 
-	err = db.Begin().Model(&hamster).Related(&hamsterToys, "OtherToy")
+	err = db.Model(&hamster).Related(&hamsterToys, "OtherToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,7 +235,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 	}
 
 	hamsterToy := Toy{}
-	a, err = db.Begin().Model(&hamster).Association("PreferredToy")
+	a, err = db.Model(&hamster).Association("PreferredToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,7 +249,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 	}
 
 	hamsterToy = Toy{}
-	a, err = db.Begin().Model(&hamster).Association("OtherToy")
+	a, err = db.Model(&hamster).Association("OtherToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -263,7 +263,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 	}
 
 	// Append
-	a, err = db.Begin().Model(&hamster).Association("PreferredToy")
+	a, err = db.Model(&hamster).Association("PreferredToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -275,7 +275,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 		t.Fatal(err)
 	}
 
-	a, err = db.Begin().Model(&hamster).Association("OtherToy")
+	a, err = db.Model(&hamster).Association("OtherToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -288,7 +288,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 	}
 
 	hamsterToy = Toy{}
-	a, err = db.Begin().Model(&hamster).Association("PreferredToy")
+	a, err = db.Model(&hamster).Association("PreferredToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -301,7 +301,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 	}
 
 	hamsterToy = Toy{}
-	a, err = db.Begin().Model(&hamster).Association("OtherToy")
+	a, err = db.Model(&hamster).Association("OtherToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -314,7 +314,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 		t.Errorf("Should update has one polymorphic association with Append")
 	}
 
-	a, err = db.Begin().Model(&hamster).Association("OtherToy")
+	a, err = db.Model(&hamster).Association("OtherToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -326,7 +326,7 @@ func testNamedPolymorphic(t *testing.T, db *DB) {
 		t.Errorf("expected %d got %d", 1, count)
 	}
 
-	a, err = db.Begin().Model(&hamster).Association("PreferredToy")
+	a, err = db.Model(&hamster).Association("PreferredToy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +374,7 @@ func testAssociationBelongsTo(t *testing.T, db *DB) {
 
 	// Query
 	var category1 fixture.Category
-	a, err := db.Begin().Model(&post).Association("Category")
+	a, err := db.Model(&post).Association("Category")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -388,7 +388,7 @@ func testAssociationBelongsTo(t *testing.T, db *DB) {
 	}
 
 	var mainCategory1 fixture.Category
-	a, err = db.Begin().Model(&post).Association("MainCategory")
+	a, err = db.Model(&post).Association("MainCategory")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -401,7 +401,7 @@ func testAssociationBelongsTo(t *testing.T, db *DB) {
 	}
 
 	var category11 fixture.Category
-	err = db.Begin().Model(&post).Related(&category11)
+	err = db.Model(&post).Related(&category11)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -409,7 +409,7 @@ func testAssociationBelongsTo(t *testing.T, db *DB) {
 		t.Errorf("expected %s got %s", post.Category.Name, category11.Name)
 	}
 
-	a, err = db.Begin().Model(&post).Association("Category")
+	a, err = db.Model(&post).Association("Category")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -421,7 +421,7 @@ func testAssociationBelongsTo(t *testing.T, db *DB) {
 		t.Errorf("expected %d got %d", 1, count)
 	}
 
-	a, err = db.Begin().Model(&post).Association("MainCategory")
+	a, err = db.Model(&post).Association("MainCategory")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -532,7 +532,7 @@ func testAssociationHasOne(t *testing.T, db *DB) {
 
 	// Query
 	var creditCard1 fixture.CreditCard
-	err = db.Begin().Model(&user).Related(&creditCard1)
+	err = db.Model(&user).Related(&creditCard1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -542,7 +542,7 @@ func testAssociationHasOne(t *testing.T, db *DB) {
 	}
 
 	var creditCard11 fixture.CreditCard
-	a, err := db.Begin().Model(&user).Association("CreditCard")
+	a, err := db.Model(&user).Association("CreditCard")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -554,7 +554,7 @@ func testAssociationHasOne(t *testing.T, db *DB) {
 		t.Errorf("Query has one relations with Related")
 	}
 
-	a, err = db.Begin().Model(&user).Association("CreditCard")
+	a, err = db.Model(&user).Association("CreditCard")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -569,7 +569,7 @@ func testAssociationHasOne(t *testing.T, db *DB) {
 	var creditcard2 = fixture.CreditCard{
 		Number: "411111111112",
 	}
-	a, err = db.Begin().Model(&user).Association("CreditCard")
+	a, err = db.Model(&user).Association("CreditCard")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -592,7 +592,7 @@ func testAssociationHasOne(t *testing.T, db *DB) {
 	}
 
 	var creditcard21 fixture.CreditCard
-	err = db.Begin().Model(&user).Related(&creditcard21)
+	err = db.Model(&user).Related(&creditcard21)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -717,7 +717,7 @@ func testAssociationHasMany(t *testing.T, db *DB) {
 
 	var comments1 []fixture.Comment
 
-	a, err := db.Begin().Model(&post).Association("Comments")
+	a, err := db.Model(&post).Association("Comments")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -730,7 +730,7 @@ func testAssociationHasMany(t *testing.T, db *DB) {
 	}
 
 	var comments11 []fixture.Comment
-	db.Begin().Model(&post).Related(&comments11)
+	db.Model(&post).Related(&comments11)
 	if !compareComments(comments11, []string{"Comment 1", "Comment 2"}) {
 		t.Errorf("Query has many relations with Related")
 	}
@@ -829,7 +829,7 @@ func testAssociationManyToMany(t *testing.T, db *DB) {
 
 	// Query
 	var newLanguages []fixture.Language
-	err = db.Begin().Model(&user).Related(&newLanguages, "Languages")
+	err = db.Model(&user).Related(&newLanguages, "Languages")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -838,7 +838,7 @@ func testAssociationManyToMany(t *testing.T, db *DB) {
 	}
 	var newLanguages1 []fixture.Language
 
-	a, err := db.Begin().Model(&user).Association("Languages")
+	a, err := db.Model(&user).Association("Languages")
 	if err != nil {
 		t.Fatal(err)
 	}

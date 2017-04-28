@@ -37,13 +37,6 @@
 // and still reap all the benefits of this package.
 //
 //
-// Chaining
-//
-// The API supports method chaining for a specific set of method.Be warned if
-// you intend to chain anything don't forget to start with Begin method. This
-// will help clear any context left after previous calls.
-//
-//	db.Begin().Model(User{}).AddIndex()
 package ngorm
 
 import (
