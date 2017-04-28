@@ -22,10 +22,6 @@
 * Composite Primary Key
 * SQL Builder
 * Auto Migrations
-* Logger
-* Extendible, write Plugins based on NGORM hooks
-* Every feature comes with tests
-* Developer Friendly
 
 Documentation https://godoc.org/github.com/ngorm/ngorm
 
