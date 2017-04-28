@@ -389,10 +389,6 @@ func BeforeUpdate(e *engine.Engine) error {
 	if err != nil {
 		return err
 	}
-
-	if _, ok := e.Scope.Get(model.UpdateColumn); !ok {
-
-	}
 	return nil
 }
 
