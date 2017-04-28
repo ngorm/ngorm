@@ -314,7 +314,6 @@ func QLAfterCreate(e *engine.Engine) error {
 	defer engine.Put(ne)
 	ne.Scope.Set(model.IgnoreProtectedAttrs, true)
 	ne.Scope.Set(model.UpdateInterface, util.ToSearchableMap(e.Scope.Value))
-	ne.Scope.Value = e.Scope.Value
 	ne.Scope.ContextValue(e.Scope.Value)
 
 	err := UpdateSQL(ne)
@@ -558,7 +557,7 @@ func AfterAssociation(e *engine.Engine) error {
 					fieldValue := field.Field.Addr().Interface()
 					ne := e.Clone()
 					defer engine.Put(ne)
-					ne.Scope.Value = fieldValue
+					ne.Scope.ContextValue(fieldValue)
 					if rel.PolymorphicType != "" {
 						err = scope.SetColumn(ne, rel.PolymorphicType, rel.PolymorphicValue)
 						if err != nil {
@@ -959,7 +958,7 @@ func PreloadBelongsTo(e *engine.Engine, field *model.Field, conditions []interfa
 	results := util.MakeSlice(field.Struct.Type)
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
-	pdb.Scope.Value = results
+	pdb.Scope.ContextValue(results)
 
 	err := Query(pdb)
 	if err != nil {
@@ -1027,7 +1026,7 @@ func PreloadManyToMany(e *engine.Engine, field *model.Field, conditions []interf
 	// generate query with join table
 	newScope := e.Clone()
 	defer engine.Put(newScope)
-	newScope.Scope.Value = reflect.New(fieldType).Interface()
+	newScope.Scope.ContextValue(reflect.New(fieldType).Interface())
 	search.Table(newScope, scope.TableName(newScope, newScope.Scope.Value))
 	search.Select(newScope, "*")
 
@@ -1134,7 +1133,7 @@ func PreloadManyToMany(e *engine.Engine, field *model.Field, conditions []interf
 func JoinWith(e *engine.Engine, s, handler *model.JoinTableHandler, source interface{}) (*engine.Engine, error) {
 	ne := e.Clone()
 	defer engine.Put(ne)
-	ne.Scope.Value = source
+	ne.Scope.ContextValue(source)
 	tableName := handler.TableName
 	quotedTableName := scope.Quote(ne, tableName)
 	var (
@@ -1236,13 +1235,13 @@ func ColumnAsScope(e *engine.Engine, column string) (*engine.Engine, error) {
 				}
 			}
 			ne := e.Clone()
-			ne.Scope.Value = results.Interface()
+			ne.Scope.ContextValue(results.Interface())
 			return ne, nil
 		}
 	case reflect.Struct:
 		if field := iv.FieldByName(column); field.CanAddr() {
 			ne := e.Clone()
-			ne.Scope.Value = field.Addr().Interface()
+			ne.Scope.ContextValue(field.Addr().Interface())
 			return ne, nil
 		}
 	}
@@ -1346,7 +1345,7 @@ func PreloadHasMany(e *engine.Engine, field *model.Field, conditions []interface
 	results := util.MakeSlice(field.Struct.Type)
 	search.Where(pdb, query, values...)
 	search.Inline(pdb, pCond...)
-	pdb.Scope.Value = results
+	pdb.Scope.ContextValue(results)
 
 	err := Query(pdb)
 	if err != nil {

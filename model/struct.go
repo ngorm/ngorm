@@ -202,6 +202,7 @@ func NewStructsMap() *SafeStructsMap {
 //Scope is the scope level of SQL building.
 type Scope struct {
 	Value       interface{}
+	TableName   string
 	v           reflect.Value
 	hasValue    bool
 	SQL         string

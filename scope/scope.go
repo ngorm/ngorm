@@ -670,6 +670,9 @@ func TableName(e *engine.Engine, value interface{}) string {
 	if e.Search != nil && len(e.Search.TableName) > 0 {
 		return e.Search.TableName
 	}
+	if e.Scope.TableName != "" {
+		return e.Scope.TableName
+	}
 	switch t := value.(type) {
 	case engine.Tabler:
 		return t.TableName()
@@ -687,6 +690,7 @@ func TableName(e *engine.Engine, value interface{}) string {
 	if err != nil {
 		return ""
 	}
+	e.Scope.TableName = ms.DefaultTableName
 	return ms.DefaultTableName
 }
 
