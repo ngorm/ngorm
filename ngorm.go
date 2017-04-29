@@ -68,7 +68,7 @@ type Opener interface {
 
 // DB provide an API for interacting with SQL databases using Go data structures.
 type DB struct {
-	db            model.SQLCommon
+	db            *model.SQLCommonWrapper
 	dialect       dialects.Dialect
 	connStr       string
 	ctx           context.Context
@@ -129,7 +129,7 @@ func OpenWithOpener(opener Opener, dialect string, args ...interface{}) (*DB, er
 	dia.SetDB(db)
 	ctx, cancel := context.WithCancel(context.Background())
 	return &DB{
-		db:        db,
+		db:        &model.SQLCommonWrapper{SQLCommon: db},
 		dialect:   dia,
 		structMap: model.NewStructsMap(),
 		ctx:       ctx,
@@ -159,6 +159,15 @@ func (db *DB) CreateTable(models ...interface{}) (sql.Result, error) {
 		return db.ExecTx(query.Q, query.Args...)
 	}
 	return db.SQLCommon().Exec(query.Q, query.Args...)
+
+}
+
+// Verbose prints what is executed on stdout.
+//
+//DOn't set this to true when in production. It is dog slow, and a security
+//risk. Use this only in development
+func (db *DB) Verbose(b bool) {
+	db.db.Verbose(b)
 }
 
 //ExecTx wraps the query execution in a Transaction. This ensure all operations

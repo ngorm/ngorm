@@ -4,6 +4,9 @@ package model
 
 import (
 	"database/sql"
+	"fmt"
+	"io"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -343,4 +346,41 @@ type JoinTableHandler struct {
 	TableName   string          `sql:"-"`
 	Source      JoinTableSource `sql:"-"`
 	Destination JoinTableSource `sql:"-"`
+}
+
+type SQLCommonWrapper struct {
+	SQLCommon
+	verbose bool
+	o       io.Writer
+}
+
+func (s *SQLCommonWrapper) printQuery(w, q string, args ...interface{}) {
+	if s.o == nil {
+		s.o = os.Stdout
+	}
+	fmt.Fprintf(s.o, "ngorm:[%s] %s \t ==> ARGS %v\n", w, q, args)
+}
+
+func (s *SQLCommonWrapper) Exec(query string, args ...interface{}) (sql.Result, error) {
+	if s.verbose {
+		s.printQuery("EXEC", query, args...)
+	}
+	return s.SQLCommon.Exec(query, args...)
+}
+
+func (s *SQLCommonWrapper) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	if s.verbose {
+		s.printQuery("QUERY", query, args...)
+	}
+	return s.SQLCommon.Query(query, args...)
+}
+func (s *SQLCommonWrapper) QueryRow(query string, args ...interface{}) *sql.Row {
+	if s.verbose {
+		s.printQuery("QUERY", query, args...)
+	}
+	return s.SQLCommon.QueryRow(query, args...)
+}
+
+func (s *SQLCommonWrapper) Verbose(b bool) {
+	s.verbose = b
 }
