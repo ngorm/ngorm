@@ -93,23 +93,22 @@ Database support
 
 # Synopsis
 
-NGORM is a fork of gorm. I initially forked gorm for the purpose of improving
-performance, after navigating through the whole code base it dawned to me that
-there was no straight way to benchmark and any efforts won't be conveying the
-truth about what is happening.
+Welcome, I have been looking for ways to work with ql database. Since I was
+familiar with gorm I tried to add ql dialect. A task that proved too hard due to
+limitation of gorm.
 
-Queries are executed using `database/sql` package, majority of the time is spent
-generating the queries from models. So there can be two places for
-benchmarking.
+I had to rework internals on gorm to reach my end goal. Along the way I had a
+vision on how gorm should have looked like if I were to build it today.
 
-First is the code that is responsible to take models and generate SQl. Second is the
-code that uses `database/sql` to run the queries i.e measure how fast/efficient
-are the generated queries.
+The new codebase is in a good shape. One of the benifits is now, you can inspect
+the expected queries without excuting anything (for some methods), eg
+`db.FIndSQL` will return the query for finding an item/items without hitting the
+database.
 
-The second part is too broad and vague, and might have different outcomes based
-on the nature of the database. So the focus of ngorm is to make sure all the
-cases are addressed, in a way that  the library generates the best possible
-queries for the supported databases.
+With the new code base, it is easy to improve as the building blocks are all
+visible and well documented. There is also proper error handling. The error
+handling is consistent with other Go libraries, no exceptions are raised but
+errors are returned so the application developers can handle them.
 
 ## Installation
 
@@ -122,8 +121,7 @@ to a database.
 
 > connections to the databases requires importing of the respective driver
 
-```go
-package main
+```go package main
 
 import (
 	"log"
@@ -141,7 +139,7 @@ import (
 
 func main() {
 
-	// The frist argument is the dialect or the name of the database driver that
+	// The first argument is the dialect or the name of the database driver that
 	// you wish to to connect to, the second argument is connection information
 	// please check the appropriate driver for more information on the arguments
 	// that are passed to database/sql Open.
@@ -159,7 +157,8 @@ instance of this object throughout your application life cycle. Make it a global
 or pass it in context.
 
 ## Migrations
-ngorm support automatic migrations of models. ngorm reuses the gorm logic for loading models so all the valid gorm models are also valid ngorm model.
+ngorm support automatic migrations of models. ngorm reuses the gorm logic for
+loading models so all the valid gorm models are also valid ngorm model.
 
 ```go
 	type Profile struct {
@@ -266,7 +265,10 @@ Checking if the table exists already is handled separately by the dialects.
 
 ##  Find
 
-Find is uded for looking up things in the database. You can look for one item or a list of items. This works well will the other query building API calls. Something to no note is this is the last call after chaining other API calls. So, you can have something similar to `db.Where(...).Find()` etc.
+Find is uded for looking up things in the database. You can look for one item or
+a list of items. This works well will the other query building API calls.
+Something to no note is this is the last call after chaining other API calls.
+So, you can have something similar to `db.Where(...).Find()` etc.
 
 This is an example of looking up for all users.
 
@@ -355,7 +357,8 @@ This is an example of looking up for all users.
 
 ##  Select
 
-Use this to compose `SELECT` queries. The first argument is the Query and you can  pass any positional arguments after it.
+Use this to compose `SELECT` queries. The first argument is the Query and you
+can  pass any positional arguments after it.
 
 eg
 ```go
