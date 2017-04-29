@@ -344,39 +344,8 @@ func (db *DB) Create(value interface{}) error {
 	return hooks.Create(e)
 }
 
-//CreateSQL generates SQl query for creating a new record/records for value. This
-//uses Hooks to allow more flexibility.
-//
-// There is no error propagation. Each step/hook execution must pass. Any error
-// indicate the end of the execution.
-//
-// The hooks that are used here are all defined in model package  as constants. You can
-// easily overide them by using DB.SetCreateHook method.
-//
-//	model.BeforeCreate
-//If set, this is the first hook to be executed. The default hook that is used
-//is defined in hooks.BeforeCreate. If by any chance the hook returns an error
-//then execution is halted and the error is returned.
-//
-//	model.HookSaveBeforeAss
-// If the model value has association and  this is set then it will be executed.
-// This is useful if you also want to save associations.
-//
-//	model.HookUpdateTimestamp
-// New record needs to have CreatedAt and UpdatedAt properly set. This is
-// executed to update the record timestamps( The default hook for this assumes
-// you used model.Model convention for naming the timestamp fields).
-//
-//	model.Create
-// The last hook to be executed.
-//
-// NOTE: All the hooks must be tailored towards generating SQL not executing
-// anything that might change the state of the table.
-//
-// All the other hooks apart from model.Create should write SQL queries in
-// e.Scope.Exprs only model.Create hook should write to e.Scope.SQL.
-//
-// The end query is wrapped under TRANSACTION block.
+//CreateSQL generates SQl query for creating a new record/records for value.
+// The end query is wrapped under for ql dialectTRANSACTION block.
 func (db *DB) CreateSQL(value interface{}) (*model.Expr, error) {
 	var e *engine.Engine
 	if db.e != nil {
