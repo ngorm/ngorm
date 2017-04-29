@@ -12,7 +12,7 @@ bench-new:
 benchcomp:
 	benchcmp old.txt new.txt
 clean:
-	rm -f *out *.test
+	rm -f *out *.test *.txt
 
 cpu: clean
 	NGORM_PG_CONN=$(PG) go test -run @ -bench . -cpuprofile cpu.out
