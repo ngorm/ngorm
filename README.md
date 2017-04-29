@@ -223,6 +223,36 @@ ngorm api borrows heavily from gorm.
 
 ##  CreateTable
 
+Creates a new database table if the table doesn't exist yet. This is useful for
+doing database migrations
+
+e.g
+
+You have the following model
+
+```go
+	type User struct {
+		ID       int64
+		Name     string
+		Password string
+		Email    string
+	}
+```
+
+```go
+db.CreateTable(&User{})
+```
+
+Will execute the following query
+
+```sql
+BEGIN TRANSACTION; 
+	CREATE TABLE users (id int64,name string,password string,email string ) ;
+COMMIT;
+```
+
+Checking if the table exists already is handled separately by the dialects.
+
 ##  Delete
 
 ##  Dialect

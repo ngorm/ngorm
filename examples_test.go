@@ -5,6 +5,8 @@ import (
 	"log"
 	"sort"
 
+	"strings"
+
 	"github.com/gernest/ngorm/model"
 )
 
@@ -322,4 +324,56 @@ func ExampleDB_Find() {
 	// helen
 	// kemi
 	// gernest
+}
+
+func ExampleDB_CreateTable() {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+
+	type User struct {
+		ID       int64
+		Name     string
+		Password string
+		Email    string
+	}
+	_, err = db.CreateTable(&User{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(db.Dialect().HasTable("users"))
+	//Output:
+	//true
+
+}
+
+func ExampleDB_CreateTableSQL() {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+
+	type User struct {
+		ID       int64
+		Name     string
+		Password string
+		Email    string
+	}
+	sql, err := db.CreateTableSQL(&User{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	e := `
+BEGIN TRANSACTION; 
+	CREATE TABLE users (id int64,name string,password string,email string ) ;
+COMMIT;
+`
+	sql.Q = strings.TrimSpace(sql.Q)
+	e = strings.TrimSpace(e)
+	fmt.Println(sql.Q == e)
+	//Output:
+	//true
 }

@@ -422,6 +422,9 @@ func (db *DB) Save(value interface{}) error {
 //calls on the returned DB e.g
 //
 //	db.Model(&user).Update("name","hero")
+//
+// You don't have to call db.Begin().Model() since this calls Begin automatically for you.
+// It is safe for chaining.
 func (db *DB) Model(value interface{}) *DB {
 	c := db.clone()
 	c.e.Scope.ContextValue(value)
