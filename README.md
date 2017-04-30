@@ -370,7 +370,42 @@ This will build `SELECT count(*)`
 
 ##  SingulatTable
 
+SingularTable enables or disables singular tables name. By default this is
+disabled, meaning table names are in plural.
+```
+	Model	| Plural table name
+	----------------------------
+	Session	| sessions
+	User	| users
+
+	Model	| Singular table name
+	----------------------------
+	Session	| session
+	User	| user
+```
+
+To enable singular tables do,
+```go
+db.SingularTable(true)
+```
+
+To disable singular tables do,
+```go
+db.SingularTable(false)
+```
 ##  Table
+This specify manually the database table you want to run operations on. Most
+operations are built automatically from models.
+
+For instance, to find all users you can do `db.Find(&users)` which might
+generate `SELECT * FROM users;`. 
+
+You can instead select from `scary_users` instead by,
+
+```go
+db.Begin().Table("scary_users").Find(&users)
+// SELECT * FROM scary_users
+```
 
 ##  Update
 
@@ -381,3 +416,30 @@ This will build `SELECT count(*)`
 ##  Updates
 
 ##  Where
+
+This generates `WHERE` SQL clause.
+
+Using Where with plain SQL
+
+```go
+db.Where("name","gernest")
+
+// WHERE (name=$1)
+//$1="gernest"
+```
+
+Using Where `IN`
+
+```go
+db.Where(e, "name in (?)", []string{"gernest", "gernest 2"})
+// WHERE (name in ($1,$2))
+// $1="gernest", $2="gernest 2"
+```
+
+Using Where with `LIKE`
+
+```go
+db.Where(e, "name LIKE ?", "%jin%")
+// WHERE (name LIKE $1)
+//$1="%jin%"
+```
