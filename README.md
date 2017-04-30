@@ -254,14 +254,44 @@ COMMIT;
 Checking if the table exists already is handled separately by the dialects.
 
 ##  Delete
+Executes `DELETE` query, which is used to delete rows from a database table.
+
+```go
+db.Begin().Delete(&Users{ID: 10})
+```
+
+Will execute 
+```sql
+BEGIN TRANSACTION;
+	DELETE FROM users  WHERE id = $1;
+COMMIT;
+```
+
+Where `$1=10`
 
 ##  Dialect
+Gives you the instance of dialect which is registered in the `DB`. 
 
 ##  DropColumn
 
+Removes columns from database tables by issuing `ALTER TABLE`.
+
+For instance,
+
+```go
+db.Model(&USer{}).DropColumn("password")
+//ALTER TABLE users DROP COLUMN password
+```
+
 ##  DropTable
 
+Executes `DROP Table` query. Use this to get rid of database tables. This is the
+opposite of `CreateTable` whatever `CreateTable` does to the database this
+undoes it.
+
 ##  DropTableIfExests
+
+This will check if the table exist in the database before dropping it by calling `DropTable`.
 
 ##  Find
 
@@ -313,7 +343,38 @@ This is an example of looking up for all users.
 
 ##  First
 
+First  fetches the first record and order by primary key.
+
+For instance,
+
+```go
+db.Begin().First(&user)
+```
+
+Will execute,
+```sql
+SELECT * FROM users   ORDER BY id ASC LIMIT 1
+```
+
+First user by primary key
+
+```go
+db.Begin().First(&user,10)
+```
+
+will execute
+
+```sql
+SELECT * FROM users  WHERE (id = $1) ORDER BY id ASC LIMIT 1
+```
+Whereby `$1=10`
+
+You can chain other methods as well to build complex queries.
+
 ##  FirstOrCreate
+
+This will first try to find the first record that matches, when there is no
+match a new record is created.
 
 ##  FirstOrInit
 
