@@ -265,7 +265,7 @@ Checking if the table exists already is handled separately by the dialects.
 
 ##  Find
 
-Find is uded for looking up things in the database. You can look for one item or
+Find is used for looking up things in the database. You can look for one item or
 a list of items. This works well will the other query building API calls.
 Something to no note is this is the last call after chaining other API calls.
 So, you can have something similar to `db.Where(...).Find()` etc.
@@ -400,7 +400,7 @@ operations are built automatically from models.
 For instance, to find all users you can do `db.Find(&users)` which might
 generate `SELECT * FROM users;`. 
 
-You can instead select from `scary_users` instead by,
+You can  select from `scary_users` instead by,
 
 ```go
 db.Begin().Table("scary_users").Find(&users)
