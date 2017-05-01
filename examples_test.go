@@ -377,3 +377,37 @@ COMMIT;
 	//Output:
 	//true
 }
+
+func ExampleDB_Count() {
+	db, err := Open("ql-mem", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+
+	type Foo struct {
+		ID    int64
+		Stuff string
+	}
+	_, err = db.Automigrate(&Foo{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sample := []string{"a", "b", "c", "d"}
+	for _, v := range sample {
+		err := db.Create(&Foo{Stuff: v})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	var stuffs int64
+	err = db.Model(&Foo{}).Count(&stuffs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(stuffs)
+
+	//Output:
+	//4
+}

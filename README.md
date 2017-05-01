@@ -50,7 +50,6 @@ Database support
   - [Association](#association)
   - [Attrs](#attrs)
   - [Automigrate](#automigrate)
-  - [CommonDB](#commondb)
   - [Count](#Count)
   - [CreateTable](#createtable)
   - [Delete](#delete)
@@ -217,9 +216,23 @@ ngorm api borrows heavily from gorm.
 
 ##  Automigrate
 
-##  CommonDB
 
 ##  Count
+Returns the number of matched rows for a given query.
+
+You can count the number of all users like this.
+```go
+var count int64
+db.Model(&user).Count(&count)
+```
+
+Which will execute
+
+```sql
+SELECT count(*) FROM foos  
+```
+You can build a normal query by chaining methods and call `Count` at the end,
+that way the query will be executed and the matched rows will be counted.
 
 ##  CreateTable
 
@@ -382,17 +395,51 @@ match a new record is created.
 
 ##  HasTable
 
+Returns true if there is a table for the given value, the value can
+either be a string representing a table name or a ngorm model.
+
 ##  Having
+
+Builds `HAVING` SQL
 
 ##  Set
 
+Store temporary values that will be available across  db chains. The values are
+visible at scope leve.
+
 ##  Joins
+
+Add `JOIN` SQL
 
 ##  Last
 
+Returns the Last row to match the query.
+
+You can gen the last user by
+```go
+var user User
+db.Last(&user)
+```
+
+Which will execute the following query
+
+```sql
+SELECT * FROM users   ORDER BY id DESC LIMIT 1
+```
+
 ##  Limit
 
+Add `LIMIT` SQL clause
+
 ##  Model
+
+Sets the value as the scope value for the db instance. value must be a valid
+ngorm model.
+
+This paves way for chainable query building, since most methods operate on the
+scoped model value.
+
+By calling `db.Model(&user)` we are stating that out primary model we want to perate on is `&user`, now from there we can chain further methods to get what we want. like `db.Model(*user).Limit(2).Offset(4).Find(&users)`
 
 ##  ModifyColumn
 
@@ -400,13 +447,23 @@ match a new record is created.
 
 ##  Offset
 
+Add `OFFSET` SQL clause
+
 ##  Omit
+
+Use this to setup fields from the model to be skipped.
+
 
 ##  Or
 
+Add `OR` SQL clause
+
 ##  Order
 
+Add `ORDER BY` SQL clause
+
 ##  Pluck
+
 
 ##  Preload
 
