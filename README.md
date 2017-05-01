@@ -229,7 +229,7 @@ db.Model(&user).Count(&count)
 Which will execute
 
 ```sql
-SELECT count(*) FROM foos  
+SELECT count(*) FROM users  
 ```
 You can build a normal query by chaining methods and call `Count` at the end,
 that way the query will be executed and the matched rows will be counted.
