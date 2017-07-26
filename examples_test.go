@@ -5,9 +5,9 @@ import (
 	"log"
 	"sort"
 
-	"strings"
+	"github.com/ngorm/ngorm/model"
 
-	"github.com/gernest/ngorm/model"
+	"strings"
 )
 
 func ExampleOpen() {
