@@ -138,7 +138,9 @@ func benchFind(b *testing.B, db *DB) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
+		b.StopTimer()
 		persons := []*Person{}
+		b.StartTimer()
 		if err := db.Find(&persons); err != nil {
 			b.Fatalf("error finding: %s", err)
 		}
@@ -174,8 +176,11 @@ func benchFindSQL(b *testing.B, db *DB) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
+		b.StopTimer()
 		persons := []*Person{}
-		if _, err := db.FindSQL(&persons); err != nil {
+		var err error
+		b.StartTimer()
+		if _, err = db.FindSQL(&persons); err != nil {
 			b.Fatalf("error finding: %s", err)
 		}
 	}
