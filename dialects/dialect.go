@@ -62,7 +62,7 @@ type Dialect interface {
 	// users.id
 	//
 	// Here users. is the prefix and id is the field name. We can go about and
-	// implement somthing like that as
+	// implement something like this
 	//
 	// func QueryFieldName(tableName string) string {
 	// 	return tableName + "."
