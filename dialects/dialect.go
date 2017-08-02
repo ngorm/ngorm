@@ -50,9 +50,24 @@ type Dialect interface {
 	// CurrentDatabase return current database name
 	CurrentDatabase() string
 
-	PrimaryKey([]string) string
+	// PrimaryKey returns string representation of primary keys. It is common
+	// for this to return a string with keys joined to a string with comma as
+	// separator
+	PrimaryKey(keys []string) string
 
-	QueryFieldName(string) string
+	// QueryFieldName takes a table name and returns a prefix for the field
+	// name. Some databases support refering to table fields from table name,
+	// for instance
+	//
+	// users.id
+	//
+	// Here users. is the prefix and id is the field name. We can go about and
+	// implement somthing like that as
+	//
+	// func QueryFieldName(tableName string) string {
+	// 	return tableName + "."
+	// }
+	QueryFieldName(tableName string) string
 }
 
 var baseOpener *DefaultOpener
