@@ -30,7 +30,7 @@ Database support
 
 - [x] [ql](https://godoc.org/github.com/cznic/ql)
 - [x] postgresql
-- [ ] mysql
+- [ ] [WIP} mysql
 - [ ] mssql
 - [ ] sqlite
 
@@ -112,6 +112,12 @@ errors are returned so the application developers can handle them.
 ## Installation
 
 	go get -u github.com/ngorm/ngorm
+
+You also need to install the dialects(database drivers)
+
+	go get -u github.com/ngorm/ql #ql dialect
+	go get -u github.com/ngorm/postgres #postgresql dialect
+
 
 ## Connecting to a database
 
