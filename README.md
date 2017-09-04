@@ -136,9 +136,9 @@ import (
 	// other supported databases.
 
     // driver for postgresql database
-	_ "github.com/ngorm/ngorm/postgres"
+	_ "github.com/ngorm/postgres"
     // driver for ql database
-	_ "github.com/ngorm/ngorm/ql"
+	_ "github.com/ngorm/ql"
 	"github.com/ngorm/ngorm"
 )
 
