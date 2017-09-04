@@ -12,7 +12,7 @@
 
 [![GoDoc](https://godoc.org/github.com/ngorm/ngorm?status.svg)](https://godoc.org/github.com/ngorm/ngorm)[![Coverage Status](https://coveralls.io/repos/github/ngorm/ngorm/badge.svg?branch=master)](https://coveralls.io/github/ngorm/ngorm?branch=master)[![Build Status](https://travis-ci.org/ngorm/ngorm.svg?branch=master)](https://travis-ci.org/ngorm/ngorm)
 
-__IMPORTANT__: This is not meant to replace gorm. For advanced users you might find this library lacking, I advice you use ngorm.
+__IMPORTANT__: This is not meant to replace gorm. For advanced users you might find this library lacking, I advice you use gorm instead.
 
 ## Overview
 
