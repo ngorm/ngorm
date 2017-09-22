@@ -892,6 +892,14 @@ func (db *DB) ModifyColumn(column string, typ string) (sql.Result, error) {
 	)
 }
 
+// Ping checks if you can connect to the database
+func (db *DB) Ping() error {
+	if dr, ok := db.db.SQLCommon.(*sql.DB); ok {
+		return dr.Ping()
+	}
+	return errors.New("ngorm: ping not supported")
+}
+
 // Preload preload associations with given conditions
 //    db.Preload("Orders", "state NOT IN (?)", "cancelled").Find(&users)
 func (db *DB) Preload(column string, conditions ...interface{}) *DB {
