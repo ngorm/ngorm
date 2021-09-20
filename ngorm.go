@@ -289,8 +289,11 @@ func (db *DB) AutomigrateSQL(models ...interface{}) (*model.Expr, error) {
 		}
 		if e.Scope.MultiExpr {
 			for _, expr := range e.Scope.Exprs {
+				k := expr.Q
 				i := strings.Index(expr.Q, "(")
-				k := expr.Q[:i]
+				if i > 0 {
+					k = expr.Q[:i]
+				}
 				if _, ok := keys[k]; !ok {
 					buf.WriteString("\t" + expr.Q + ";\n")
 					keys[k] = true
